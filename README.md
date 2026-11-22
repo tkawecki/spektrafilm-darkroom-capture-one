@@ -38,7 +38,7 @@ The panel keeps its settings, looks and log in `%LOCALAPPDATA%\FilmToolsForCaptu
 
 [![The start page of the Spektrafilm Darkroom user manual](assets/manual-screenshot.jpg)](docs/manual-en/index.html)
 
-A full user manual in English describes every control, with example images: [docs/manual-en](docs/manual-en/index.html). It is plain HTML that works offline; open `index.html` in a browser after downloading the repository, or open `manual\index.html` in the installation folder (the release package includes it). Its example photos are CC0 images from discuss.pixls.us, listed in the manual's chapter "Sources and licences".
+A full user manual in English describes every control, with example images: [docs/manual-en](docs/manual-en/index.html). It is plain HTML that works offline; open `index.html` in a browser after downloading the repository, or open `manual\index.html` in the installation folder (the release package includes it). Its example photos are the author's own photo of a village and CC0 images from discuss.pixls.us, listed in the manual's chapter "Sources and licences".
 
 ## Recommended Capture One preparation
 
@@ -78,6 +78,8 @@ This panel only connects other people's work to Capture One.
 - **Luka Kauzlaric** wrote the original [Spektrafilm for Capture One](https://github.com/nothing-complex/spektrafilm-for-capture-one), from which this project started.
 
 Both spektrafilm and spektrafilm OFX are worth exploring on their own.
+
+This fork was programmed together with **Claude**, Anthropic's AI model, working in Claude Code: it wrote much of the code, the tests and the manual under the author's direction, and the author decided what to build and tried the results in Capture One.
 
 ## Licence
 
