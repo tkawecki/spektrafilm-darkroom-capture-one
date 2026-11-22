@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../NativePanel/OpticalRenderer.cs" Link="OpticalRenderer.cs" />
+    <Compile Include="../../NativePanel/WorkerEnvironment.cs" Link="WorkerEnvironment.cs" />
+    <Compile Include="../../NativePanel/PreviewPerformance.cs" Link="PreviewPerformance.cs" />
+  </ItemGroup>
+</Project>

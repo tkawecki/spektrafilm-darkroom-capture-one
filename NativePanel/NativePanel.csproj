@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <CaptureOneDirectory Condition="'$(CaptureOneDirectory)' == ''">C:\Program Files\Capture One\Capture One</CaptureOneDirectory>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CaptureOne" HintPath="$(CaptureOneDirectory)\CaptureOne.dll" Private="false" />
+    <Reference Include="P1.AppCore" HintPath="$(CaptureOneDirectory)\P1.AppCore.dll" Private="false" />
+    <Reference Include="P1.C1.Core" HintPath="$(CaptureOneDirectory)\P1.C1.Core.dll" Private="false" />
+    <Reference Include="P1.C1.Framework" HintPath="$(CaptureOneDirectory)\P1.C1.Framework.dll" Private="false" />
+    <Reference Include="P1.C1.ImageCoreWrapper" HintPath="$(CaptureOneDirectory)\P1.C1.ImageCoreWrapper.dll" Private="false" />
+    <Reference Include="P1.C1.ModelEntities" HintPath="$(CaptureOneDirectory)\P1.C1.ModelEntities.dll" Private="false" />
+    <Reference Include="P1.C1.ViewModels" HintPath="$(CaptureOneDirectory)\P1.C1.ViewModels.dll" Private="false" />
+  </ItemGroup>
+</Project>

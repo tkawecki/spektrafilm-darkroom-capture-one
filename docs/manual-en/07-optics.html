@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Optics | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Optics</h1>
+      <p class="lede">Light does not stay exactly where it lands. It scatters in the emulsion, reflects off the film base, and diffusion filters spread it on purpose. These effects give film its typical softness and the glow around bright highlights.</p>
+
+      <h2>Highlights first</h2>
+      <p>Halation and diffusion work only where the light is very bright. Capture One delivers the image with the highlights clipped at sensor white, so bright sources do not carry enough "energy" to glow. That is why, on a hazy photo taken into the sun, halation is almost invisible until you turn on <span class="ui">Highlight boost</span>.</p>
+      <ul class="gallery wide">
+        <li><figure><a href="img/sunrise-full-default-crop.webp"><img data-local src="img/sunrise-full-default-crop.webp" alt="Heath at sunrise into the sun, no effects" loading="lazy"></a><figcaption><strong>No effects</strong>100% crop.</figcaption></figure></li>
+        <li><figure><a href="img/sunrise-full-halation-2-crop.webp"><img data-local src="img/sunrise-full-halation-2-crop.webp" alt="Halation 2 without highlight boost" loading="lazy"></a><figcaption><strong>Halation amount 2</strong>Almost no change: not enough light.</figcaption></figure></li>
+        <li><figure><a href="img/sunrise-full-halation-1-boost6-crop.webp"><img data-local src="img/sunrise-full-halation-1-boost6-crop.webp" alt="Halation with highlight boost" loading="lazy"></a><figcaption><strong>Halation 1, Highlight boost 6</strong>A warm glow around the bright areas.</figcaption></figure></li>
+      </ul>
+
+      <h2>Halation and scatter</h2>
+      <ul class="gallery">
+        <li><figure><a href="img/mist-hi-default-crop.webp"><img data-local src="img/mist-hi-default-crop.webp" alt="Misty heath into the sun without halation" loading="lazy"></a><figcaption><strong>No halation</strong></figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-halation-1-boost3-crop.webp"><img data-local src="img/mist-hi-halation-1-boost3-crop.webp" alt="Halation 1 with boost 3" loading="lazy"></a><figcaption><strong>Halation 1, boost 3</strong></figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-halation-2-boost6-crop.webp"><img data-local src="img/mist-hi-halation-2-boost6-crop.webp" alt="Halation 2 with boost 6" loading="lazy"></a><figcaption><strong>Halation 2, boost 6</strong>A clear warm glow.</figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-halation-2-boost6-spread3-crop.webp"><img data-local src="img/mist-hi-halation-2-boost6-spread3-crop.webp" alt="Halation with a wider spread" loading="lazy"></a><figcaption><strong>Spread 3</strong>A wider glow.</figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-gold-halation-2-boost6-crop.webp"><img data-local src="img/mist-hi-gold-halation-2-boost6-crop.webp" alt="Gold 200 with halation" loading="lazy"></a><figcaption><strong>Gold 200, same settings</strong>Red fringes of a film with a weak anti-halation layer.</figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-scatter-1-crop.webp"><img data-local src="img/mist-hi-scatter-1-crop.webp" alt="Emulsion scatter 1" loading="lazy"></a><figcaption><strong>Emulsion scatter 1</strong>Slightly softer edges.</figcaption></figure></li>
+      </ul>
+
+      <div class="control">
+        <h3>Halation amount</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–4</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>The strength of halation: light that has passed through the emulsion, reflected off the film base and come back, exposing the layers a second time around bright areas. The red layer lies closest to the base, so halation is reddish. 1 is the physical value for the chosen film.</p>
+        <h5>When to use it</h5>
+        <p>Sun in the frame, backlight, street lamps, neon, reflections on water. Start at 1 with <span class="ui">Highlight boost</span> 2–3.</p>
+        <h5>Pitfalls</h5>
+        <p>At 0 all the halation sliders below are inactive. Without <span class="ui">Highlight boost</span> the effect is often invisible on images from C1.</p>
+      </div>
+
+      <div class="control">
+        <h3>Halation spread</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–4</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>The reach of the glow. 1 is the radius that follows from the thickness of the base: about 65 µm for still-camera film and about 50 µm for cinema film. Higher values give a wider, softer glow.</p>
+      </div>
+
+      <div class="control">
+        <h3>Emulsion scatter and Emulsion scatter spread</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts"><div><dt>Emulsion scatter</dt><dd>0–2, default 0</dd></div><div><dt>Spread</dt><dd>0–4, default 1</dd></div></dl>
+        <p>Light scattering inside the emulsion itself, without reflection. It gives a very fine softening of edges and a faint glow over a few micrometres. It is one of the reasons film looks less "digitally sharp".</p>
+        <h5>Typical values</h5>
+        <p>0.5–1. If the image is too soft, lower it.</p>
+      </div>
+
+      <div class="control">
+        <h3>Highlight boost (EV)</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–20 EV</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Rebuilds the light above white: it stretches the brightest areas before halation and scatter are applied. This lets the sun and lamps glow even though C1 clipped them at white.</p>
+        <h5>Typical values</h5>
+        <p>2–3 for a subtle glow, 6 or more for a strong one. It works only together with halation or scatter.</p>
+      </div>
+
+      <div class="control">
+        <h3>Highlight boost range and Highlight protection (EV)</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–1, default 0.3</dd></div><div><dt>Protection</dt><dd>0–10 EV, default 2</dd></div></dl>
+        <p><span class="ui">Highlight protection</span> sets the brightness at which the boost begins. With <span class="ui">Measure protection down from the brightest highlight</span> turned on, it is counted in EV below the brightest point: 1–2 EV boosts only the brightest spots. <span class="ui">Range</span> sets how gently the boost builds up.</p>
+      </div>
+
+      <div class="control">
+        <h3>Measure protection down from the brightest highlight</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts"><div><dt>New look</dt><dd>on</dd></div></dl>
+        <p>On: the threshold is counted from the brightest highlight in the frame. Off: the original Spektrafilm rule, a threshold in EV above middle grey. Images from C1 usually end 2–3 EV above grey, so with the original rule and high protection the boost does nothing. The panel then shows a warning.</p>
+      </div>
+
+      <div class="control">
+        <h3>Override stock halation channels</h3>
+        <p class="path">Spektrafilm optics › Halation and scatter</p>
+        <dl class="facts">
+          <div><dt>Default</dt><dd>off</dd></div>
+          <div><dt><span class="ui">Red strength</span>, <span class="ui">Green strength</span>, <span class="ui">Blue strength</span></dt><dd>0–1, default 0.05 / 0.015 / 0</dd></div>
+        </dl>
+        <p>Replaces the halation colour from the film profile with your own values for R, G and B. The sliders' default values are a "use the film" marker: until you move them, the film's own halation colour still applies.</p>
+        <h5>When to use it</h5>
+        <p>For the look of a film without an anti-halation layer, in the style of CineStill: red 0.3, green 0.1, blue 0.015 and <span class="ui">Halation amount</span> 1–2. No profile in the panel reproduces such a film by itself. These are the values from the original model for a film without an anti-halation layer.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/sunrise-cs-base-crop.webp"><img data-local src="img/sunrise-cs-base-crop.webp" alt="Heath at sunrise into the sun without halation" loading="lazy"></a><figcaption><strong>No halation</strong></figcaption></figure></li>
+          <li><figure><a href="img/sunrise-cs-stock-15-boost4-crop.webp"><img data-local src="img/sunrise-cs-stock-15-boost4-crop.webp" alt="Portra 400 film halation" loading="lazy"></a><figcaption><strong>Portra 400, Halation 1.5, boost 4</strong>Halation colour from the film profile: almost invisible.</figcaption></figure></li>
+          <li><figure><a href="img/sunrise-cs-cine-15-boost4-crop.webp"><img data-local src="img/sunrise-cs-cine-15-boost4-crop.webp" alt="Halation overridden with 0.3 / 0.1 / 0.015" loading="lazy"></a><figcaption><strong>Override 0.3 / 0.1 / 0.015</strong>A red fringe around the bright edges and highlights.</figcaption></figure></li>
+        </ul>
+        <p class="measure-note">Measurement: Portra 400, <span class="ui">Halation amount</span> 1.5. Around bright areas the film's own halation colour adds almost no red; the override adds clearly more. <span class="ui">Highlight boost (EV)</span> 4 strengthens both.</p>
+      </div>
+
+      <aside class="note darkroom">
+        <span class="note-title">Films with stronger halation</span>
+        <p>Fujifilm C200, X-Tra 400, Kodak Gold 200, Ultramax 400 and 800, and Kodachrome 64 have a weaker anti-halation layer in their profiles. With the same settings they glow several times more than Portra or Ektar.</p>
+      </aside>
+
+      <h2>Diffusion filters</h2>
+      <p>A diffusion filter moves part of the light from the sharp image into a glow made of a core, a halo and a bloom. The model preserves energy: the light does not disappear, it only moves. <span class="ui">Camera diffusion</span> works like a filter on the lens, in front of the film. <span class="ui">Print diffusion</span> works in the enlarger, at the print.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/mist-default.webp"><img data-local src="img/mist-default.webp" alt="No filter" loading="lazy"></a><figcaption><strong>No filter</strong></figcaption></figure></li>
+        <li><figure><a href="img/mist-glimmer-1.webp"><img data-local src="img/mist-glimmer-1.webp" alt="Glimmerglass" loading="lazy"></a><figcaption><strong>Glimmerglass 1</strong>Clean and subtle, black untouched.</figcaption></figure></li>
+        <li><figure><a href="img/mist-bpm-1.webp"><img data-local src="img/mist-bpm-1.webp" alt="Black Pro-Mist" loading="lazy"></a><figcaption><strong>Black Pro-Mist 1</strong>A tight halo, deep black.</figcaption></figure></li>
+        <li><figure><a href="img/mist-promist-1.webp"><img data-local src="img/mist-promist-1.webp" alt="Pro-Mist" loading="lazy"></a><figcaption><strong>Pro-Mist 1</strong>A pastel haze, lighter shadows.</figcaption></figure></li>
+        <li><figure><a href="img/mist-cinebloom-1.webp"><img data-local src="img/mist-cinebloom-1.webp" alt="CineBloom" loading="lazy"></a><figcaption><strong>CineBloom 1</strong>A wide, warm glow over the whole frame.</figcaption></figure></li>
+        <li><figure><a href="img/mist-print-bpm-1.webp"><img data-local src="img/mist-print-bpm-1.webp" alt="Black Pro-Mist in the enlarger" loading="lazy"></a><figcaption><strong>Print diffusion, Black Pro-Mist 1</strong>The glow comes from the shadows, not the highlights.</figcaption></figure></li>
+      </ul>
+
+      <div class="control">
+        <h3>Filter</h3>
+        <p class="path">Spektrafilm optics › Camera diffusion and Print diffusion</p>
+        <dl class="facts"><div><dt>Options</dt><dd>Off, Black Pro-Mist, Glimmerglass, Pro-Mist, CineBloom</dd></div><div><dt>Default</dt><dd>Off</dd></div></dl>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Filter</th><th>Character</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td>Glimmerglass</td><td>Mostly core, a small halo, a weak long tail. Smooths micro-contrast, black stays.</td><td>Portraits, when it should be delicate.</td></tr>
+              <tr><td>Black Pro-Mist</td><td>A clear, tight halo that fades quickly. Deep black, a warm halo with a slight yellow-green tint.</td><td>The classic "filmic" glow of highlights.</td></tr>
+              <tr><td>Pro-Mist</td><td>A wide, pastel haze, a balance of halo and bloom. Lightens the shadows.</td><td>Dreamy, nostalgic, light in fog.</td></tr>
+              <tr><td>CineBloom</td><td>Reaches across the whole frame, a slow tail, the warmest edge.</td><td>Retro, strong atmosphere.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h5>Pitfalls</h5>
+        <p>While the filter is <span class="ui">Off</span>, the other sliders in the section are inactive. Their saved values are kept. <span class="ui">Print diffusion</span> works only in Print Simulation.</p>
+      </div>
+
+      <div class="control">
+        <h3>Filter strength</h3>
+        <p class="path">Spektrafilm optics › Camera diffusion and Print diffusion</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>0.5</dd></div></dl>
+        <p>The filter strength in the "grades" used in shops: 1/8, 1/4, 1/2, 1, 2. At strength 1 the filter diverts about half of the light, at 2 about three quarters, before the character of the filter family is taken into account.</p>
+        <h5>Typical values</h5>
+        <p>0.25–0.5 for a subtle effect, 1 for a clear one. The slider moves in steps of 0.125; type other values (e.g. 0.3) into the number field.</p>
+      </div>
+
+      <div class="control">
+        <h3>Spatial scale and Halo warmth</h3>
+        <p class="path">Spektrafilm optics › Camera diffusion and Print diffusion</p>
+        <dl class="facts"><div><dt>Spatial scale</dt><dd>0–4, default 1</dd></div><div><dt>Halo warmth</dt><dd>−1.5 to 1.5, default 0</dd></div></dl>
+        <p><span class="ui">Spatial scale</span> scales the reach of the glow, for example for a different print size. <span class="ui">Halo warmth</span> tints the outer halo: positive values warm it, negative values cool it.</p>
+      </div>
+
+      <div class="control">
+        <h3>Filter core, halo and bloom</h3>
+        <p class="path">Spektrafilm optics › Camera diffusion and Print diffusion</p>
+        <dl class="facts"><div><dt>Intensity</dt><dd>0–4, default 1</dd></div><div><dt>Size</dt><dd>0.1–4, default 1</dd></div></dl>
+        <p>Advanced multipliers for the three parts of the glow: the core (right next to the light), the halo (medium reach) and the bloom (furthest reach): <span class="ui">Core intensity</span>, <span class="ui">Core size</span>, <span class="ui">Halo intensity</span>, <span class="ui">Halo size</span>, <span class="ui">Bloom intensity</span>, <span class="ui">Bloom size</span>. The same sliders are in Camera diffusion and Print diffusion. 1 is the character of the chosen filter family.</p>
+        <h5>When to use it</h5>
+        <p>When you want your "own" filter, for example Black Pro-Mist with a smaller halo and more bloom.</p>
+      </div>
+
+      <h2>Camera or enlarger</h2>
+      <p>Both filters use the same model and the same sliders. What differs is their place in the chain, and so the direction of the glow. A filter on the camera spreads the highlights of the scene, so bright areas glow into dark ones. A filter in the enlarger spreads the light passing through the negative: the brightest parts of the negative are the shadows of the scene, so the glow runs from the shadows into the highlights and the print darkens around dark shapes.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/diffusion-chart-none.webp"><img data-local src="img/diffusion-chart-none.webp" alt="Test chart without a filter" loading="lazy"></a><figcaption><strong>No filter</strong>A light band on a dark background and a dark band on a light one.</figcaption></figure></li>
+        <li><figure><a href="img/diffusion-chart-camera.webp"><img data-local src="img/diffusion-chart-camera.webp" alt="Test chart with Camera diffusion" loading="lazy"></a><figcaption><strong>Camera diffusion</strong>A warm glow spreads into the dark fields. The light ones stay.</figcaption></figure></li>
+        <li><figure><a href="img/diffusion-chart-print.webp"><img data-local src="img/diffusion-chart-print.webp" alt="Test chart with Print diffusion" loading="lazy"></a><figcaption><strong>Print diffusion</strong>A cool shadow spreads into the light fields. The black stays.</figcaption></figure></li>
+        <li><figure><a href="img/diffusion-chart-both.webp"><img data-local src="img/diffusion-chart-both.webp" alt="Test chart with both filters" loading="lazy"></a><figcaption><strong>Both at once</strong>The edge softens from both sides.</figcaption></figure></li>
+      </ul>
+      <p class="measure-note">Measurement: a 1600 px test chart, Portra 400 on Portra Endura, Black Pro-Mist, <span class="ui">Filter strength</span> 1, enlarged crop. Within 30 px of the edge, <span class="ui">Camera diffusion</span> lightens the dark field by 6/255 and changes the light one by 1. <span class="ui">Print diffusion</span> darkens the light field by 12 and changes the dark one by 0.3. At strength 0.5: 4 and 7. Further than 30 px from the edge the change is less than 1.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Camera diffusion</th><th>Print diffusion</th></tr></thead>
+          <tbody>
+            <tr><td>Place in the chain</td><td>On the lens, in front of the film.</td><td>In the enlarger, between the negative and the paper.</td></tr>
+            <tr><td>What glows</td><td>The highlights of the scene.</td><td>The shadows of the scene, because they are bright in the negative.</td></tr>
+            <tr><td>What changes</td><td>Dark areas next to bright ones get lighter.</td><td>Bright areas next to dark ones get darker.</td></tr>
+            <tr><td>Black</td><td>Rises near highlights.</td><td>Stays deep.</td></tr>
+            <tr><td>Fringe colour</td><td>Warm, lighter.</td><td>Cooler, darker.</td></tr>
+            <tr><td>When</td><td>The glow of lamps, the sun and reflections, a soft portrait.</td><td>Silhouettes and branches against a bright sky, when black must stay black.</td></tr>
+            <tr><td>Mode</td><td>Print Simulation and Scan.</td><td>Print Simulation only.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="gallery wide">
+        <li><figure><a href="img/mist-hi-default-crop.webp"><img data-local src="img/mist-hi-default-crop.webp" alt="Misty heath into the sun without a filter, crop" loading="lazy"></a><figcaption><strong>No filter</strong>100% crop.</figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-bpm-1-crop.webp"><img data-local src="img/mist-hi-bpm-1-crop.webp" alt="Misty heath with Black Pro-Mist on the camera, crop" loading="lazy"></a><figcaption><strong>Camera diffusion, Black Pro-Mist 1</strong>The bright sky glows into the dark shapes: they get lighter and lose their black.</figcaption></figure></li>
+        <li><figure><a href="img/mist-hi-print-bpm-1-crop.webp"><img data-local src="img/mist-hi-print-bpm-1-crop.webp" alt="Misty heath with Black Pro-Mist in the enlarger, crop" loading="lazy"></a><figcaption><strong>Print diffusion, Black Pro-Mist 1</strong>The dark shapes stay black; the sky between them darkens.</figcaption></figure></li>
+      </ul>
+      <p class="measure-note">On this kind of crop, the dark areas get clearly lighter with the filter on the camera and hardly change with the filter in the enlarger. The bright sky darkens a little with the filter on the camera and much more with the filter in the enlarger.</p>
+      <h3>Both filters at once</h3>
+      <p>The filters do not cancel each other out. Each one changes a different side of the edge, so together they lower contrast on both sides. On the test chart at strength 1, the dark field lightens by 7, as with the camera filter alone, and the light field darkens by 8 instead of 12. Start with one filter. Add the second only when you know which side of the edge is missing.</p>
+      <p>Scanner glare (<span class="ui">Scanner glare</span>) is described in <a href="09-finishing.html">chapter 9</a>.</p>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

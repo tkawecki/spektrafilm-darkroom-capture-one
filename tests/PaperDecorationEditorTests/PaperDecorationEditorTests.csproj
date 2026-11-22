@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Nullable>enable</Nullable></PropertyGroup><ItemGroup>
+<Compile Include="../../NativePanel/PaperDecoration.cs" Link="PaperDecoration.cs"/>
+<Compile Include="../../NativePanel/PaperDecorationStorage.cs" Link="PaperDecorationStorage.cs"/>
+<Compile Include="../../NativePanel/PaperTextureStore.cs" Link="PaperTextureStore.cs"/>
+<Compile Include="../../NativePanel/PaperDecorationEditor.cs" Link="PaperDecorationEditor.cs"/>
+<Compile Include="../../NativePanel/PercentText.cs" Link="PercentText.cs" />
+</ItemGroup></Project>

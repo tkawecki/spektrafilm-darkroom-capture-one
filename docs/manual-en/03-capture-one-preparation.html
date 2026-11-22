@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preparation in Capture One | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Chapter list</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Preparation in Capture One</h1>
+      <p class="lede">Spektrafilm receives the image that Capture One has developed and treats it as scene light falling on the film. The more neutral and true to the scene this image is, the better the simulation works.</p>
+
+      <h2>Working variant</h2>
+      <p>Spektrafilm settings are saved separately for each variant of a photo. It is easiest to work on a clone: the original variant keeps your existing edits, and the clone gets the film look. Spektrafilm is, however, on by default for every variant without a saved look, so on the original clear <span class="ui">Enable Spektrafilm</span> if it should stay without film (also in export). You can have several clones with different film–paper pairs. A new clone starts from the Spektrafilm default settings; you carry a look over to it with <span class="ui">Copy look</span> (<a href="10-tools.html">chapter 10</a>). Compare clones one at a time or with the <span class="ui">Compare reference…</span> window, because the Spektrafilm preview is paused when the Viewer shows several photos at once.</p>
+      <aside class="note tip">
+        <span class="note-title">Tip</span>
+        <p>You do not need to reset photos you have already edited. A clone with neutral look settings on the clone, as described below, is enough.</p>
+      </aside>
+
+      <h2>What to keep in Capture One</h2>
+      <p>These adjustments prepare the scene and do not compete with the film:</p>
+      <ul>
+        <li><strong>White balance.</strong> Set it neutral: grey and white surfaces should have no colour cast. The simulation assumes a correctly balanced image. You add a warm or cool mood later, on purpose, with white balance or enlarger filtration (<a href="06-colour.html">chapter 6</a>).</li>
+        <li><strong>Crop, straightening, perspective and lens correction.</strong> Geometry has no effect on the simulation.</li>
+        <li><strong>Noise reduction and retouching.</strong> Sensor noise and film grain are different things. Too much noise mixes with the grain. Spektrafilm receives an image that is already denoised: ordinary <span class="ui">Noise Reduction</span> and <span class="ui">Enhanced Denoise</span> work before the film simulation, and the film and paper raise contrast, so leftover noise becomes more visible than in C1. When you turn on <span class="ui">Enhanced Denoise</span>, C1 spends a few seconds computing a separate file in the background. Until then the panel shows the photo with ordinary noise reduction, and once the file is ready it renders the photo again by itself (panel version of 21 November 2026 onwards; on a test photo this clearly reduced the noise in dark areas).</li>
+        <li><strong>Local brightness and colour adjustments.</strong> They work before the film, that is, like brightening or darkening parts of the scene. This is a good place to lift a face out of shadow.</li>
+      </ul>
+
+      <h2>What to reduce or turn off</h2>
+      <p>These adjustments build a look of their own. On the film they would stack on top of the film look:</p>
+      <ul>
+        <li><strong>Curves, Levels, Contrast, Brightness.</strong> Contrast and tonality come from the film–paper pair.</li>
+        <li><strong>Color grading, Color Editor, saturation, Vibrance.</strong> Colour comes from the film–paper pair and the enlarger filtration.</li>
+        <li><strong>Styles, look presets and LUTs.</strong> Turn them off on the working variant.</li>
+        <li><strong>Strong High Dynamic Range (Highlight/Shadow).</strong> A little helps in extreme scenes, but strong settings flatten the image even before the film.</li>
+        <li><strong>Film Grain in C1.</strong> Grain is better added in Spektrafilm. The panel also has a section that sets C1 grain, if you prefer it (<a href="08-grain.html">chapter 8</a>).</li>
+      </ul>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall</span>
+        <p>Double contrast is the most common mistake. The C1 curve plus the film and paper curves give a harsh, blown-out photo, and different films start to look alike.</p>
+      </aside>
+
+      <h2>Input to the simulation</h2>
+      <p>Four settings decide in what form the image from C1 reaches the film. New looks have them set correctly; check older ones.</p>
+      <div class="control">
+        <h3>Input preparation</h3>
+        <p class="path">Spektrafilm optics › Color management</p>
+        <dl class="facts">
+          <div><dt>Options</dt><dd>Neutral for film, Capture One development</dd></div>
+          <div><dt>New look</dt><dd>Neutral for film</dd></div>
+        </dl>
+        <p>Decides how C1 prepares the image for Spektrafilm. It works on a copy of the photo’s settings, only for the Spektrafilm preview and export. Your saved C1 settings do not change.</p>
+        <h5>Neutral for film</h5>
+        <p>C1 uses the Linear Response curve that matches the camera instead of the usual development curve. It skips sharpening, Clarity and Structure, also on layers, and output sharpening. The other adjustments work: exposure, white balance, crop, lens and local adjustments.</p>
+        <p>Side effect: the print is softer than the image in C1, because there is no digital sharpening. You restore sharpness with scanner sharpening, micro contrast or the film edge effect (<a href="09-finishing.html#ostrosc">chapter 9, Sharpness</a>).</p>
+        <h5>Capture One development</h5>
+        <p>Spektrafilm receives the image exactly as you see it in C1, with its curve. The contrast doubles, and different films look more alike. This option is mainly for older looks that were made before neutral input was introduced.</p>
+        <h5>When to use</h5>
+        <p>Always <span class="ui">Neutral for film</span>, unless you deliberately want a stronger image based on the C1 look.</p>
+        <h5>Pitfalls</h5>
+        <p>If C1 has no Linear Response curve for your camera, the panel shows an error and offers to switch to <span class="ui">Capture One development</span>. The panel does not substitute another camera’s curve. Linear Response still has its own gentle highlight shaping, so it is not a scientific, fully linear image of the scene.</p>
+      </div>
+
+      <div class="control">
+        <h3>Input color space</h3>
+        <p class="path">Spektrafilm optics › Color management</p>
+        <dl class="facts">
+          <div><dt>Options</dt><dd>sRGB, Adobe RGB (1998), ProPhoto RGB, Linear Rec.2020</dd></div>
+          <div><dt>New look</dt><dd>ProPhoto RGB</dd></div>
+        </dl>
+        <p>The colour space in which C1 hands the image to the simulation. A wide space keeps the saturated colours of the scene, for example the blue of the sea, the green of plants or the red of roof tiles. The film compresses them in its own way.</p>
+        <h5>When to use</h5>
+        <p><span class="ui">ProPhoto RGB</span> for everyday work. <span class="ui">sRGB</span> clips saturated colours before they reach the film and remains only for older looks. <span class="ui">Linear Rec.2020</span> is a wide space without a gamma curve, useful for technical comparisons.</p>
+      </div>
+
+      <div class="control">
+        <h3>Use recommended input</h3>
+        <p class="path">Button below the Look strength slider, visible only when the input is not the recommended one</p>
+        <p>Sets <span class="ui">Neutral for film</span> and <span class="ui">ProPhoto RGB</span> for the current look. It first saves the existing look as the version “Before recommended input”, so you can always go back to it.</p>
+        <h5>Pitfalls</h5>
+        <p>After the switch, brightness and contrast change. Adjust <span class="ui">Film exposure</span>.</p>
+      </div>
+
+      <div class="control">
+        <h3>Renderer transport encoding (technical)</h3>
+        <p class="path">Spektrafilm optics › Color management</p>
+        <p>Only determines how pixels travel from the renderer to the panel. The panel decodes them back before display and export, so the look does not change. Leave it at <span class="ui">sRGB</span>.</p>
+      </div>
+
+      <h2 id="jpeg-tiff">JPEG and TIFF photos</h2>
+      <p>Neutral input needs a Linear Response curve for the camera, and Capture One provides it for RAW files from supported cameras. For JPEGs, TIFFs and scans there is usually no such curve, and the panel then shows the message “A matching Capture One Linear Response curve is unavailable…”.</p>
+      <ul>
+        <li>For such a photo, set <span class="ui">Input preparation</span> = <span class="ui">Capture One development</span>.</li>
+        <li>The image then already has the tone curve of the camera or the software, so the contrast doubles. Start with a lower <span class="ui">Print gamma</span> (0.7–0.85) and a negative <span class="ui">Print highlight shape</span>.</li>
+        <li>Sharpening saved in the JPEG stays in the image. Do not add scanner sharpening on top.</li>
+        <li>Highlights clipped in the JPEG are lost; film cannot bring them back.</li>
+      </ul>
+      <p>According to users on the Spektrafilm forum, the simulation works on such files but needs more manual correction than on RAW files.</p>
+
+      <h2>Exposure in C1 and in Spektrafilm</h2>
+      <p>With <span class="ui">Automatic film exposure</span> on, the panel first meters the image from C1 and sets the film exposure so that the midtones land in the middle of the curve. A change of exposure in C1 is therefore largely evened out by the metering. Set brightness with the <span class="ui">Film exposure</span> and <span class="ui">Print exposure</span> sliders.</p>
+      <p>Exposure in C1 matters mainly when you turn off automatic metering. Darkening the photo in C1 does not recover highlights: with Linear Response, C1 already shows the full range of the RAW (measured in the project on 17 November 2026), and the C1 exposure slider also changes colour along the way. Metering is described in <a href="05-exposure-and-contrast.html">chapter 5</a>.</p>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall</span>
+        <p>C1 clips highlights at the sensor’s white level. What is not in the RAW, film cannot bring back. Bright highlights in the scene, needed for halation, can be boosted with the <span class="ui">Highlight boost</span> slider (<a href="07-optics.html">chapter 7</a>).</p>
+      </aside>
+
+      <h2>Checklist before turning on Spektrafilm</h2>
+      <ol class="steps">
+        <li>Variant clone made.</li>
+        <li>White balance and exposure correct for the scene.</li>
+        <li>Crop and geometry done.</li>
+        <li>Curves, color grading, styles and LUTs neutral on the clone.</li>
+        <li>In the panel, <span class="ui">Input preparation</span> = <span class="ui">Neutral for film</span>, <span class="ui">Input color space</span> = <span class="ui">ProPhoto RGB</span>.</li>
+      </ol>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

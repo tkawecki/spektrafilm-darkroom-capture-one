@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Export | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Export</h1>
+      <p class="lede">An export with the Spektrafilm effect renders each photo again, at full quality, with the settings saved for its variant. The preview in the Viewer uses the same settings; judge grain and effects calculated in pixels (Micro contrast, Glare blur) at 100% zoom or at Native resolution.</p>
+
+      <h2>Three ways to export</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Way</th><th>Size</th><th>Where it saves</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Export with Spektrafilm…</span></td><td>Full size of the photo after the C1 crop</td><td>A file save dialog</td><td>One photo at full resolution.</td></tr>
+            <tr><td><span class="ui">Export selected TIFFs…</span> and the others</td><td>Full size</td><td>A folder you choose</td><td>A series of selected photos.</td></tr>
+            <tr><td>Ordinary C1 export (File › Export, Export with previous)</td><td>Size from the C1 recipe</td><td>Where the recipe says: folder, subfolder and a name from tokens</td><td>A series for the web, printing or the archive; several recipes at once, with metadata and a watermark.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>With the neutral input, the image contains no C1 sharpening from the Sharpening tool. You set sharpness in the panel (<a href="09-finishing.html#ostrosc">chapter 9, Sharpness</a>). The ordinary C1 export also adds the recipe's output sharpening (Screen and Print modes), as it does without Spektrafilm; the panel's export buttons do not.</p>
+
+      <div class="control">
+        <h3>Export with Spektrafilm…</h3>
+        <p class="path">Presets and LUT export</p>
+        <p>Exports the current photo at full size. It suggests the name <code>name-Spektrafilm</code> and the format from <span class="ui">Export file format</span>. With several photos selected it switches to batch export.</p>
+      </div>
+
+      <div class="control">
+        <h3>Export selected TIFFs…, Export selected PNGs…, Export selected JPEGs…, Export selected DNGs…, Cancel export</h3>
+        <p class="path">Below the list of panel sections</p>
+        <p>Batch export of the selected variants to a folder you choose. Each variant uses its own saved Spektrafilm settings. Variants with Spektrafilm switched off are exported with the C1 development only. Files are named <code>name-Spektrafilm</code>; when such a file already exists, the panel picks a free name, so nothing is overwritten. <span class="ui">Cancel export</span> stops the batch, and finished files are kept.</p>
+      </div>
+
+      <div class="control" id="receptury">
+        <h3>Ordinary Capture One export</h3>
+        <p class="path">File › Export, Export with previous</p>
+        <p>When the selected photo has Spektrafilm switched on, the C1 export writes the Spektrafilm image through C1's export recipes. The C1 export window has "Spektrafilm" added to its title. After you click Export, the panel lists the files, and after you confirm it renders the photos and hands them to C1 to write.</p>
+        <h5>What comes from the recipe</h5>
+        <ul>
+          <li><strong>Recipes:</strong> the same ones C1 would use, several at once if you like. Each gives its own file.</li>
+          <li><strong>Location and name:</strong> folder, subfolder and a file name from tokens (for example <code>[Image Name]</code>, the date, the recipe name), worked out by the same function as in C1. A counter in the name gives all files of one image the same number, as in C1; a cancelled list uses no numbers.</li>
+          <li><strong>Format:</strong> JPEG, TIFF 8 or 16 bit, PNG, PSD and PSB, with the compression and quality from the recipe. Linear DNG is written by the panel (without the recipe's metadata and watermark).</li>
+          <li><strong>ICC profile</strong> from the recipe. With sRGB and Adobe RGB, C1 only writes the panel's pixels; with any other profile (a printer, eciRGB), the panel renders in 16-bit ProPhoto RGB and C1 converts to the recipe's profile.</li>
+          <li><strong>Size</strong> (scale, long edge and so on) and <strong>resolution</strong> (dpi).</li>
+          <li><strong>Metadata</strong> of the photo, following the recipe's switches: camera data, copyright, rating, GPS, keywords.</li>
+          <li><strong>Watermark</strong>, text (with tokens) or image, in the same place and size as in an ordinary C1 export.</li>
+          <li><strong>Output sharpening</strong> (Screen, Print).</li>
+          <li><strong>Crop as a path</strong> (<span class="ui">Crop › As path</span>): the file holds the whole photo and the crop path, for example in PSD. When scan geometry or a paper border reshapes the image, the panel applies the crop instead of the path and says so in the list.</li>
+        </ul>
+        <p>A photo is rendered once for each group of recipes with the same size, crop and colour space, so several recipes do not make the export several times longer.</p>
+        <h5>The list before the export</h5>
+        <p>The <span class="ui">Export with recipes</span> window shows every file: photo, recipe, name, folder and what will happen: <em>New file</em>, <em>Renamed</em> (the name was taken), <em>Replaces the existing file</em> or <em>Skipped</em>. The export starts only with <span class="ui">Export</span>. <span class="ui">Show this list before every export</span> turns the list off for later exports; it still appears when a decision about an interrupted export is needed.</p>
+        <h5>When a file already exists</h5>
+        <p>The recipe's setting decides: rename (<code>name_1</code>, <code>name_2</code>, as in C1), replace or skip. The panel never replaces the original photo or a file written earlier in the same export; in that case it picks a free name. Each file is written under a temporary name and gets its real name only when it is complete.</p>
+        <h5>An interrupted export</h5>
+        <p>The progress of an export is saved as it goes. When you stop an export (<span class="ui">Cancel export</span>), when a file cannot be written or when C1 is closed, the button <span class="ui">Resume interrupted export (N files)…</span> appears below the panel sections. Resuming writes only the missing files, under their planned names, with the current Spektrafilm settings of those photos. The resume window also lets you drop the interrupted export (<span class="ui">Discard interrupted export</span>). The photos must be in the collection shown in the C1 browser.</p>
+        <h5>The look in the metadata</h5>
+        <p>When the recipe writes other metadata (<span class="ui">Metadata › Other</span>), the file also gets a description of the Spektrafilm look: film, paper, mode, exposures and <span class="ui">Look strength</span>, in its own XMP fields (<code>spektrafilm:</code>). Programs that read XMP show them next to the data from C1.</p>
+        <h5>Pitfalls</h5>
+        <ul>
+          <li>The preview in the C1 export window does not show the Spektrafilm effect; the effect is in the file.</li>
+          <li><span class="ui">Original</span> recipes (a copy of the original) and Affinity recipes are not processed images, so the panel does not write them and marks them in the list.</li>
+          <li>C1 16.9 writes 16-bit PNG with its bytes swapped; the panel detects this and corrects the file.</li>
+          <li>When no selected photo has Spektrafilm switched on, the ordinary C1 export runs. With a mixed selection, variants with Spektrafilm switched off are written with the C1 development only, through the same recipes.</li>
+          <li>In a C1 version other than 16.9.0.3894, when functions it needs are missing, the panel falls back to the earlier way: it asks where to save and needs exactly one selected recipe.</li>
+          <li>When the panel cannot take over the C1 export, it shows an orange message at the top of the panel. In that case the C1 export would save files without film, so use the export buttons in the panel.</li>
+        </ul>
+      </div>
+
+      <div class="control">
+        <h3>Resume interrupted export…</h3>
+        <p class="path">Below the list of panel sections (only when an export was interrupted)</p>
+        <p>Resumes an interrupted recipe export of the current catalog or session; see <a href="#receptury">An interrupted export</a>.</p>
+      </div>
+
+      <h2>Format and colour</h2>
+      <div class="control">
+        <h3>Export file format</h3>
+        <p class="path">Spektrafilm optics › Color management</p>
+        <dl class="facts"><div><dt>Options</dt><dd>Use C1 recipe format (TIFF if unavailable), TIFF 16-bit, PNG 16-bit, JPEG 8-bit, Linear DNG 16-bit Rec.2020</dd></div><div><dt>Default</dt><dd>Use C1 recipe format</dd></div></dl>
+        <p>Applies to the panel's export buttons. The ordinary C1 export takes the format from the recipe.</p>
+        <ul>
+          <li><strong>TIFF and PNG</strong> keep the full 16-bit precision. TIFF for further editing and printing.</li>
+          <li><strong>JPEG</strong> is 8-bit and lossy. For the web and previews.</li>
+          <li><strong>Linear DNG</strong> saves linear Rec.2020 data with highlight headroom, regardless of the chosen profile. For further editing in a program that reads DNG.</li>
+        </ul>
+      </div>
+      <div class="control">
+        <h3>JPEG quality</h3>
+        <p class="path">Spektrafilm optics › Color management</p>
+        <dl class="facts"><div><dt>Range</dt><dd>60–100</dd></div><div><dt>Default</dt><dd>92</dd></div></dl>
+        <p>JPEG compression quality. 90–95 is a good compromise; film grain compresses worse than a smooth image, so do not go low.</p>
+      </div>
+      <div class="control">
+        <h3>Export profile / compression target</h3>
+        <p class="path">Spektrafilm optics › Color management</p>
+        <dl class="facts"><div><dt>Default</dt><dd>sRGB</dd></div><div><dt>Options</dt><dd>17 colour spaces, including sRGB, Adobe RGB, ProPhoto, Display P3, Rec.2020, ACES2065-1, DaVinci Wide Gamut, V-Gamut and their linear versions</dd></div></dl>
+        <p>The profile of files from the panel's export buttons; the ordinary C1 export uses the recipe's profile. The preview in the Viewer is always in sRGB (before monitor correction), so it is not a full preview of a wide gamut.</p>
+        <h5>When to use</h5>
+        <ul>
+          <li><strong>sRGB</strong>: the web, screens, most labs.</li>
+          <li><strong>Adobe RGB, ProPhoto RGB, Display P3</strong>: printing and further editing in a wide gamut.</li>
+          <li><strong>DaVinci Wide Gamut, V-Gamut, ACES</strong>: video and grading. The logarithmic DaVinci and V-Log versions are saved without an embedded profile, so you must set the colour space in the target program.</li>
+        </ul>
+        <h5>Pitfalls</h5>
+        <p>The output compression in the <span class="ui">Color adaptation</span> section (<span class="ui">Output lightness compression</span> and <span class="ui">Output chroma compression</span>) fits the image into sRGB, also when you export to a wider profile. Measurement on a saturated colour chart (Ektar 100 on Endura Premier): with compression on, no pixel falls outside sRGB, so an Adobe RGB or ProPhoto file contains only sRGB colours. With both switches off, 55% of the chart has colours outside sRGB and a wider profile keeps them. Switch both off together: with only <span class="ui">Output chroma compression</span> off, colours are hard-clipped at the sRGB boundary. When you export to sRGB, leave both on.</p>
+      </div>
+
+      <h2 id="rozmiar-wyniku">What depends on the output size</h2>
+      <p>Most of the simulation is calculated in micrometres on the film, so it looks the same at any size. A few things, however, depend on the number of pixels in the output.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Element</th><th>Behaviour in a smaller file</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Micro contrast</span></td><td>Has a fixed radius in pixels, so in a small file it acts on larger structures and looks stronger.</td></tr>
+            <tr><td><span class="ui">Glare blur (px)</span></td><td>Also in pixels: the same value is wider in a small file.</td></tr>
+            <tr><td>Preview, Production and RMS grain</td><td>Downsizing averages the grain, so it is weaker. <span class="ui">Keep average colour under grain</span> makes sure the colour does not change.</td></tr>
+            <tr><td>Grain synthesis</td><td>With <span class="ui">Match grain to output size</span>, <span class="ui">Remove sampling noise</span> and <span class="ui">Blur grain as light</span>, a smaller output has the grain colour and strength of a downsized full-resolution image (difference in strength up to about 10%).</td></tr>
+            <tr><td>Scanner sharpening, halation, diffusion</td><td>Calculated in micrometres, so proportional to the frame. In a small file, fine effects become smaller than a pixel and disappear.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Judge a look for a specific size at that size: set <span class="ui">Viewer resolution</span> close to the target width, or make a test export through a C1 recipe of that size.</p>
+
+      <h2>Limits</h2>
+      <ul>
+        <li>Up to 100 MP and 16,384 px per side. A larger export ends with a message asking for a smaller size.</li>
+        <li>Grain synthesis up to 32 MP. For a larger export, change the grain model to Production or reduce the size.</li>
+        <li>One C1 crop per variant. A crop that extends beyond the image must be moved inside the photo.</li>
+      </ul>
+
+      <h2>LUT export</h2>
+      <div class="control">
+        <h3>Export color-only 33-point LUT…, Export color-only 65-point LUT…</h3>
+        <p class="path">Presets and LUT export</p>
+        <p>Saves the look as a 3D LUT (<code>.cube</code> or <code>.3dl</code>), with sRGB input and output. 33 points are enough in most programs; 65 is more accurate. The LUT buttons work only when Spektrafilm is switched on for the current photo; otherwise they do nothing.</p>
+      </div>
+      <div class="control">
+        <h3>Export Hald CLUT…, Export OCIO bundle…</h3>
+        <p class="path">Presets and LUT export</p>
+        <p>The same look as a Hald CLUT image (PNG, level 8) for programs that read it, or as an OpenColorIO bundle (a folder with a configuration and a LUT).</p>
+      </div>
+      <aside class="note pitfall">
+        <span class="note-title">What a LUT does not contain</span>
+        <p>A LUT contains the film and paper simulation, the colour and tone from finishing, and <span class="ui">Look strength</span>. It does not contain micro contrast, automatic exposure metering, grain, spatial effects (halation, diffusion, glare), geometry or the input preparation in C1. So a LUT cannot reproduce the full look from the Viewer; it works best on images prepared in a similar way as in C1.</p>
+      </aside>
+
+      <h2>Checklist before export</h2>
+      <ol class="steps">
+        <li>Look checked in the preview, for grain and sharpness at 100% zoom (<span class="ui">Viewer resolution</span> = Auto or Native resolution).</li>
+        <li>Format and profile set in the C1 recipe (ordinary export) or in <span class="ui">Color management</span> (panel buttons).</li>
+        <li>For a series: look copied to all photos (<span class="ui">Copy look</span>), brightness checked on a few of them.</li>
+        <li>Export with an ordinary C1 export (the list before the export shows the files and any name collisions) or with a panel button.</li>
+      </ol>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

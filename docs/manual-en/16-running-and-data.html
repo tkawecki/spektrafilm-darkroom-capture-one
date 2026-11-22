@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Running and data | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Table of contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Running and data</h1>
+      <p class="lede">Spektrafilm is not an ordinary Capture One plug-in. The panel appears only when C1 starts through a special shortcut. This chapter describes starting up, where looks are stored, backups, and what to do after an update or on another computer.</p>
+
+      <h2>Starting</h2>
+      <ol class="steps">
+        <li>Close all Capture One windows. The launcher refuses to start while any C1 is already running.</li>
+        <li>Start the <strong>Spektrafilm Darkroom for Capture One</strong> shortcut on the desktop.</li>
+        <li>In the first window, choose a catalog or session (<code>.cocatalogdb</code> or <code>.cosessiondb</code>).</li>
+        <li>Capture One starts with the panel in the <span class="ui">SPEKTR…</span> tab. You open further catalogs and sessions the usual way, through File › Open or Open Recent; the panel switches to them within about a second.</li>
+      </ol>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall: the ordinary Capture One shortcut</span>
+        <p>C1 started with the ordinary shortcut has no panel. Photos then look as if there were no Spektrafilm, and export saves files <strong>without film</strong>. Your looks are not lost: they come back when you start through the Spektrafilm shortcut.</p>
+      </aside>
+      <p>At every start, the launcher checks that the installed Capture One is the version the panel was tested with (16.9.0.3894) and that the panel and renderer files are in place.</p>
+
+      <h2>Where your data is</h2>
+      <p>Everything the panel saves is in the folder <code>%LOCALAPPDATA%\FilmToolsForCaptureOne</code> (paste this path into the File Explorer address bar). None of it goes into the C1 catalog file or into files next to the photos.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Folder or file</th><th>Contents</th></tr></thead>
+          <tbody>
+            <tr><td><code>Variant looks</code></td><td>The look of each variant (one file per variant) and its versions, in a subfolder tied to the path of the catalog or session.</td></tr>
+            <tr><td><code>Look backups</code></td><td>Copies of all looks and panel preferences, made by the launcher at start-up. The last five, each as one ZIP. A copy identical to the previous one is not repeated.</td></tr>
+            <tr><td><code>Catalog backups</code></td><td>Copies of the catalog or session database, made at start-up. The last five for each catalog.</td></tr>
+            <tr><td><code>Look recovery</code></td><td>Recovery copies: a change that could not be saved, and preserved originals of looks the panel could not load.</td></tr>
+            <tr><td><code>Panel preferences.json</code></td><td>Settings shared by all photos: <span class="ui">Viewer resolution</span>, <span class="ui">Drag preview resolution</span>, <span class="ui">Draft synthesis preview</span>.</td></tr>
+            <tr><td><code>Paper textures</code></td><td>Paper textures imported in the paper editor.</td></tr>
+            <tr><td><code>panel.log</code></td><td>The panel log. Useful when reporting a problem: it contains error messages and rendering times.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Presets (<code>.spektra.json</code>) and exported files are wherever you save them.</p>
+
+      <h2>Backups and recovery</h2>
+      <ul>
+        <li><strong>A mistake in the current session:</strong> <span class="ui">Undo</span> or <span class="ui">Restore look version…</span> (<a href="10-tools.html">chapter 10</a>).</li>
+        <li><strong>A look spoiled earlier:</strong> automatically saved versions (“Before defaults”, “Before loading preset …”, “Before applying copied look”) are permanent and available through <span class="ui">Restore look version…</span>.</li>
+        <li><strong>Many looks lost:</strong> with C1 closed, unpack the newest ZIP from <code>Look backups</code> into the <code>FilmToolsForCaptureOne</code> folder, replacing the <code>Variant looks</code> folder. Copy the current folder to a safe place first.</li>
+        <li><strong>Your own backup:</strong> copy the whole <code>FilmToolsForCaptureOne</code> folder and your presets.</li>
+      </ul>
+
+      <h2>Moving a catalog and another computer</h2>
+      <p>Looks are tied to the full path of the catalog or session. After you move or rename a catalog, the panel treats it as new and shows the default settings. The old looks are still in <code>Variant looks</code>, but under the old path.</p>
+      <ul>
+        <li>The simplest way: do not move catalogs you work on with Spektrafilm, or restore the old path after moving.</li>
+        <li>Before moving, save important looks as presets. You can load a preset on any photo, in any catalog and on another computer.</li>
+        <li>Another computer needs the same Spektrafilm installation and the same Capture One version. The looks folder alone is not enough if the catalog paths are different.</li>
+      </ul>
+
+      <h2>Updating Capture One</h2>
+      <p>The panel uses internal mechanisms of Capture One 16.9, so a C1 update can break it. The launcher checks the version and refuses to start with an unknown one.</p>
+      <ul>
+        <li>Do not update Capture One before checking whether Spektrafilm has a version for the new release.</li>
+        <li>After an update, C1 works normally with the ordinary shortcut, just without the panel. The looks stay on disk and come back once the panel has been adapted.</li>
+      </ul>
+
+      <h2>Working without Spektrafilm</h2>
+      <p>To work without film, start C1 with the ordinary shortcut or clear <span class="ui">Enable Spektrafilm</span> on the chosen variants. Remember that Spektrafilm is on by default for every variant without a saved look, so in a session started through the Spektrafilm shortcut even untouched photos have a film look until you turn it off.</p>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

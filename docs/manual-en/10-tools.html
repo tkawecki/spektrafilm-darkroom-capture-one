@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Working tools | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Working tools</h1>
+      <p class="lede">Spektrafilm settings are saved separately for each variant, outside the Capture One settings. That is why the panel has its own undo, versions, presets, copying and comparisons.</p>
+
+      <h2 id="gdzie-widac-efekt">Where you see the effect</h2>
+      <p>Spektrafilm draws its image only in the main Capture One Viewer, laid over the selected photo. The rest of the program still shows the C1 development.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Place in C1</th><th>What it shows</th></tr></thead>
+          <tbody>
+            <tr><td>Main Viewer, one photo</td><td>The image with film.</td></tr>
+            <tr><td>Viewer with several photos at once</td><td>The Spektrafilm preview is paused; the panel asks you to show one photo.</td></tr>
+            <tr><td>Thumbnails in the browser</td><td>C1 development, without film.</td></tr>
+            <tr><td>C1 histogram and exposure warnings</td><td>C1 development, without film. Check the print tones in the <span class="ui">Scopes…</span> window.</td></tr>
+            <tr><td>Preview in the C1 export window</td><td>C1 development, without film. The effect is in the saved file.</td></tr>
+            <tr><td>Exported file</td><td>The image with film, if Spektrafilm is enabled for the variant (<a href="11-export.html">chapter 11</a>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>When the main Viewer is hidden, the panel waits and does not render.</p>
+
+      <h2 id="stan-podgladu">Preview status</h2>
+      <p>The line under the <span class="ui">Look strength</span> slider tells you what the panel is showing right now, or what it is waiting for.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Text</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Live Viewer · 8019 × 5152</td><td>The Viewer shows a full, up-to-date frame at the size given.</td></tr>
+            <tr><td>Interactive preview · 1740 × 2560</td><td>A temporary, smaller frame: while you drag a slider it is at the <span class="ui">Drag preview resolution</span> size; after a change or when you release the slider it is at screen resolution (1600–2560 px), so it is sharp at the current zoom. The full frame replaces it shortly.</td></tr>
+            <tr><td>Rendering at native resolution… / Rendering Viewer preview…</td><td>The full frame is being computed.</td></tr>
+            <tr><td>Loading native resolution</td><td>Capture One is developing the photo at full resolution for the panel. Meanwhile you see a quick frame made from the ready Capture One preview: after you select another photo and after every change of settings in Capture One itself.</td></tr>
+            <tr><td>Waiting for Capture One to build the source preview…</td><td>The panel is waiting for C1 to prepare the source image, for example right after you select a photo.</td></tr>
+            <tr><td>Source preview · …</td><td><span class="ui">Show source</span> is on: you see the C1 image without film.</td></tr>
+            <tr><td>Show one image in the main Viewer.</td><td>The Viewer shows several photos at once. Switch to the single-photo view.</td></tr>
+            <tr><td>Show the main Viewer to see the live preview.</td><td>The main Viewer is hidden.</td></tr>
+            <tr><td>Waiting for a visible image in the main Viewer.</td><td>The Viewer has not shown the photo yet; this usually takes a moment.</td></tr>
+            <tr><td>Reading the Windows monitor color profile; Viewer temporarily uses sRGB.</td><td>The panel is loading the monitor profile. Until then the preview colours may differ slightly.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 id="obsluga-panelu">Using the sliders and the panel</h2>
+      <ul>
+        <li><strong>Back to the default value:</strong> double-click the slider name or the slider itself.</li>
+        <li><strong>Exact value:</strong> click the number field on the right, type the value and confirm. This way you can set values the slider cannot hit, e.g. <span class="ui">Filter strength</span> 0.3.</li>
+        <li><strong>Cut-off names:</strong> since the panel build of 21 November 2026 (16:25), the slider name column fits the longest name, as long as the slider keeps at least half the width. With a panel 380 px wide or more, all names are shown in full; in a narrower panel the longest ones are shortened (“Scanner MTF50 (lp/…”). In that case widen the tool column or undock the panel.</li>
+        <li><strong>Floating window:</strong> the three-dot menu in the panel header has the <span class="ui">Float Tool</span> command. The panel then opens in a separate window that you can widen and move to a second monitor.</li>
+        <li><strong>Sections:</strong> click a header to collapse or expand a section. Nested sections, such as <span class="ui">Scanning</span> or <span class="ui">Spektrafilm grain</span>, are inside <span class="ui">Spektrafilm optics</span>.</li>
+        <li><strong>Greyed-out controls</strong> do not work in the current mode or are waiting for another option. Their saved values stay and come back when the control is active again.</li>
+      </ul>
+
+      <h2>Undo</h2>
+      <div class="control">
+        <h3>Undo, Redo</h3>
+        <p class="path">Under “Enable Spektrafilm”</p>
+        <p>Undo and redo Spektrafilm changes on the current photo. The shortcuts <kbd>Ctrl</kbd>+<kbd>Z</kbd>, <kbd>Ctrl</kbd>+<kbd>Y</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> work when the panel has focus, that is, after you click in the panel. After you click on the photo, Ctrl+Z goes back to Capture One.</p>
+        <ul>
+          <li>Each photo has its own history of up to 200 steps, kept until you close the catalog or Capture One.</li>
+          <li>Changes made faster than 0.8 s apart, such as one continuous slider drag, are one step. A pause while dragging starts a new step.</li>
+          <li>Defaults, loading a preset, restoring a version, “Use recommended input” and “Apply copied look” are separate steps.</li>
+          <li>Undo restores the whole look: films, paper, optics, the on/off switch and the C1 grain sliders. It does not touch C1 grain already saved in the variant; ordinary Ctrl+Z in C1 undoes that.</li>
+        </ul>
+        <h5>Pitfalls</h5>
+        <p>Ordinary Ctrl+Z in C1 does not undo Spektrafilm. If you have just selected another photo, the first Undo only tells you so, so that it does not change a photo you have not seen yet.</p>
+      </div>
+
+      <h2>Look versions</h2>
+      <div class="control">
+        <h3>Save look version…, Restore look version…</h3>
+        <p class="path">Look versions and copying (collapsible section under Defaults)</p>
+        <p>A version is a named record of the whole look of the current photo, kept between sessions. <span class="ui">Save look version…</span> asks for a name. <span class="ui">Restore look version…</span> shows a list of versions with dates and, before restoring, saves the current look as a version “Before restoring …”, so nothing is lost.</p>
+        <p>The panel saves a version by itself before actions that replace the whole look: <span class="ui">Defaults</span> (“Before defaults”), <span class="ui">Load preset…</span> (“Before loading preset …”), <span class="ui">Use recommended input</span> and <span class="ui">Apply copied look to selected</span>.</p>
+        <h5>When to use</h5>
+        <p>Before an experiment that may not work out. To compare several looks on one photo when you do not want clones in C1.</p>
+      </div>
+      <div class="control">
+        <h3>Defaults</h3>
+        <p class="path">Under the Viewer settings</p>
+        <p>Sets a new, default look: Portra 400 on Portra Endura, neutral ProPhoto input, automatic metering, no grain and no effects. The previous look is saved as the version “Before defaults”, and you can also undo it with Undo; the panel does not show a message about this. The Viewer settings do not change. Under the button there is the <span class="ui">Automatic film exposure</span> row with the <span class="ui">Metering</span> list (<a href="05-exposure-and-contrast.html">chapter 5</a>), and below it the collapsible <span class="ui">Look versions and copying</span> section.</p>
+      </div>
+
+      <h2>Copying and presets</h2>
+      <div class="control">
+        <h3>Copy look, Apply copied look to selected</h3>
+        <p class="path">Look versions and copying (collapsible section under Defaults)</p>
+        <ol class="steps">
+          <li>On the photo with the finished look, click <span class="ui">Copy look</span>.</li>
+          <li>Select one or more photos in C1.</li>
+          <li>Click <span class="ui">Apply copied look to selected</span>. Each photo first gets a version “Before applying copied look”.</li>
+        </ol>
+        <h5>Pitfalls</h5>
+        <p>A variant clone made in C1 does not inherit the Spektrafilm look: the look belongs to the variant, so a new clone starts from the default settings. Copy the look with <span class="ui">Copy look</span>. Checked in a test: after changing the film and <span class="ui">Film exposure</span>, the clone of the variant showed Defaults in the panel (Portra 400, 0 EV), while the original kept its look.</p>
+        <p>Ordinary Copy/Apply Adjustments in C1 does not carry the Spektrafilm settings. With automatic metering on, each photo is metered separately, so <span class="ui">Film exposure</span> works as an offset and brightness usually stays consistent across a series.</p>
+      </div>
+      <div class="control">
+        <h3>Save preset…, Load preset…</h3>
+        <p class="path">Presets and LUT export</p>
+        <p>A preset is a <code>.spektra.json</code> file with the whole look: film, paper, all sliders and optics. Use it to build your own library of looks and to move them between C1 catalogs. <span class="ui">Load preset…</span> first saves the current look as a version. If the version cannot be saved, the look stays unchanged.</p>
+        <h5>Pitfalls</h5>
+        <p>Looks are tied to the path of the catalog or session. After you move or rename the catalog, or open it on another computer, the panel will not find them. Before moving, save important looks as presets.</p>
+        <p>A preset with a film or paper that the panel does not have is rejected with a message. Looks saved with an earlier second processing engine, since removed, are no longer supported.</p>
+      </div>
+
+      <h2>Comparisons and preview</h2>
+      <div class="control">
+        <h3>Show source</h3>
+        <p class="path">Under the Look strength slider</p>
+        <p>Shows in the Viewer the C1 image prepared for the simulation (after <span class="ui">Input preparation</span>), without film. Useful for a quick before and after. The setting lasts until the end of the session and is not part of the look.</p>
+      </div>
+      <div class="control">
+        <h3>Pin reference, Compare reference…, Clear reference</h3>
+        <p class="path">Under the Look strength slider</p>
+        <p><span class="ui">Pin reference</span> stores the current Viewer frame, which can also come from another photo. <span class="ui">Compare reference…</span> opens a comparison window with the modes <span class="ui">Side by side</span>, <span class="ui">Vertical wipe</span>, <span class="ui">Reference only</span> and <span class="ui">Current only</span>; the window follows the current Viewer. <span class="ui">Clear reference</span> removes the stored frame.</p>
+        <h5>When to use</h5>
+        <p>To compare two papers or two contrast values, or to match the look of a photo to another photo in the series.</p>
+      </div>
+      <div class="control">
+        <h3>Scopes…</h3>
+        <p class="path">Under the Look strength slider</p>
+        <p>Opens a window with an RGB histogram, a waveform and a vectorscope for the current Spektrafilm frame, in sRGB values 0–255. Options: <span class="ui">Luma waveform</span> (brightness waveform) and <span class="ui">Log histogram</span> (logarithmic scale). The pixel counts at 0 and 255 describe this 8-bit frame, not clipping in the RAW file.</p>
+      </div>
+      <div class="control">
+        <h3>Exposure strips…</h3>
+        <p class="path">Presets and LUT export</p>
+        <p>A test strip as in the darkroom: it renders 3 or 5 versions of the photo with different <span class="ui">Film exposure</span>, in steps of 1/3, 1/2 or 1 EV, as full frames or as a test strip. You carry the chosen exposure over to the look with the <span class="ui">Apply selected exposure</span> button.</p>
+        <h5>When to use</h5>
+        <p>At the start of work on a difficult photo, when you do not know which way to go with the exposure.</p>
+      </div>
+      <div class="control">
+        <h3>Save preview PNG…</h3>
+        <p class="path">Under the Look strength slider</p>
+        <p>Saves the current Viewer frame as a PNG in sRGB, at preview resolution. Use it to share a preview quickly; for the real files, use export. The panel will not let you overwrite the original photo.</p>
+      </div>
+
+      <h2>Viewer</h2>
+      <div class="control">
+        <h3>Viewer resolution</h3>
+        <p class="path">Under the preview buttons</p>
+        <dl class="facts"><div><dt>Options</dt><dd>Auto (follows Viewer zoom), Native resolution, 4096, 3072, 2560, 2048, 1600, 1200, 900, 720 px</dd></div><div><dt>Default</dt><dd>Auto</dd></div></dl>
+        <p>The resolution of the full frame in the Viewer. The setting is shared by all photos, is not part of the look and does not affect export.</p>
+        <p><strong>Auto (follows Viewer zoom)</strong> computes the frame at the size the photo takes up on screen (1600, 2048 or 2560 px), so after a settings change the finished image appears after about 0.1 s instead of about 1 s. When you zoom the Viewer in beyond that size, the panel adds a full-resolution frame after a moment (about 1.5 s). When you zoom out, nothing is recomputed; the next change goes back to screen size. Capture One develops the photo once, as with Native.</p>
+        <h5>When to use</h5>
+        <p>Auto for everyday work: fast when you view the whole photo, full resolution when you zoom in. Native resolution when you want the full frame always ready, for example when you often jump between the whole-photo view and 100%. A fixed 2048–3072 px when you never need full resolution. With Grain synthesis and photos above 32 MP, choose a smaller fixed resolution; in Auto the preview works when you view the whole photo, but after zooming in to full resolution the panel shows a limit error.</p>
+        <h5>Pitfalls</h5>
+        <p>In Auto, judge grain and sharpness after zooming in: at screen size the grain is averaged. <span class="ui">Save preview PNG…</span> saves the frame as it is in the Viewer, so in Auto usually at screen size.</p>
+      </div>
+      <div class="control">
+        <h3>Drag preview resolution</h3>
+        <p class="path">Under the preview buttons</p>
+        <dl class="facts"><div><dt>Options</dt><dd>Off, 720, 1200, 1600, 2048, 2560 px</dd></div><div><dt>Default</dt><dd>1600 px</dd></div></dl>
+        <p>A temporary, faster frame while you drag sliders with a large preview. After you release the slider, or after a single change, the panel first shows a frame at screen resolution and then the full one. Off turns the temporary frames off: the preview refreshes only when the change is finished. The setting is shared by all photos.</p>
+      </div>
+
+      <h2 id="monitor">Monitor and preview colour</h2>
+      <p>The Spektrafilm preview is computed in sRGB and then converted to your monitor profile from the Windows settings, just as Capture One does. On a wide-gamut monitor you therefore see correct sRGB colours, not oversaturated ones.</p>
+      <ul>
+        <li>The preview does not show colours outside sRGB, even when you export to a wider colour space (<a href="11-export.html">chapter 11</a>).</li>
+        <li>When HDR mode or automatic colour management (Advanced Color) is on in Windows, the panel hands colour over to the system and shows a notice about it. This mode has not been compared by measurement with the ICC profile mode.</li>
+        <li>The match between the preview and the screen has not yet been confirmed by measurement with a colorimeter. For colour-critical judgement, compare the export in a program you trust.</li>
+        <li><span class="ui">Save preview PNG…</span> saves the preview in sRGB with an embedded sRGB profile.</li>
+      </ul>
+
+      <h2 id="wydajnosc">Performance</h2>
+      <p>Approximate timings on an RTX 4090 card for a 50 MP photo: about 20 frames per second while you drag a slider, and a finished frame at screen resolution about 0.1 s after a change. With <span class="ui">Viewer resolution</span> = Auto this is already the final frame; with Native resolution, or after zooming in, the full frame follows after about 1 s. After you switch photos, the first image with film appears after about 0.2–0.3 s (it is computed from the ready Capture One preview, so for a moment it is less sharp), and the full frame after about 2–3 s. After a change of settings in Capture One itself (exposure, white balance), the image with film refreshes after about 0.2–0.3 s, and while you drag a Capture One slider, a dozen or so times per second; the finished frame arrives about 1.3–2.3 s after the slider stops. After C1 starts, the full frame appears after about 4 s.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>What slows things down</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Viewer resolution</span> = Native resolution with large files</td><td>Go back to Auto (the default): the final frame at screen size after about 0.1 s, full resolution after zooming in.</td></tr>
+            <tr><td>Grain synthesis</td><td>Turn on <span class="ui">Draft synthesis preview</span>, or build the look with the Production model and switch the model at the end.</td></tr>
+            <tr><td>Spatial effects: halation, diffusion, a wide coupler range</td><td>Set the films, exposure and contrast first, and add the optics at the end.</td></tr>
+            <tr><td>Stutter while dragging</td><td>Lower <span class="ui">Drag preview resolution</span>: at 1200–1600 px the image keeps up with the slider much better than at 2560 px.</td></tr>
+            <tr><td>Slow switching between photos</td><td>The first image arrives quickly from the Capture One preview; for full resolution you have to wait, because most of that time is Capture One developing the photo, which the panel cannot influence. A photo without a ready C1 preview does not get a quick frame.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Export quality does not depend on these settings: export always computes full quality.</p>
+
+      <h2>Messages under the sliders</h2>
+      <p>The panel shows short notes under the controls when something does not work, or works differently from what the name suggests. The most common:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Message</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>This look uses Capture One development as input…</td><td>Input with the C1 curve: the contrast is doubled. Click <span class="ui">Use recommended input</span>.</td></tr>
+            <tr><td>This look uses sRGB input…</td><td>A narrow input clips saturated colours. Click <span class="ui">Use recommended input</span>.</td></tr>
+            <tr><td>Halation and scatter are off (amount 0)…</td><td>Raise the halation or scatter strength to unlock their sliders.</td></tr>
+            <tr><td>Select a filter to enable diffusion…</td><td>The diffusion filter is Off; the sliders are waiting.</td></tr>
+            <tr><td>Grain model is Off…</td><td>Choose a grain model.</td></tr>
+            <tr><td>DIR warning</td><td>A coupler strength above 1.5 can reverse tones (<a href="06-colour.html">chapter 6</a>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

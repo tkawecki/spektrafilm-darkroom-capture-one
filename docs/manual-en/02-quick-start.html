@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick start | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Quick start</h1>
+      <p class="lede">Your first photo from RAW to file in ten steps. Each step points to the chapter that describes it in detail.</p>
+
+      <figure class="shot">
+        <img data-local src="img/02-panel-overview.webp" alt="The Spektrafilm Darkroom panel in Capture One: on/off switch, mode, film, paper, exposures and the list of sections." width="1800" height="957" loading="lazy">
+        <figcaption>The Spektrafilm panel in a C1 tool tab. The most important controls at the top, collapsible sections below.</figcaption>
+      </figure>
+
+      <h2>Ten steps</h2>
+      <ol class="steps">
+        <li>
+          <strong>Make a working variant.</strong> In C1, create a clone of the photo's variant (<span class="ui">Image › Clone Variant</span>). Spektrafilm settings are separate for each variant. Note: Spektrafilm is switched on by default for every variant without a saved look, including the original. On an original that should stay without film, untick <span class="ui">Enable Spektrafilm</span>.
+        </li>
+        <li>
+          <strong>Correct only the technical things in C1.</strong> White balance, exposure, crop, straightening, lens correction, noise reduction, retouching. Leave curves, Levels, colour grading and styles neutral. Details in <a href="03-capture-one-preparation.html">chapter 3</a>.
+        </li>
+        <li>
+          <strong>Check that Spektrafilm is working.</strong> Open the <span class="ui">SPEKTR…</span> tab. <span class="ui">Enable Spektrafilm</span> is ticked by default for a variant without a saved look. The first full preview appears after a few seconds; later changes are faster.
+        </li>
+        <li>
+          <strong>Check the input.</strong> A new look uses the <span class="ui">Neutral for film</span> preparation and the <span class="ui">ProPhoto RGB</span> colour space. If you see a note under the <span class="ui">Look strength</span> slider saying that the look uses "Capture One development" or an sRGB input, click <span class="ui">Use recommended input</span>. The previous look is saved as a version.
+        </li>
+        <li>
+          <strong>Choose the process and materials.</strong> <span class="ui">Processing mode</span>: <span class="ui">Print Simulation</span>. <span class="ui">Film stock</span>: Kodak Portra 400 to start with. <span class="ui">Print stock</span>: Kodak Professional Portra Endura. This is a gentle, all-round pair. Other pairs in <a href="04-films-and-papers.html">chapter 4</a>.
+        </li>
+        <li>
+          <strong>Set the film exposure.</strong> The panel meters the photo itself, and <span class="ui">Film exposure</span> shifts the metering result. When the highlights burn out, lower it by 0.3–1 EV. When the shadows are empty and noisy, raise it.
+        </li>
+        <li>
+          <strong>Set the brightness of the print.</strong> <span class="ui">Print exposure</span> works like the exposure time of the paper: more means darker. Change it in steps of 0.1–0.3 EV.
+        </li>
+        <li>
+          <strong>Refine the print contrast.</strong> When the image is too hard, lower <span class="ui">Print gamma</span> to 0.8–0.9 in the <span class="ui">Enlarger and print</span> section. When the highlights lack detail, set <span class="ui">Print highlight shape</span> to a negative value, e.g. −0.5, or add a very small amount of <span class="ui">Preflash exposure</span> (0.01–0.02) and balance the brightness by lowering <span class="ui">Print exposure</span> by about 0.3. When it is too soft, raise <span class="ui">Print gamma</span>. More in <a href="05-exposure-and-contrast.html">chapter 5</a>.
+        </li>
+        <li>
+          <strong>Add character if you like.</strong> Halation and diffusion in <span class="ui">Spektrafilm optics</span> (<a href="07-optics.html">chapter 7</a>), grain in <span class="ui">Spektrafilm grain</span> (<a href="08-grain.html">chapter 8</a>). Small values are enough to start with.
+        </li>
+        <li>
+          <strong>Compare and export.</strong> <span class="ui">Pin reference</span> keeps the current look for comparison with later attempts. Save the finished photo with the <span class="ui">Export with Spektrafilm…</span> button or with an ordinary C1 export with one recipe enabled (<a href="11-export.html">chapter 11</a>).
+        </li>
+      </ol>
+
+      <aside class="note tip">
+        <span class="note-title">Tip</span>
+        <p>You undo a mistake with the <span class="ui">Undo</span> button under the on/off switch, or with <kbd>Ctrl</kbd>+<kbd>Z</kbd> after clicking in the panel. C1's own undo does not include Spektrafilm settings.</p>
+      </aside>
+
+      <h2>What to watch in the preview</h2>
+      <ul>
+        <li><strong>Highlights.</strong> White walls, sky, skin in the sun. They should have detail, not flat white.</li>
+        <li><strong>Midtones and skin.</strong> These tell you the most about the film–paper pair.</li>
+        <li><strong>Shadows.</strong> On the print, deep shadows are often darker than in C1. This is normal, but they should not merge into one dark patch.</li>
+        <li><strong>The colour of neutral surfaces.</strong> Grey concrete and white walls show whether the filtration is right.</li>
+      </ul>
+      <p>The preview in the Viewer uses the same settings as the export. Judge grain and effects calculated in pixels (Micro contrast, Glare blur) at 100% zoom (with <span class="ui">Viewer resolution</span> = Auto the panel then calculates full resolution) or at Native resolution. The panel renders the preview at the resolution set in <span class="ui">Viewer resolution</span>, and while you drag sliders it shows a faster frame at the <span class="ui">Drag preview resolution</span> size.</p>
+
+      <h2>When something goes wrong</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Most common cause</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td>Too much contrast, burnt-out highlights</td><td>Input with a C1 curve, or too much film exposure</td><td><span class="ui">Use recommended input</span>, lower <span class="ui">Film exposure</span>, lower <span class="ui">Print gamma</span></td></tr>
+            <tr><td>Image softer than in C1</td><td>The neutral input skips sharpening, Clarity and Structure from C1</td><td>Scanner sharpening or <span class="ui">Micro contrast</span> (<a href="09-finishing.html#ostrosc">chapter 9</a>)</td></tr>
+            <tr><td>Controls are grey</td><td>Spektrafilm is switched off, or the function does not work in the current mode</td><td>Check <span class="ui">Enable Spektrafilm</span> and <span class="ui">Processing mode</span></td></tr>
+            <tr><td>A render error message</td><td>A setting the renderer does not accept</td><td>Read the message and see <a href="13-troubleshooting.html">chapter 13</a></td></tr>
+            <tr><td>The look disappeared after copying C1 adjustments</td><td>C1 Copy/Apply does not carry Spektrafilm</td><td>Use <span class="ui">Copy look</span> in the panel (<a href="10-tools.html">chapter 10</a>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colour | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Colour</h1>
+      <p class="lede">The colour of the print comes from the film–paper pairing. This chapter describes the tools you use to correct it or to change it deliberately: enlarger filtration, DIR couplers, spectral reconstruction, material bases, bleaching and emulsion aging.</p>
+
+      <h2>Enlarger filtration</h2>
+      <p>An enlarger's colour head has cyan, magenta and yellow filters. The panel starts from a “neutral” filtration, chosen so that an 18% grey comes out grey for the given film–paper pairing. The sliders shift the filtration from that point.</p>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall: the direction is reversed</span>
+        <p>A filter in the enlarger removes light of its complementary colour, and negative paper responds in reverse. More magenta gives a <strong>greener</strong> print, more yellow a <strong>bluer</strong> one, more cyan a <strong>warmer, redder</strong> one. To remove a cast, add filter in the colour of the cast.</p>
+      </aside>
+      <ul class="gallery">
+        <li><figure><a href="img/village-col-magenta-m20.webp"><img data-local src="img/village-col-magenta-m20.webp" alt="Magenta filter shift −20" loading="lazy"></a><figcaption><strong>Magenta −20 CC</strong>A more purple print.</figcaption></figure></li>
+        <li><figure><a href="img/village-col-magenta-p20.webp"><img data-local src="img/village-col-magenta-p20.webp" alt="Magenta filter shift +20" loading="lazy"></a><figcaption><strong>Magenta +20 CC</strong>A greener print.</figcaption></figure></li>
+        <li><figure><a href="img/village-col-yellow-m20.webp"><img data-local src="img/village-col-yellow-m20.webp" alt="Yellow filter shift −20" loading="lazy"></a><figcaption><strong>Yellow −20 CC</strong>A warmer, yellow print.</figcaption></figure></li>
+        <li><figure><a href="img/village-col-yellow-p20.webp"><img data-local src="img/village-col-yellow-p20.webp" alt="Yellow filter shift +20" loading="lazy"></a><figcaption><strong>Yellow +20 CC</strong>A cooler, blue print.</figcaption></figure></li>
+        <li><figure><a href="img/village-col-cyan-30.webp"><img data-local src="img/village-col-cyan-30.webp" alt="Cyan filtration 30" loading="lazy"></a><figcaption><strong>Cyan 30 CC</strong>A red, warm print.</figcaption></figure></li>
+        <li><figure><a href="img/village-default.webp"><img data-local src="img/village-default.webp" alt="Neutral filtration" loading="lazy"></a><figcaption><strong>Neutral</strong>All shifts at 0.</figcaption></figure></li>
+      </ul>
+
+      <div class="control">
+        <h3>Magenta filter shift</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts"><div><dt>Range</dt><dd>−60 to 60 CC</dd></div><div><dt>Default</dt><dd>0</dd></div><div><dt>Step</dt><dd>1 CC</dd></div></dl>
+        <p>The green–purple axis. More magenta gives a greener print.</p>
+        <h5>Typical values</h5>
+        <p>Correcting a cast: 2–10 CC. 20 CC is already a strong effect.</p>
+      </div>
+
+      <div class="control">
+        <h3>Yellow filter shift</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts"><div><dt>Range</dt><dd>−60 to 60 CC</dd></div><div><dt>Default</dt><dd>0</dd></div><div><dt>Step</dt><dd>1 CC</dd></div></dl>
+        <p>The warm–cool axis. More yellow gives a bluer print, less yellow a warmer one.</p>
+        <h5>Typical values</h5>
+        <p>Warming: −5 to −10 CC. Cooling: +5 to +10 CC. This is the equivalent of white balance, but done “on the paper”, so it acts a little differently in the highlights and the shadows.</p>
+      </div>
+
+      <div class="control">
+        <h3>Cyan filtration</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–120 CC</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Adds a cyan filter, which reduces the red exposure. The print becomes redder and warmer, and green weakens. In the darkroom the cyan filter is rarely used, because most corrections are made with yellow and magenta.</p>
+        <h5>Typical values</h5>
+        <p>Up to 5–10 CC for a warm, “sunset” tone. 30 CC is a very strong effect.</p>
+      </div>
+
+      <h2>DIR couplers</h2>
+      <p>During development DIR couplers release an inhibitor that slows development in the same layer and in the neighbouring layers. They give cleaner colours, better colour separation and local contrast. Each film has its own values in its profile.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/romewarm-dir-0.webp"><img data-local src="img/romewarm-dir-0.webp" alt="DIR coupler amount 0" loading="lazy"></a><figcaption><strong>Amount 0</strong>No couplers: much less saturated.</figcaption></figure></li>
+        <li><figure><a href="img/romewarm-default.webp"><img data-local src="img/romewarm-default.webp" alt="DIR coupler amount 1" loading="lazy"></a><figcaption><strong>Amount 1</strong>The film profile.</figcaption></figure></li>
+        <li><figure><a href="img/romewarm-dir-120.webp"><img data-local src="img/romewarm-dir-120.webp" alt="DIR coupler amount 1.2" loading="lazy"></a><figcaption><strong>Amount 1.2</strong>More saturated.</figcaption></figure></li>
+        <li><figure><a href="img/romewarm-dir-160.webp"><img data-local src="img/romewarm-dir-160.webp" alt="DIR coupler amount 1.6" loading="lazy"></a><figcaption><strong>Amount 1.6</strong>Much more saturated; the panel warns.</figcaption></figure></li>
+      </ul>
+
+      <div class="control">
+        <h3>DIR coupler amount</h3>
+        <p class="path">Spectral reconstruction and DIR</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>The overall strength of the couplers. Below 1 the colours are calmer, above 1 stronger.</p>
+        <h5>Typical values</h5>
+        <p>0.8–1.2. With slides and scenes with a lot of green, try lower values.</p>
+        <h5>Pitfalls</h5>
+        <p>When the effective strength, Amount × (0.4 × Same-layer + 0.6 × Interlayer), exceeds 1.5, the model starts to reverse tones: darker areas print lighter. This happens with 15 of the 26 films in the 1.6–2.0 range. The panel then shows a warning below the sliders, but it does not block the value.</p>
+      </div>
+
+      <div class="control">
+        <h3>Same-layer inhibition</h3>
+        <p class="path">Spectral reconstruction and DIR</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Inhibition within the same layer. It mainly affects contrast and edge sharpness within each colour.</p>
+      </div>
+
+      <div class="control">
+        <h3>Interlayer inhibition</h3>
+        <p class="path">Spectral reconstruction and DIR</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Inhibition between layers. It mainly affects saturation and colour separation. It carries more weight in the DIR warning than Same-layer.</p>
+      </div>
+
+      <div class="control">
+        <h3>Coupler diffusion</h3>
+        <p class="path">Spektrafilm optics › Coupler diffusion</p>
+        <dl class="facts">
+          <div><dt><span class="ui">Diffusion width (µm)</span></dt><dd>0–100, default 0</dd></div>
+          <div><dt><span class="ui">Tail width (µm)</span></dt><dd>0–1000, default 200</dd></div>
+          <div><dt><span class="ui">Tail weight</span></dt><dd>0–1, default 0.06</dd></div>
+        </dl>
+        <p>The spatial reach of the couplers. A width above zero gives an edge effect: local contrast and an impression of sharpness, as in real film. The tail adds a weak, wide effect over a long distance.</p>
+        <h5>When to use</h5>
+        <p>New looks have zero; the chemical DIR effect itself still works. The original Spektrafilm gives 5–20 µm as the typical range. A width of 30 µm raises contrast a little.</p>
+        <h5>Pitfalls</h5>
+        <p>At a width of 0 the tail sliders are inactive. The reach scales with <span class="ui">Film format</span> (<a href="08-grain.html">chapter 8</a>).</p>
+      </div>
+
+      <div class="control">
+        <h3>Override stock coupler channels</h3>
+        <p class="path">Spektrafilm optics › Coupler diffusion</p>
+        <dl class="facts"><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Replaces the coupler values from the film profile with nine sliders: <span class="ui">Same-layer gamma</span> R, G, B and the couplings between layers: <span class="ui">R → G coupling</span>, <span class="ui">R → B coupling</span>, <span class="ui">G → R coupling</span>, <span class="ui">G → B coupling</span>, <span class="ui">B → R coupling</span>, <span class="ui">B → G coupling</span> (0–1). The sliders' default values are generic, not the values of the chosen film.</p>
+        <h5>When to use</h5>
+        <p>Only for colour experiments. The couplings work like a 3×3 colour matrix: for example, a higher G → R strengthens the separation of green from red.</p>
+        <h5>Pitfalls</h5>
+        <p>Once you turn it on, you lose the DIR character of the chosen film, and changing the film no longer changes the couplers.</p>
+      </div>
+
+      <h2>Spectral reconstruction</h2>
+      <div class="control">
+        <h3>Spectral reconstruction</h3>
+        <p class="path">Spectral reconstruction and DIR</p>
+        <dl class="facts">
+          <div><dt>Options</dt><dd>Hanatos 2025, Hanatos 2026, Mallett 2019</dd></div>
+          <div><dt>Default</dt><dd>Hanatos 2025</dd></div>
+        </dl>
+        <p>The image from C1 has three RGB channels, but film responds to the whole spectrum of light. The reconstruction method rebuilds from RGB a smooth spectrum that “falls” on the film.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/village-default.webp"><img data-local src="img/village-default.webp" alt="Hanatos 2025" loading="lazy"></a><figcaption><strong>Hanatos 2025</strong>The full range of visible colours.</figcaption></figure></li>
+          <li><figure><a href="img/village-col-method-hanatos2026.webp"><img data-local src="img/village-col-method-hanatos2026.webp" alt="Hanatos 2026" loading="lazy"></a><figcaption><strong>Hanatos 2026</strong>Slightly warmer.</figcaption></figure></li>
+          <li><figure><a href="img/village-col-method-mallett2019.webp"><img data-local src="img/village-col-method-mallett2019.webp" alt="Mallett 2019" loading="lazy"></a><figcaption><strong>Mallett 2019</strong>sRGB gamut only.</figcaption></figure></li>
+        </ul>
+        <h5>When to use</h5>
+        <p>Hanatos 2025 for everyday work. The methods differ mainly in very saturated colours (violets, neon, flowers, LED lights). In scenes without such colours the differences are minimal.</p>
+        <h5>Pitfalls</h5>
+        <p>Mallett 2019 clips colours outside sRGB, so do not combine it with a wide ProPhoto input if the scene has very saturated colours.</p>
+      </div>
+
+      <h2>Colour adaptation</h2>
+      <div class="control">
+        <h3>Color adaptation</h3>
+        <p class="path">Spektrafilm optics › Color adaptation</p>
+        <dl class="facts"><div><dt>New look</dt><dd>on, with four detailed options</dd></div></dl>
+        <p>A newer colour path, marked as experimental in the OFX version. It compresses colours gently instead of clipping them. It consists of four options:</p>
+        <ul>
+          <li><span class="ui">Input spectral gamut compression</span>: pulls colours outside the visible range inside it before spectral reconstruction.</li>
+          <li><span class="ui">Density curve smoothing</span>: smoother interpolation of the density curves.</li>
+          <li><span class="ui">Output lightness compression</span>: a soft lightness knee at the output.</li>
+          <li><span class="ui">Output chroma compression</span>: soft saturation compression at the output.</li>
+        </ul>
+        <p>When you turn it off, saturation rises a little and the image becomes slightly cooler. Saturated colours may then clip.</p>
+        <h5>When to use</h5>
+        <p>Leave it on. Turn it off only when you compare with a look from before adaptation was introduced.</p>
+      </div>
+
+      <h2>UV and IR filters</h2>
+      <div class="control">
+        <h3>UV cutoff, IR cutoff</h3>
+        <p class="path">Film development</p>
+        <dl class="facts">
+          <div><dt>UV cutoff</dt><dd>380–450 nm, default 380 (no filter)</dd></div>
+          <div><dt>IR cutoff</dt><dd>600–780 nm, default 780 (no filter)</dd></div>
+        </dl>
+        <p>Filters in front of the lens that cut off short or long wavelengths. They change how the film sees violets and deep reds.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/village-col-uv-420.webp"><img data-local src="img/village-col-uv-420.webp" alt="UV cutoff 420 nm" loading="lazy"></a><figcaption><strong>UV 420 nm</strong>Cooler.</figcaption></figure></li>
+          <li><figure><a href="img/village-col-ir-650.webp"><img data-local src="img/village-col-ir-650.webp" alt="IR cutoff 650 nm" loading="lazy"></a><figcaption><strong>IR 650 nm</strong>Warmer, slightly less saturated.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <h2>Bleaching and silver</h2>
+      <div class="control">
+        <h3>Negative bleach bypass</h3>
+        <p class="path">Film development</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–100%</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Skips bleaching of the negative: metallic silver stays in the film next to the dyes. The print has lower saturation and a more “silvery”, raw character. At 50% it lowers saturation and brightens the print slightly.</p>
+      </div>
+      <div class="control">
+        <h3>Negative leuco cyan</h3>
+        <p class="path">Film development</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>The loss of cyan dye in a skipped bleach (1 = the physical value). It works only together with <span class="ui">Negative bleach bypass</span>. Without it, it does not change the image.</p>
+      </div>
+      <div class="control">
+        <h3>Print bleach bypass</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–100%</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Silver stays in the print. The print is darker and less saturated, with a deeper black. This is the classic “bleach bypass” known from cinema: a hard, desaturated image with dense black.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/village-col-neg-bleach-50.webp"><img data-local src="img/village-col-neg-bleach-50.webp" alt="Negative bleach bypass 50%" loading="lazy"></a><figcaption><strong>Negative 50%</strong></figcaption></figure></li>
+          <li><figure><a href="img/village-col-print-bleach-50.webp"><img data-local src="img/village-col-print-bleach-50.webp" alt="Print bleach bypass 50%" loading="lazy"></a><figcaption><strong>Print 50%</strong>Darker.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <h2>Material bases</h2>
+      <p>The base is the density of the unexposed, developed material: the orange mask of the negative and the tint of the paper. The print is calibrated to the base, so changing it shifts the whole colour balance.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/village-col-filmbase-0.webp"><img data-local src="img/village-col-filmbase-0.webp" alt="Base density scale 0" loading="lazy"></a><figcaption><strong>Film base 0</strong>No mask: a strong red cast.</figcaption></figure></li>
+        <li><figure><a href="img/village-default.webp"><img data-local src="img/village-default.webp" alt="Base density scale 1" loading="lazy"></a><figcaption><strong>Film base 1</strong>The profile.</figcaption></figure></li>
+        <li><figure><a href="img/village-col-filmbase-2.webp"><img data-local src="img/village-col-filmbase-2.webp" alt="Base density scale 2" loading="lazy"></a><figcaption><strong>Film base 2</strong>A turquoise cast, darker.</figcaption></figure></li>
+        <li><figure><a href="img/village-col-printbase-2.webp"><img data-local src="img/village-col-printbase-2.webp" alt="Print base scale 2" loading="lazy"></a><figcaption><strong>Paper base 2</strong>A darker, dingy white.</figcaption></figure></li>
+      </ul>
+      <div class="control">
+        <h3>Film base</h3>
+        <p class="path">Film base</p>
+        <dl class="facts">
+          <div><dt>Enable base tuning</dt><dd>on by default</dd></div>
+          <div><dt>Base density scale</dt><dd>0–5, default 1</dd></div>
+          <div><dt>Spectral tilt</dt><dd>−2 to 2, default 0</dd></div>
+          <div><dt><span class="ui">cyan base</span>, <span class="ui">magenta base</span>, <span class="ui">yellow base</span></dt><dd>0–5, default 1</dd></div>
+        </dl>
+        <p>The scale of the negative's mask, its spectral tilt around 555 nm, and multipliers for each dye.</p>
+        <h5>When to use</h5>
+        <p>Rarely. Small changes to the components (0.9–1.1) give subtle colour shifts in the shadows and highlights. Large values give strong casts that you have to balance with filtration.</p>
+        <h5>Pitfalls</h5>
+        <p>A value of 0 or 2 is already an extreme effect. After any larger change, correct the enlarger filtration.</p>
+      </div>
+      <div class="control">
+        <h3>Print base</h3>
+        <p class="path">Print base, Print Simulation only</p>
+        <dl class="facts">
+          <div><dt>Enable base tuning</dt><dd>on by default</dd></div>
+          <div><dt>Base density scale</dt><dd>0–5, default 1</dd></div>
+          <div><dt><span class="ui">cyan base</span>, <span class="ui">magenta base</span>, <span class="ui">yellow base</span></dt><dd>0–5, default 1</dd></div>
+        </dl>
+        <p>The density and tint of the paper white. Higher values give a darker, “old” white. Useful in the look of a period print (<a href="12-recipes.html#odbitka-z-epoki">recipe</a>).</p>
+      </div>
+
+      <h2>Emulsion aging</h2>
+      <p>A model of expired or badly stored film. It is a creative model: it relies on approximations, not on measurements of a specific roll. The effects build up more and more slowly: after about 12 “effective” years they reach about 2/3 of the full effect, and after about 36 years almost all of it.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/romewarm-default.webp"><img data-local src="img/romewarm-default.webp" alt="No aging" loading="lazy"></a><figcaption><strong>Fresh film</strong></figcaption></figure></li>
+        <li><figure><a href="img/romewarm-aging-10.webp"><img data-local src="img/romewarm-aging-10.webp" alt="Film aged 10 years at room temperature" loading="lazy"></a><figcaption><strong>10 years</strong>Less saturated, lifted black, cooler.</figcaption></figure></li>
+        <li><figure><a href="img/romewarm-aging-hot.webp"><img data-local src="img/romewarm-aging-hot.webp" alt="Film aged 10 years in heat and humidity" loading="lazy"></a><figcaption><strong>10 years, hot and humid</strong>Much less saturated, the black lifted further.</figcaption></figure></li>
+        <li><figure><a href="img/romewarm-aging-40.webp"><img data-local src="img/romewarm-aging-40.webp" alt="Film aged 40 years" loading="lazy"></a><figcaption><strong>40 years</strong>Much less saturated, a grey black: flat and bluish.</figcaption></figure></li>
+      </ul>
+      <div class="control">
+        <h3>Emulsion aging</h3>
+        <p class="path">Emulsion aging</p>
+        <dl class="facts">
+          <div><dt>Enable emulsion aging</dt><dd>off by default</dd></div>
+          <div><dt>Age (years)</dt><dd>0–100</dd></div>
+          <div><dt>Storage</dt><dd>Room temperature, Refrigerated, Frozen, Hot and humid</dd></div>
+        </dl>
+        <p>Age and storage conditions. Freezing slows aging about 20 times, a refrigerator about 3 times, and heat and humidity speed it up 2.5 times. Aging adds fog (strongest in the blue layer), lowers contrast and maximum density, increases grain and lowers speed.</p>
+        <p>The detailed sliders add to the model: <span class="ui">Gamma scale</span>, <span class="ui">Dye density scale</span>, <span class="ui">Grain gain</span>, <span class="ui">Speed loss (EV)</span>, and separately for each channel: <span class="ui">R fog density</span>, <span class="ui">R gamma scale</span>, <span class="ui">G fog density</span>, <span class="ui">G gamma scale</span>, <span class="ui">B fog density</span>, <span class="ui">B gamma scale</span> (fog 0–1, default 0; gamma 0.05–2, default 1).</p>
+        <h5>When to use</h5>
+        <p>For the look of a found, expired roll: 5–15 years at room temperature is a moderate effect. You can balance the cool cast of aging with <span class="ui">Yellow filter shift</span> −5 to −10.</p>
+        <h5>Pitfalls</h5>
+        <p><span class="ui">Grain gain</span> changes the grain of the Preview, Production and RMS models. Grain synthesis has its own radius sliders.</p>
+      </div>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+{
+  "Films": [
+    {
+      "Id": "fujifilm_c200",
+      "Label": "Fujifilm C200",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "fujifilm_pro_400h",
+      "Label": "Fujifilm Pro 400H",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "fujifilm_provia_100f",
+      "Label": "Fujifilm Provia 100F",
+      "Kind": "positive",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "fujifilm_velvia_100",
+      "Label": "Fujifilm Velvia 100",
+      "Kind": "positive",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "fujifilm_xtra_400",
+      "Label": "Fujifilm X-Tra 400",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_ektachrome_100",
+      "Label": "Kodak Ektachrome 100",
+      "Kind": "positive",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_ektar_100",
+      "Label": "Kodak Ektar 100",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_gold_200",
+      "Label": "Kodak Gold 200",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_kodachrome_64",
+      "Label": "Kodak Kodachrome 64",
+      "Kind": "positive",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_portra_160",
+      "Label": "Kodak Portra 160",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_portra_400",
+      "Label": "Kodak Portra 400",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_portra_800",
+      "Label": "Kodak Portra 800",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_portra_800_push1",
+      "Label": "Kodak Portra 800 (Push 1)",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_portra_800_push2",
+      "Label": "Kodak Portra 800 (Push 2)",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_ultramax_400",
+      "Label": "Kodak Ultramax 400",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_verita_200d",
+      "Label": "Kodak Verita 200D",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision3_200t",
+      "Label": "Kodak Vision3 200T",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision3_250d",
+      "Label": "Kodak Vision3 250D",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision3_500t",
+      "Label": "Kodak Vision3 500T",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision3_50d",
+      "Label": "Kodak Vision3 50D",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "fujifilm_eterna_250d",
+      "Label": "Fujifilm Eterna 250D",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "fujifilm_velvia_100f",
+      "Label": "Fujifilm Velvia 100F",
+      "Kind": "positive",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_ultramax_800",
+      "Label": "Kodak Ultramax 800",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision2_100t",
+      "Label": "Kodak Vision2 100T 5212",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision2_500t",
+      "Label": "Kodak Vision2 500T 5260",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_vision2_50d",
+      "Label": "Kodak Vision2 50D 5201",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    }
+  ],
+  "Papers": [
+    {
+      "Id": "fujifilm_crystal_archive_typeii",
+      "Label": "Fujifilm Crystal Archive Type II",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_2383",
+      "Label": "Kodak Vision 2383",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_2393",
+      "Label": "Kodak Vision Premier 2393",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_ektacolor_edge",
+      "Label": "Kodak Ektacolor Edge",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_endura_premier",
+      "Label": "Kodak Professional Endura Premier",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_portra_endura",
+      "Label": "Kodak Professional Portra Endura",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_supra_endura",
+      "Label": "Kodak Professional Supra Endura",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    },
+    {
+      "Id": "kodak_ultra_endura",
+      "Label": "Kodak Professional Ultra Endura",
+      "Kind": "negative",
+      "ChannelModel": "color"
+    }
+  ],
+  "Modes": [
+    {
+      "Id": "print",
+      "Label": "Print Simulation"
+    },
+    {
+      "Id": "scan",
+      "Label": "Scan Film"
+    }
+  ],
+  "SpectralMethods": [
+    {
+      "Id": "hanatos2025",
+      "Label": "Hanatos 2025"
+    },
+    {
+      "Id": "hanatos2026",
+      "Label": "Hanatos 2026"
+    },
+    {
+      "Id": "mallett2019",
+      "Label": "Mallett 2019"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(TransportFaultWorker LANGUAGES CXX)
+add_executable(SpektraStillRenderer FaultWorker.cpp)
+target_compile_features(SpektraStillRenderer PRIVATE cxx_std_17)
+set_property(TARGET SpektraStillRenderer PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

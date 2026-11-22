@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exposure and contrast | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Table of contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Exposure and contrast</h1>
+      <p class="lede">You set the brightness and contrast of the print as you would in a darkroom: how much light the film received, how it was developed, how much light the paper received and how it was developed. Each of these controls acts differently on the highlights and the shadows.</p>
+
+      <figure class="compare">
+        <img data-local src="img/heath-source.webp" alt="Heath with backlit trees in mist: the Capture One image before the simulation" loading="lazy">
+        <div class="after"><img data-local src="img/heath-default.webp" alt="The same scene after the Portra 400 on Portra Endura simulation" loading="lazy"></div>
+        <span class="label before">C1 image (neutral input)</span>
+        <span class="label after-label">Portra 400 + Portra Endura</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare the C1 image with the print">
+        <div class="handle"></div>
+        <figcaption>The example for the whole chapter: a bright gap in the sky, backlit trees in mist and a dark foreground. Every image below is this frame with one value changed.</figcaption>
+      </figure>
+
+      <h2>Order of work</h2>
+      <ol class="steps">
+        <li><strong>Film exposure</strong> sets where the scene sits on the film curve: how much detail the shadows and highlights hold.</li>
+        <li><strong>Print exposure</strong> sets the brightness of the print.</li>
+        <li><strong>Print gamma</strong> sets the overall contrast of the print.</li>
+        <li><strong>Print highlight shape</strong> and <strong>Print shadow shape</strong> refine the two ends of the scale.</li>
+        <li><strong>Preflash</strong>, in a very small dose, softens the highlights when nothing else is enough.</li>
+      </ol>
+      <p>Leave film changes (negative gamma, push/pull) for the end or for deliberate experiments: they also change colour.</p>
+
+      <h2>Film and print exposure</h2>
+      <div class="control">
+        <h3>Film exposure</h3>
+        <p class="path">Top of the panel</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−8 to +8 EV</dd></div>
+          <div><dt>Default</dt><dd>0 EV</dd></div>
+          <div><dt>Step</dt><dd>0.1 EV</dd></div>
+        </dl>
+        <p>The amount of light on the film. The print is “exposed” for 0 EV, so more light on the film gives a denser negative and a <strong>brighter</strong> print. With automatic metering on, this is an offset from the metered value.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-film-exp-m1.webp"><img data-local src="img/heath-film-exp-m1.webp" alt="Film exposure −1 EV" loading="lazy"></a><figcaption><strong>−1 EV</strong>Darker, more detail in the highlights.</figcaption></figure></li>
+          <li><figure><a href="img/heath-film-exp-m05.webp"><img data-local src="img/heath-film-exp-m05.webp" alt="Film exposure −0.5 EV" loading="lazy"></a><figcaption><strong>−0.5 EV</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Film exposure 0 EV" loading="lazy"></a><figcaption><strong>0 EV</strong>Automatic metering.</figcaption></figure></li>
+          <li><figure><a href="img/heath-film-exp-p1.webp"><img data-local src="img/heath-film-exp-p1.webp" alt="Film exposure +1 EV" loading="lazy"></a><figcaption><strong>+1 EV</strong>Brighter; the highlights lose detail.</figcaption></figure></li>
+        </ul>
+        <h5>When to use</h5>
+        <p>The first control for every photo. Dark scenes with a bright area (interiors, backlight, dusk) usually need −0.3 to −1 EV, because metering pulls them towards grey and burns out the bright parts.</p>
+        <h5>Pitfalls</h5>
+        <p>The direction is the opposite of <span class="ui">Print exposure</span>. At large values colour and grain change too, because the scene moves along the film curves.</p>
+      </div>
+
+      <div class="control">
+        <h3>Print exposure</h3>
+        <p class="path">Top of the panel, Print Simulation only</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−5 to +5 EV</dd></div>
+          <div><dt>Default</dt><dd>0 EV</dd></div>
+          <div><dt>Step</dt><dd>0.1 EV</dd></div>
+        </dl>
+        <p>The exposure time of the paper. More light on the paper gives a <strong>darker</strong> print. It acts more strongly on the shadows than <span class="ui">Film exposure</span>.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-print-exp-m05.webp"><img data-local src="img/heath-print-exp-m05.webp" alt="Print exposure −0.5 EV" loading="lazy"></a><figcaption><strong>−0.5 EV</strong>Brighter print.</figcaption></figure></li>
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Print exposure 0 EV" loading="lazy"></a><figcaption><strong>0 EV</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-print-exp-p05.webp"><img data-local src="img/heath-print-exp-p05.webp" alt="Print exposure +0.5 EV" loading="lazy"></a><figcaption><strong>+0.5 EV</strong>Darker, denser shadows.</figcaption></figure></li>
+        </ul>
+        <h5>When to use</h5>
+        <p>To set the brightness once you are happy with how the tones sit on the film. Typically ±0.1–0.5 EV.</p>
+        <aside class="note darkroom">
+          <span class="note-title">In the darkroom</span>
+          <p>This is exactly the exposure time under the enlarger. Longer means darker, because negative paper darkens with light.</p>
+        </aside>
+      </div>
+
+      <div class="control">
+        <h3>Look strength</h3>
+        <p class="path">Top of the panel</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>0–100%</dd></div>
+          <div><dt>Default</dt><dd>100%</dd></div>
+        </dl>
+        <p>Mixes the finished print with the C1 image from before the simulation. Lower values can make the image darker and the shadows deeper, because the shadows of the digital image come back in.</p>
+        <h5>When to use</h5>
+        <p>At the end, when the look is already set with the stocks and exposure and you only want to soften it.</p>
+        <h5>Pitfalls</h5>
+        <p>This is not a contrast control. It also dilutes the colour and grain of the film. If you lower Strength because the print is too hard, use <span class="ui">Print gamma</span> and <span class="ui">Print highlight shape</span> instead.</p>
+      </div>
+
+      <h2>Exposure metering</h2>
+      <div class="control">
+        <h3>Automatic film exposure</h3>
+        <p class="path">Under the Defaults button, on one row with Metering</p>
+        <dl class="facts"><div><dt>New look</dt><dd>on</dd></div></dl>
+        <p>Before exposing the film, the panel meters the image like a light meter and places the midtones on 18% grey. <span class="ui">Film exposure</span> becomes an offset from this reading. Metering largely evens out brightness changes you make in C1.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Automatic metering, centre-weighted" loading="lazy"></a><figcaption><strong>On, Center weighted</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-meter-median.webp"><img data-local src="img/heath-meter-median.webp" alt="Automatic metering, median" loading="lazy"></a><figcaption><strong>On, Median</strong>The brightness can differ slightly from Center weighted.</figcaption></figure></li>
+          <li><figure><a href="img/heath-auto-off.webp"><img data-local src="img/heath-auto-off.webp" alt="Without automatic metering" loading="lazy"></a><figcaption><strong>Off</strong>The film is exposed directly with the C1 image.</figcaption></figure></li>
+        </ul>
+        <h5>When to turn it off</h5>
+        <p>When you want a series of photos taken in the same light to get identical exposure, or when you set brightness deliberately in C1. Metering works separately for each photo, so brightness can vary slightly across a series.</p>
+        <h5>Pitfalls</h5>
+        <p>Metering is not included in a LUT export: a LUT does not know the specific photo (<a href="11-export.html">chapter 11</a>).</p>
+      </div>
+
+      <div class="control">
+        <h3>Metering</h3>
+        <p class="path">Under the Defaults button, next to Automatic film exposure</p>
+        <dl class="facts">
+          <div><dt>Options</dt><dd>Center weighted, Median</dd></div>
+          <div><dt>Default</dt><dd>Center weighted</dd></div>
+        </dl>
+        <p>The list is inactive when <span class="ui">Automatic film exposure</span> is off. <span class="ui">Center weighted</span> meters with emphasis on the centre of the frame, like a classic in-camera light meter. <span class="ui">Median</span> takes the middle brightness of the whole frame, regardless of composition.</p>
+        <h5>When to use</h5>
+        <p>Median for scenes where the centre of the frame is unusually bright or dark and the rest is typical, for example a backlit figure in the middle.</p>
+      </div>
+
+      <h2>Print contrast</h2>
+      <div class="control">
+        <h3>Print gamma</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>0.1–2</dd></div>
+          <div><dt>Default</dt><dd>1</dd></div>
+          <div><dt>Step</dt><dd>0.05</dd></div>
+        </dl>
+        <p>The contrast of the paper. It changes the slope of the paper curve; along the way it also moves the black and white of the print. Below 1 the print is soft, above 1 it is hard.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-print-gamma-080.webp"><img data-local src="img/heath-print-gamma-080.webp" alt="Print gamma 0.8" loading="lazy"></a><figcaption><strong>0.8</strong>Lighter black, darker white.</figcaption></figure></li>
+          <li><figure><a href="img/heath-print-gamma-090.webp"><img data-local src="img/heath-print-gamma-090.webp" alt="Print gamma 0.9" loading="lazy"></a><figcaption><strong>0.9</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Print gamma 1" loading="lazy"></a><figcaption><strong>1</strong>Paper profile unchanged.</figcaption></figure></li>
+          <li><figure><a href="img/heath-print-gamma-125.webp"><img data-local src="img/heath-print-gamma-125.webp" alt="Print gamma 1.25" loading="lazy"></a><figcaption><strong>1.25</strong>Deeper black, stronger colours.</figcaption></figure></li>
+        </ul>
+        <h5>Typical values</h5>
+        <p>0.8–0.9 in harsh sun and high-contrast scenes. 1.1–1.5 in flat light, fog or on an overcast day. Advice from the Spektrafilm forum (1.3–1.5) usually concerns exactly such flat photos.</p>
+        <aside class="note darkroom">
+          <span class="note-title">In the darkroom</span>
+          <p>In a black-and-white darkroom, this corresponds to the paper grade or multigrade filters. Colour paper has a single grade, so in a real colour darkroom you change contrast only by choosing a different paper. Here you have it on a slider.</p>
+        </aside>
+      </div>
+
+      <div class="control">
+        <h3>Print highlight shape</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−1 to 1</dd></div>
+          <div><dt>Default</dt><dd>0</dd></div>
+        </dl>
+        <p>The shape of the bright end of the paper curve. The paper white and black stay where they are; only the transition to white changes.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-hl-shape-m1.webp"><img data-local src="img/heath-hl-shape-m1.webp" alt="Print highlight shape −1" loading="lazy"></a><figcaption><strong>−1</strong>Softer highlights with more detail.</figcaption></figure></li>
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Print highlight shape 0" loading="lazy"></a><figcaption><strong>0</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-hl-shape-p1.webp"><img data-local src="img/heath-hl-shape-p1.webp" alt="Print highlight shape +1" loading="lazy"></a><figcaption><strong>+1</strong>Brighter, flattened highlights.</figcaption></figure></li>
+        </ul>
+        <p>In the brightest part of the frame, −1 makes the highlights darker and gives them a wider tonal range (more detail). At +1 the tonal range narrows and the highlights move closer to paper white.</p>
+        <h5>When to use</h5>
+        <p>Negative values (−0.3 to −0.6) when clouds, white walls or skin in sunlight lose detail. Positive values when you want a bright, “high-key” look.</p>
+      </div>
+
+      <div class="control">
+        <h3>Print shadow shape</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−1 to 1</dd></div>
+          <div><dt>Default</dt><dd>0</dd></div>
+        </dl>
+        <p>The shape of the dark end of the paper curve. Positive values open the shadows, negative values deepen them. The paper black stays where it is.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-sh-shape-m1.webp"><img data-local src="img/heath-sh-shape-m1.webp" alt="Print shadow shape −1" loading="lazy"></a><figcaption><strong>−1</strong>Deeper shadows.</figcaption></figure></li>
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Print shadow shape 0" loading="lazy"></a><figcaption><strong>0</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-sh-shape-p1.webp"><img data-local src="img/heath-sh-shape-p1.webp" alt="Print shadow shape +1" loading="lazy"></a><figcaption><strong>+1</strong>Open shadows.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <div class="control">
+        <h3>Print push / pull</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−2 to 2 EV</dd></div>
+          <div><dt>Default</dt><dd>0</dd></div>
+        </dl>
+        <p>Longer or shorter development of the paper. Contrast changes by a factor of 2<sup>0.25·EV</sup>, so at ±2 EV by about ×1.41 or ×0.71. It works much like <span class="ui">Print gamma</span>.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-print-push-m1.webp"><img data-local src="img/heath-print-push-m1.webp" alt="Print push/pull −1" loading="lazy"></a><figcaption><strong>−1</strong>Soft.</figcaption></figure></li>
+          <li><figure><a href="img/heath-print-push-p1.webp"><img data-local src="img/heath-print-push-p1.webp" alt="Print push/pull +1" loading="lazy"></a><figcaption><strong>+1</strong>Hard.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <div class="control">
+        <h3>Preflash exposure</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>0–1, step 0.001</dd></div>
+          <div><dt>Default</dt><dd>0</dd></div>
+        </dl>
+        <p>A short, even exposure of the paper before the main exposure. It adds density where the paper would get little light, that is, in the highlights of the print. The paper white turns greyer and the highlights gain detail. Useful values are 0.005–0.03, which is why the field takes three decimal places; it is easiest to type the value on the keyboard.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="No preflash" loading="lazy"></a><figcaption><strong>0</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-preflash-001.webp"><img data-local src="img/heath-preflash-001.webp" alt="Preflash 0.01" loading="lazy"></a><figcaption><strong>0.01</strong>Barely visible softening of the highlights.</figcaption></figure></li>
+          <li><figure><a href="img/heath-preflash-002.webp"><img data-local src="img/heath-preflash-002.webp" alt="Preflash 0.02" loading="lazy"></a><figcaption><strong>0.02</strong>Clearly darker highlights.</figcaption></figure></li>
+          <li><figure><a href="img/heath-preflash-002-comp.webp"><img data-local src="img/heath-preflash-002-comp.webp" alt="Preflash 0.02 and Print exposure −0.3" loading="lazy"></a><figcaption><strong>0.02 and Print exposure −0.3</strong>Brightness restored, softer contrast.</figcaption></figure></li>
+          <li><figure><a href="img/heath-preflash-005.webp"><img data-local src="img/heath-preflash-005.webp" alt="Preflash 0.05" loading="lazy"></a><figcaption><strong>0.05</strong>Already too much: a grey, dull print.</figcaption></figure></li>
+        </ul>
+        <p class="measure-note">As preflash increases, the brightest part of the frame gets darker and gains tonal detail, while the shadows barely change. Beyond small doses the extra detail hardly grows and the print only gets greyer.</p>
+        <h5>Typical values</h5>
+        <p>0.01–0.02. Always together with lowering <span class="ui">Print exposure</span> by 0.2–0.4 EV to bring the brightness back.</p>
+        <h5>Pitfalls</h5>
+        <p>The slider is very sensitive: 0.05 is already a strong effect, and 0.4 gives an almost black image. The field takes three decimal places (step 0.001), so you can set small doses such as 0.005 precisely. Type it into the number field instead of dragging the slider.</p>
+        <aside class="note darkroom">
+          <span class="note-title">In the darkroom</span>
+          <p>The classic remedy for an overly contrasty negative: a short flash of light on the paper without the negative, just before the main exposure.</p>
+        </aside>
+      </div>
+
+      <div class="control">
+        <h3>Preflash magenta, Preflash yellow</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−60 to 60 CC</dd></div>
+          <div><dt>Default</dt><dd>0</dd></div>
+        </dl>
+        <p>Filtration of the preflash light. It tints mainly the highlights of the print, for example cool highlights with warm shadows. They work only with a non-zero <span class="ui">Preflash exposure</span>. The direction is the same as for enlarger filtration (<a href="06-colour.html">chapter 6</a>): more magenta gives greener highlights, more yellow gives bluer ones.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/village-pfc-005.webp"><img data-local src="img/village-pfc-005.webp" alt="Preflash 0.05 without filtration" loading="lazy"></a><figcaption><strong>Preflash 0.05</strong>No preflash filtration.</figcaption></figure></li>
+          <li><figure><a href="img/village-pfc-m-plus40.webp"><img data-local src="img/village-pfc-m-plus40.webp" alt="Preflash magenta +40" loading="lazy"></a><figcaption><strong>Magenta +40</strong>Highlights towards green.</figcaption></figure></li>
+          <li><figure><a href="img/village-pfc-m-minus40.webp"><img data-local src="img/village-pfc-m-minus40.webp" alt="Preflash magenta −40" loading="lazy"></a><figcaption><strong>Magenta −40</strong>Highlights towards magenta.</figcaption></figure></li>
+          <li><figure><a href="img/village-pfc-y-plus40.webp"><img data-local src="img/village-pfc-y-plus40.webp" alt="Preflash yellow +40" loading="lazy"></a><figcaption><strong>Yellow +40</strong>Highlights towards blue.</figcaption></figure></li>
+          <li><figure><a href="img/village-pfc-y-minus40.webp"><img data-local src="img/village-pfc-y-minus40.webp" alt="Preflash yellow −40" loading="lazy"></a><figcaption><strong>Yellow −40</strong>Highlights towards yellow.</figcaption></figure></li>
+        </ul>
+        <p class="measure-note">These examples use <span class="ui">Preflash exposure</span> 0.05 (deliberately strong so the tint is visible; on its own it darkens the highlights). In the brightest part of the frame, magenta +40 raises green and −40 lowers it; yellow +40 raises blue and −40 lowers it. The midtones take on the tint too; the deepest shadows stay unchanged.</p>
+      </div>
+
+      <div class="control">
+        <h3>Developer exhaustion</h3>
+        <p class="path">Enlarger and print</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>0–100%</dd></div>
+          <div><dt>Default</dt><dd>0</dd></div>
+        </dl>
+        <p>Exhausted paper developer. It softens the dark part of the paper curve while keeping the middle grey: less contrast and density where the paper received a lot of light. Zero keeps the original paper profile.</p>
+      </div>
+
+      <h2>Film contrast</h2>
+      <div class="control">
+        <h3>Negative gamma</h3>
+        <p class="path">Film development</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>0.1–2</dd></div>
+          <div><dt>Default</dt><dd>1</dd></div>
+        </dl>
+        <p>A multiplier for the slope of the negative curves. Below 1 the negative is soft, above 1 it is hard.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-neg-gamma-080.webp"><img data-local src="img/heath-neg-gamma-080.webp" alt="Negative gamma 0.8" loading="lazy"></a><figcaption><strong>0.8</strong>Clearly brighter, slightly weaker colours.</figcaption></figure></li>
+          <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Negative gamma 1" loading="lazy"></a><figcaption><strong>1</strong></figcaption></figure></li>
+          <li><figure><a href="img/heath-neg-gamma-120.webp"><img data-local src="img/heath-neg-gamma-120.webp" alt="Negative gamma 1.2" loading="lazy"></a><figcaption><strong>1.2</strong>Clearly darker, colours almost unchanged.</figcaption></figure></li>
+        </ul>
+        <h5>Pitfalls</h5>
+        <p>In the simulation it mainly changes the brightness of the print (0.8 brightens it noticeably and 1.2 darkens it), and the contrast only a little. For contrast, <span class="ui">Print gamma</span> is better. The author of the OFX version considers negative gamma less physical than push/pull.</p>
+      </div>
+
+      <div class="control">
+        <h3>Film push / pull and Push / pull model</h3>
+        <p class="path">Film development</p>
+        <dl class="facts">
+          <div><dt>Range</dt><dd>−2 to 2 EV</dd></div>
+          <div><dt>Default</dt><dd>0, Standard model</dd></div>
+        </dl>
+        <p>Extended or shortened development of the negative. In the <span class="ui">Standard</span> model it translates into a negative contrast multiplier derived from Kodak development times: about ×0.83 at −1, ×1.22 at +1 and ×1.56 at +2. The <span class="ui">Experimental</span> model changes development separately for each layer and tonal range.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/heath-pull-m1.webp"><img data-local src="img/heath-pull-m1.webp" alt="Pull −1" loading="lazy"></a><figcaption><strong>Pull −1</strong>Brighter, slightly weaker colours.</figcaption></figure></li>
+          <li><figure><a href="img/heath-push-p1.webp"><img data-local src="img/heath-push-p1.webp" alt="Push +1" loading="lazy"></a><figcaption><strong>Push +1</strong>Darker, more detail in the highlights.</figcaption></figure></li>
+        </ul>
+        <h5>Pitfalls</h5>
+        <p>It does not add the fog or stronger grain that real push processing gives. For the real look of pushed film, use the Portra 800 (Push 1) and (Push 2) profiles, which come from curves published by Kodak.</p>
+      </div>
+
+      <h2>Print white and black</h2>
+      <p>A print on paper does not reach the pure white or black of the screen: the brightest areas stay below screen white and the darkest above screen black. That is what a real print looks like. When you want the full screen range, in <span class="ui">Spektrafilm optics › Scanning</span> first turn on <span class="ui">Enable scanner controls</span>, then <span class="ui">Correct white level</span> and <span class="ui">Correct black level</span>. They work in Print Simulation and in the inverted negative scan. Details in <a href="09-finishing.html">chapter 9</a>.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Print without white and black correction" loading="lazy"></a><figcaption><strong>No correction</strong>Paper white and paper black.</figcaption></figure></li>
+        <li><figure><a href="img/heath-white-level.webp"><img data-local src="img/heath-white-level.webp" alt="White level correction" loading="lazy"></a><figcaption><strong>Correct white level</strong>Brighter white.</figcaption></figure></li>
+        <li><figure><a href="img/heath-white-black-level.webp"><img data-local src="img/heath-white-black-level.webp" alt="White and black level correction" loading="lazy"></a><figcaption><strong>White and black</strong>Black close to screen black.</figcaption></figure></li>
+      </ul>
+
+      <h2>A soft print step by step</h2>
+      <p>A recipe for photos with harsh contrast that works on most scenes. The values are a starting point.</p>
+      <ol class="steps">
+        <li><span class="ui">Film exposure</span> −0.3 to −0.5 EV.</li>
+        <li><span class="ui">Print gamma</span> 0.85.</li>
+        <li><span class="ui">Print highlight shape</span> −0.3 to −0.5.</li>
+        <li>If the highlights are still too bright: <span class="ui">Preflash exposure</span> 0.01 and <span class="ui">Print exposure</span> −0.2 EV.</li>
+        <li>Finally, set the brightness with <span class="ui">Print exposure</span> alone.</li>
+      </ol>
+      <ul class="gallery wide">
+        <li><figure><a href="img/heath-default.webp"><img data-local src="img/heath-default.webp" alt="Default print" loading="lazy"></a><figcaption><strong>Default</strong></figcaption></figure></li>
+        <li><figure><a href="img/heath-soft-b.webp"><img data-local src="img/heath-soft-b.webp" alt="Soft print" loading="lazy"></a><figcaption><strong>Soft print</strong>Film −0.5 EV, Print gamma 0.85, preflash 0.01, Print −0.2 EV.</figcaption></figure></li>
+      </ul>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

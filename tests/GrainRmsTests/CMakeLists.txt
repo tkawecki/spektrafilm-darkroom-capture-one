@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project(GrainRmsTests LANGUAGES CXX)
+add_executable(GrainRmsProbe rms_probe.cpp)
+target_compile_features(GrainRmsProbe PRIVATE cxx_std_17)
+target_include_directories(GrainRmsProbe PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../upstream-ofx/src")

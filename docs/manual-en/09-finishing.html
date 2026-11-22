@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finishing | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Chapter list</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Finishing</h1>
+      <p class="lede">After the print comes the scan: the scanner has its own white, black, sharpness and glare, and after that you can still finish the image with curves, levels and a crop. This chapter covers everything that happens after the paper simulation.</p>
+
+      <h2>Order in the pipeline</h2>
+      <ol class="steps">
+        <li><strong>Enlarger positioning</strong>: enlarges part of the negative, before the print.</li>
+        <li><strong>Scanning</strong>: scan white and black, glare, scanner sharpness.</li>
+        <li><strong>Post-scan finishing</strong>: exposure, contrast, curves, levels, saturation, toning.</li>
+        <li><strong>Scan geometry</strong>: crop, rotation and desqueeze, after the C1 crop.</li>
+        <li><strong>Paper textures and border</strong>: paper texture and burnt-in border, at the very end.</li>
+      </ol>
+
+      <h2 id="ostrosc">Sharpness</h2>
+      <p>With the default settings the print is softer than the same image in Capture One. The simulation does not blur the photo: with Defaults, halation, scatter, diffusion filters, grain and the scanner are all off. The softness comes from the input. The <span class="ui">Neutral for film</span> preparation feeds the simulation an image without C1 sharpening, without Clarity and Structure (also on layers) and without output sharpening (<a href="03-capture-one-preparation.html">chapter 3</a>).</p>
+      <aside class="note darkroom">
+        <span class="note-title">In the darkroom</span>
+        <p>Film and prints have no digital sharpening. The sharpness of film is the sharpness of the lens, the edge effect from development and, possibly, sharpening in the scanner. A sharpened input image would also give halos around the halation and harder grain.</p>
+      </aside>
+      <p>You restore sharpness with tools that have a counterpart in the film process, in this order:</p>
+      <ol class="steps">
+        <li><strong>Scanner sharpening.</strong> The <span class="ui">Scanning</span> section is inside <span class="ui">Spektrafilm optics</span>, below the grain sections; do not confuse it with <span class="ui">Scan geometry</span> in Post-scan finishing. In <span class="ui">Spektrafilm optics › Scanning</span>, turn on <span class="ui">Enable scanner controls</span>. Set <span class="ui">Scanner MTF50 (lp/mm)</span> to 0, which turns off the blur of the scanner optics, and <span class="ui">Scanner glare</span> to 0 if you do not want glare. Then choose <span class="ui">Unsharp amount</span>: 0.7 gives sharpness close to the image in C1, 1–1.5 clearly more. <span class="ui">Unsharp radius (µm)</span> 5 corresponds to about 1 pixel at 40–50 MP.</li>
+        <li><strong>Micro contrast.</strong> <span class="ui">Micro contrast</span> in Post-scan finishing, +0.1 to +0.3. It works like Clarity: it brings out texture, not edges. On its own it does not replace sharpening: +0.2 lifts fine detail only moderately.</li>
+        <li><strong>Film edge effect.</strong> <span class="ui">Diffusion width (µm)</span> in Coupler diffusion, 5–20 µm. It gives the edge sharpness typical of film (<a href="06-colour.html">chapter 6</a>).</li>
+      </ol>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall: turning on the scanner alone does not sharpen</span>
+        <p><span class="ui">Enable scanner controls</span> applies the default values at once: optics blur (MTF50 60 lp/mm, about 0.5–0.7 pixel at 24–50 MP), sharpening 0.7 and, in Print Simulation, glare 0.03. Together these weaken the finest detail and slightly strengthen medium detail. So for clean sharpening, set MTF50 to 0.</p>
+      </aside>
+      <ul>
+        <li>Judge sharpness and grain at 100% zoom with <span class="ui">Viewer resolution</span> = Auto or Native resolution; in Auto, when you view the whole photo, the frame is the size of the screen. At 400% the Spektrafilm preview is also smoothed by the scaling.</li>
+        <li>Scanner sharpening also emphasises grain. Set the grain first, then the sharpness.</li>
+        <li>An export with neutral input does not get the C1 output sharpening from the recipe. Set sharpness in the panel or later in another program.</li>
+        <li>Switching the input to <span class="ui">Capture One development</span> brings back C1 sharpening, but together with the C1 curve, so with double contrast. We do not recommend it.</li>
+      </ul>
+      <p>What this gives in numbers and on a 100% crop:</p>
+      <ul class="gallery">
+        <li><figure><a href="img/rome-sh-c1-crop.webp"><img data-local src="img/rome-sh-c1-crop.webp" alt="Image in Capture One with C1 sharpening" loading="lazy"></a><figcaption><strong>Image in C1</strong>100% crop, with C1 sharpening.</figcaption></figure></li>
+        <li><figure><a href="img/rome-sh-defaults-crop.webp"><img data-local src="img/rome-sh-defaults-crop.webp" alt="Print at default settings" loading="lazy"></a><figcaption><strong>Defaults</strong>Neutral input, no sharpening.</figcaption></figure></li>
+        <li><figure><a href="img/rome-sh-scan-default-crop.webp"><img data-local src="img/rome-sh-scan-default-crop.webp" alt="Scanner with default values" loading="lazy"></a><figcaption><strong>Enable scanner controls</strong>Default values: weaker fine detail.</figcaption></figure></li>
+        <li><figure><a href="img/rome-sh-mtf0-u07-crop.webp"><img data-local src="img/rome-sh-mtf0-u07-crop.webp" alt="MTF50 0 and Unsharp amount 0.7" loading="lazy"></a><figcaption><strong>MTF50 0, Unsharp 0.7</strong>Sharpness as in C1.</figcaption></figure></li>
+        <li><figure><a href="img/rome-sh-mtf0-u15-crop.webp"><img data-local src="img/rome-sh-mtf0-u15-crop.webp" alt="MTF50 0 and Unsharp amount 1.5" loading="lazy"></a><figcaption><strong>MTF50 0, Unsharp 1.5</strong>Clearly sharper than in C1.</figcaption></figure></li>
+        <li><figure><a href="img/rome-sh-mtf0-u15-micro02-crop.webp"><img data-local src="img/rome-sh-mtf0-u15-micro02-crop.webp" alt="Unsharp amount 1.5 and Micro contrast 0.2" loading="lazy"></a><figcaption><strong>Unsharp 1.5, Micro contrast 0.2</strong>The strongest of those compared.</figcaption></figure></li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Fine detail</th><th>Medium detail</th></tr></thead>
+          <tbody>
+            <tr><td>Image in C1 (with C1 sharpening)</td><td>reference</td><td>reference</td></tr>
+            <tr><td>Defaults</td><td>much lower</td><td>lower</td></tr>
+            <tr><td><span class="ui">Enable scanner controls</span>, default values</td><td>lowest</td><td>lower</td></tr>
+            <tr><td>MTF50 0, <span class="ui">Unsharp amount</span> 0.7</td><td>about the same</td><td>about the same</td></tr>
+            <tr><td>MTF50 0, <span class="ui">Unsharp amount</span> 1.0</td><td>slightly higher</td><td>about the same</td></tr>
+            <tr><td>MTF50 0, <span class="ui">Unsharp amount</span> 1.5</td><td>higher</td><td>slightly higher</td></tr>
+            <tr><td>MTF50 0, <span class="ui">Unsharp amount</span> 2.0</td><td>clearly higher</td><td>higher</td></tr>
+            <tr><td>MTF50 0, <span class="ui">Unsharp amount</span> 3.0</td><td>much higher</td><td>clearly higher</td></tr>
+            <tr><td><span class="ui">Micro contrast</span> +0.2 only</td><td>lower</td><td>lower</td></tr>
+            <tr><td>MTF50 0, <span class="ui">Unsharp amount</span> 1.5 and <span class="ui">Micro contrast</span> +0.2</td><td>clearly higher</td><td>higher</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="measure-note">Fine detail is the contrast of details up to about 2 pixels, medium detail 2–6 pixels; both are compared with the coarser structure of the same image, so that a difference in the tone curve does not distort the result. The reference is the sharpness of the image in C1 with the sharpening that photo had in C1. On another photo and with other C1 sharpening the amounts differ, but the order stays.</p>
+
+      <h2>Scanning</h2>
+      <div class="control">
+        <h3>Enable scanner controls</h3>
+        <p class="path">Spektrafilm optics › Scanning</p>
+        <dl class="facts"><div><dt>Default</dt><dd>off</dd></div></dl>
+        <p>Turns on all the scanner settings below. When off, they keep their saved values. Once you turn it on, the default values apply at once: optics blur (MTF50 60 lp/mm), sharpening 0.7 and, in Print Simulation, glare 0.03.</p>
+      </div>
+      <div class="control">
+        <h3>Correct white level and White point</h3>
+        <p class="path">Spektrafilm optics › Scanning</p>
+        <dl class="facts"><div><dt>White point</dt><dd>0–1, default 0.98</dd></div><div><dt>Correct white level</dt><dd>off by default</dd></div></dl>
+        <p>Sets the level (in sRGB encoding) given to the brightest print this film can produce on this paper. Middle grey stays in place, because the panel recalculates the print exposure, so mainly the highlights move. In an inverted negative scan it applies to the brightest density of the film.</p>
+        <p>The brightest whites rise a little. It needs <span class="ui">Enable scanner controls</span> and works in Print Simulation and in an inverted negative scan.</p>
+        <h5>When to use</h5>
+        <p>When the print looks “dirty” in the whites and you want clean, screen-like highlights, for example in architecture.</p>
+      </div>
+      <div class="control">
+        <h3>Correct black level and Black point</h3>
+        <p class="path">Spektrafilm optics › Scanning</p>
+        <dl class="facts"><div><dt>Black point</dt><dd>0–1, default 0.01 (about 3/255)</dd></div><div><dt>Correct black level</dt><dd>off by default</dd></div></dl>
+        <p>The same for the deepest black of the print. The default 0.01 brings the paper black (about 14/255) down to about 3/255.</p>
+        <h5>Pitfalls</h5>
+        <p>A full black takes away the character of the paper. Try the white correction on its own first.</p>
+      </div>
+      <div class="control">
+        <h3>Scanner glare, Glare roughness, Glare blur (px)</h3>
+        <p class="path">Spektrafilm optics › Scanning, Print Simulation only</p>
+        <dl class="facts">
+          <div><dt>Scanner glare</dt><dd>0–0.2, default 0.03</dd></div>
+          <div><dt>Glare roughness</dt><dd>0–4, default 0.7</dd></div>
+          <div><dt>Glare blur</dt><dd>0–32 px, default 0.5</dd></div>
+        </dl>
+        <p>Stray light in the scanner or when viewing the print. It lifts the black and lowers shadow contrast, with a slight random unevenness. At 0.1 the black rises only slightly.</p>
+        <h5>Pitfalls</h5>
+        <p><span class="ui">Glare blur</span> is measured in output pixels, so on a small preview it looks wider than on a full export. The glare is random, so it is not included in a LUT export.</p>
+      </div>
+      <div class="control">
+        <h3>Scanner MTF50, Unsharp radius, Unsharp amount</h3>
+        <p class="path">Spektrafilm optics › Scanning</p>
+        <dl class="facts">
+          <div><dt>Scanner MTF50 (lp/mm)</dt><dd>0–300, default 60</dd></div>
+          <div><dt>Unsharp radius (µm)</dt><dd>0–100, default 5</dd></div>
+          <div><dt>Unsharp amount</dt><dd>0–4, default 0.7</dd></div>
+        </dl>
+        <p>The sharpness of the scanner optics (resolution at 50% contrast) and unsharp-mask sharpening, as in scanner software. MTF50 of 0 turns off the optics blur; the higher the value, the less blur. The default 60 lp/mm is a blur with a radius of about 3 µm on the film. The sharpening radius is in micrometres on the film, so it scales with <span class="ui">Film format</span>.</p>
+        <h5>When to use</h5>
+        <p>A lower MTF (but above zero) gives a soft, “home” scan. A higher Unsharp amount gives a sharp lab scan with more visible grain. How to restore sharpness after neutral input is described in the <a href="#ostrosc">Sharpness</a> section.</p>
+      </div>
+
+      <h2>Enlarger positioning</h2>
+      <div class="control">
+        <h3>Enlarger scale, Horizontal offset (%), Vertical offset (%)</h3>
+        <p class="path">Spektrafilm optics › Enlarger positioning</p>
+        <dl class="facts">
+          <div><dt>Enlarger scale</dt><dd>1–32, default 1</dd></div>
+          <div><dt>Offsets (%)</dt><dd>−100 to 100, default 0</dd></div>
+        </dl>
+        <p>Enlarges part of the negative, like raising the enlarger head. 1 is the full frame. Higher values crop and enlarge, so grain, halation and blurs grow with the image. The offsets choose which part.</p>
+        <ul class="gallery wide">
+          <li><figure><a href="img/rome-default.webp"><img data-local src="img/rome-default.webp" alt="Full frame" loading="lazy"></a><figcaption><strong>Scale 1</strong></figcaption></figure></li>
+          <li><figure><a href="img/rome-enlarger-scale-2.webp"><img data-local src="img/rome-enlarger-scale-2.webp" alt="2× enlargement" loading="lazy"></a><figcaption><strong>Scale 2</strong>Centre of the frame, twice as large.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <h2>Post-scan finishing</h2>
+      <p>Finishing works after the print simulation and before <span class="ui">Look strength</span>. It has the same tools as an ordinary editor, but applied to the finished print. Use them sparingly: most of the look should come from the materials.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/rome-default.webp"><img data-local src="img/rome-default.webp" alt="Without finishing" loading="lazy"></a><figcaption><strong>Without finishing</strong></figcaption></figure></li>
+        <li><figure><a href="img/rome-fin-contrast-p05.webp"><img data-local src="img/rome-fin-contrast-p05.webp" alt="Contrast +0.5" loading="lazy"></a><figcaption><strong>Contrast +0.5</strong>An extreme effect.</figcaption></figure></li>
+        <li><figure><a href="img/rome-fin-contrast-m05.webp"><img data-local src="img/rome-fin-contrast-m05.webp" alt="Contrast −0.5" loading="lazy"></a><figcaption><strong>Contrast −0.5</strong>Grey and flat.</figcaption></figure></li>
+        <li><figure><a href="img/rome-fin-micro-p05.webp"><img data-local src="img/rome-fin-micro-p05.webp" alt="Micro contrast +0.5" loading="lazy"></a><figcaption><strong>Micro contrast +0.5</strong>Clearer texture.</figcaption></figure></li>
+        <li><figure><a href="img/rome-fin-sat-07.webp"><img data-local src="img/rome-fin-sat-07.webp" alt="Saturation 0.7" loading="lazy"></a><figcaption><strong>Saturation 0.7</strong>Less saturation.</figcaption></figure></li>
+        <li><figure><a href="img/rome-fin-vib-14.webp"><img data-local src="img/rome-fin-vib-14.webp" alt="Vibrance 1.4" loading="lazy"></a><figcaption><strong>Vibrance 1.4</strong>More saturation, mainly in muted colours.</figcaption></figure></li>
+      </ul>
+
+      <div class="control">
+        <h3>Enable post-scan finishing</h3>
+        <p class="path">Post-scan finishing</p>
+        <dl class="facts"><div><dt>Default</dt><dd>on (changes nothing at neutral values)</dd></div></dl>
+        <p>Turns all finishing on or off. Useful for a quick comparison with the print without finishing.</p>
+      </div>
+      <div class="control">
+        <h3>Finishing exposure (EV)</h3>
+        <p class="path">Post-scan finishing</p>
+        <dl class="facts"><div><dt>Range</dt><dd>−4 to 4 EV</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>The brightness of the finished scan, like the exposure slider in an editor. +0.5 EV brightens the midtones and lifts the whites.</p>
+        <h5>Pitfalls</h5>
+        <p>This is not the exposure of the film or the paper: it does not change the character of the curves. Use <span class="ui">Film exposure</span> and <span class="ui">Print exposure</span> first.</p>
+      </div>
+      <div class="control">
+        <h3>Contrast</h3>
+        <p class="path">Post-scan finishing</p>
+        <dl class="facts"><div><dt>Range</dt><dd>−1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Contrast of the finished image. Very strong: ±0.5 is an extreme effect. Typically ±0.05–0.2.</p>
+      </div>
+      <div class="control">
+        <h3>Micro contrast</h3>
+        <p class="path">Post-scan finishing</p>
+        <dl class="facts"><div><dt>Range</dt><dd>−1 to 1</dd></div><div><dt>Default</dt><dd>0</dd></div></dl>
+        <p>Local contrast of fine detail, like Clarity. It has a fixed radius in output pixels, so its visible strength depends on the resolution. Judge it in the preview at 100% or on the export. It is not included in a LUT export.</p>
+      </div>
+      <div class="control">
+        <h3>Saturation, Vibrance</h3>
+        <p class="path">Post-scan finishing</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p><span class="ui">Saturation</span> changes the saturation of all colours equally. <span class="ui">Vibrance</span> lifts weakly saturated colours more and spares colours that are already saturated, such as skin.</p>
+      </div>
+
+      <h3>Levels and channel balance</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control</th><th>Range, default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Black point</span></td><td>−0.25–0.5; 0</td><td>Black point. Even 0.05 takes the black close to pure black and turns the darkest areas black.</td></tr>
+            <tr><td><span class="ui">White point</span></td><td>0.5–1.5; 1</td><td>White point. Below 1 it brightens the highlights to white.</td></tr>
+            <tr><td><span class="ui">Gamma</span></td><td>0.2–3; 1</td><td>Brightness of the midtones.</td></tr>
+            <tr><td><span class="ui">Toe</span></td><td>0–1; 0</td><td>Gently lifts the deepest shadows (the toe of the curve). 0.5 lifts the black slightly.</td></tr>
+            <tr><td><span class="ui">Shoulder</span></td><td>0–1; 0</td><td>Gently rolls off the brightest tones (the shoulder of the curve). It works only close to white, so on a print without white correction it often changes nothing.</td></tr>
+            <tr><td><span class="ui">Red gain (EV)</span>, <span class="ui">Green gain (EV)</span>, <span class="ui">Blue gain (EV)</span></td><td>−2–2; 0</td><td>Channel gain, like white balance after the scan. +0.2 EV of red clearly warms the image.</td></tr>
+            <tr><td><span class="ui">Red black offset</span>, <span class="ui">Green black offset</span>, <span class="ui">Blue black offset</span></td><td>−0.25–0.25; 0</td><td>Shifts the black of a channel: tints the shadows.</td></tr>
+            <tr><td><span class="ui">Red white offset</span>, <span class="ui">Green white offset</span>, <span class="ui">Blue white offset</span></td><td>−0.25–0.25; 0</td><td>Shifts the white of a channel: tints the highlights.</td></tr>
+            <tr><td><span class="ui">Color separation</span></td><td>0–1; 0</td><td>Strengthens the differences between channels, that is, colour separation. 0.5 adds a little saturation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Hue saturation</h3>
+      <p>Six saturation sliders for colour ranges: <span class="ui">Red saturation</span>, <span class="ui">Yellow saturation</span>, <span class="ui">Green saturation</span>, <span class="ui">Cyan saturation</span>, <span class="ui">Blue saturation</span> and <span class="ui">Magenta saturation</span>. Range 0–2, default 1. Example: <span class="ui">Blue saturation</span> 0.5 calms the sky, and the other colours stay.</p>
+      <ul class="gallery wide">
+        <li><figure><a href="img/rome-fin-hue-blue-05.webp"><img data-local src="img/rome-fin-hue-blue-05.webp" alt="Blue saturation 0.5" loading="lazy"></a><figcaption><strong>Blue saturation 0.5</strong>A calmer sky.</figcaption></figure></li>
+        <li><figure><a href="img/rome-fin-split.webp"><img data-local src="img/rome-fin-split.webp" alt="Split toning" loading="lazy"></a><figcaption><strong>Split toning 0.3 / 0.3</strong>Blue shadows, warm highlights.</figcaption></figure></li>
+      </ul>
+
+      <h3>Split toning</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control</th><th>Range, default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Shadow hue</span>, <span class="ui">Shadow strength</span></td><td>0–360°, 210°; 0–1, 0</td><td>Hue and strength of the shadow toning. 210° is blue.</td></tr>
+            <tr><td><span class="ui">Midtone hue</span>, <span class="ui">Midtone strength</span></td><td>0–360°, 120°; 0–1, 0</td><td>Toning of the midtones. 120° is green.</td></tr>
+            <tr><td><span class="ui">Highlight hue</span>, <span class="ui">Highlight strength</span></td><td>0–360°, 45°; 0–1, 0</td><td>Toning of the highlights. 45° is a warm orange.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A strength of 0.3 already gives clear toning. Typically 0.05–0.15.</p>
+
+      <h3>Point curves</h3>
+      <p>Four curves: <span class="ui">Master curve</span> and the <span class="ui">Red curve</span>, <span class="ui">Green curve</span> and <span class="ui">Blue curve</span>. Each has five points with a fixed input (0, 25, 50, 75 and 100%), and the sliders set their output: <span class="ui">Black output</span>, <span class="ui">Shadows output</span>, <span class="ui">Midtones output</span>, <span class="ui">Highlights output</span> and <span class="ui">White output</span> (0–1; default 0 / 0.25 / 0.5 / 0.75 / 1).</p>
+      <div class="control">
+        <h3>Edit curve…, Use five-point controls</h3>
+        <p class="path">Post-scan finishing › Point curves › each curve</p>
+        <p><span class="ui">Edit curve…</span> opens an editor where you place the points freely, with the mouse or by typing percentages (both a point and a comma work as the decimal separator). The curve then becomes a custom curve, and the five-point sliders are inactive. <span class="ui">Use five-point controls</span> returns to the saved sliders.</p>
+        <ul class="gallery wide">
+          <li><figure><a href="img/rome-fin-curve-s.webp"><img data-local src="img/rome-fin-curve-s.webp" alt="S curve" loading="lazy"></a><figcaption><strong>S curve</strong>Shadows 0.2, Highlights 0.8.</figcaption></figure></li>
+          <li><figure><a href="img/rome-fin-redgain.webp"><img data-local src="img/rome-fin-redgain.webp" alt="Red gain +0.2" loading="lazy"></a><figcaption><strong>Red gain +0.2 EV</strong>Warmer.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <h2>Scan geometry</h2>
+      <p>Scan geometry works after finishing and after the C1 crop. The Viewer fits the result to the photo area in C1, and the export keeps the dimensions of the result. A LUT export ignores the geometry.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control</th><th>Range, default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Enable scan crop</span></td><td>off</td><td>Turns on the scan crop below.</td></tr>
+            <tr><td><span class="ui">Crop center X</span>, <span class="ui">Crop center Y</span></td><td>0–1; 0.5</td><td>Centre of the crop as a fraction of the width and height.</td></tr>
+            <tr><td><span class="ui">Crop width / long side</span>, <span class="ui">Crop height / long side</span></td><td>0.005–1; 1</td><td>Size of the crop as a fraction of the long side.</td></tr>
+            <tr><td><span class="ui">Scan rotation (degrees)</span></td><td>−45–45; 0</td><td>Rotates the scan, like film inserted crooked.</td></tr>
+            <tr><td><span class="ui">Desqueeze (+width / −height)</span></td><td>−2–2; 1</td><td>Stretch for anamorphic lenses: 1.33–2 widens the image, −1.33 to −2 stretches it vertically. Values from −1 to 1 are ignored.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall</span>
+        <p>Rotation without a crop leaves white triangles in the corners, like the scanner background. When you rotate, turn on <span class="ui">Enable scan crop</span> and make the crop smaller, or rotate the photo in C1.</p>
+      </aside>
+      <ul class="gallery wide">
+        <li><figure><a href="img/rome-scan-rotation.webp"><img data-local src="img/rome-scan-rotation.webp" alt="Scan rotated by 3 degrees" loading="lazy"></a><figcaption><strong>Scan rotation 3°</strong>White corners without a crop.</figcaption></figure></li>
+      </ul>
+
+      <h2>Paper textures and border</h2>
+      <div class="control">
+        <h3>Edit paper layers…</h3>
+        <p class="path">Paper textures and border</p>
+        <p>Opens the paper texture editor: up to 32 texture layers from your own files (paper scans, textures), with blend mode and opacity, plus a burnt-in border as a fraction of the long side. Texture and border work at the very end, after scan geometry. Active layers limit the finished image to the range of the paper, also in linear DNG. <span class="ui">Show source</span> skips them.</p>
+        <p>Textures are copied into the panel’s store (the <code>Paper textures</code> folder next to the panel log), so the look still works after you move the original file. A texture file can be up to 64 MB, 16 MP and 8192 px per side, and the border width is given in percent (0–100%).</p>
+        <p>The border makes the output file larger: a margin as wide as the given fraction of the long side is added on each side, filled with paper white and the textures.</p>
+        <h5>Pitfalls</h5>
+        <p>The burnt-in border works only together with at least one visible texture layer, as in the reference implementation. A border alone without a texture does not change the image; the summary below the button then says that the finishing has no effect.</p>
+      </div>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

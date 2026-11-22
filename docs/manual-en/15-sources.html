@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sources and licences | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Sources and licences</h1>
+      <p class="lede">Where the model, the profiles and the knowledge in this manual come from, who made them and under which licences.</p>
+
+      <h2>Authors and licences</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Element</th><th>Author</th><th>Licence</th></tr></thead>
+          <tbody>
+            <tr><td>Spektrafilm: physical model, film and paper profiles</td><td>Andrea Volpato (<a href="https://github.com/andreavolpato/spektrafilm">spektrafilm</a>)</td><td>Code GPL-3.0; profiles and derivatives, including exported LUTs, CC BY-SA 4.0</td></tr>
+            <tr><td>GPU renderer (Vulkan), OFX port</td><td>Aedan Diez (chaert-s): <a href="https://spektrafilm.114c.de/">spektrafilm OFX</a>, <a href="https://github.com/chaert-s/spektrafilm-ofx">source code</a></td><td>GPL-3.0</td></tr>
+            <tr><td>Hanatos spectral reconstruction</td><td>Johannes Hanika (vkdt)</td><td>as stated in THIRD-PARTY.md</td></tr>
+            <tr><td>Mallett 2019 spectral reconstruction</td><td>Ian Mallett, Cem Yuksel</td><td>scientific publication</td></tr>
+            <tr><td>Six profiles (Eterna 250D, Velvia 100F, Ultramax 800, Vision2 50D/100T/500T) and ports of functions: RMS grain, aging, bases, finishing, geometry, paper, LUT formats, linear DNG, test strips</td><td>Célian Le Bolloch (The Dyeworks 2.2.3)</td><td>GPL-3.0, profiles CC BY-SA 4.0</td></tr>
+            <tr><td>Ideas from flx-film-lab and nothing-complex/spektrafilm-for-capture-one</td><td>the authors of those projects</td><td>GPL-3.0</td></tr>
+            <tr><td>Capture One integration</td><td>Spektrafilm for Capture One by Luka Kauzlaric (this project is a modified version: Spektrafilm Darkroom for Capture One)</td><td>GPL-3.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>When you share a LUT exported from the panel, keep the attribution to Andrea Volpato, a link to the source and to the CC BY-SA 4.0 licence, and a note of the changes. The author of Spektrafilm asks for a line such as "film modeling powered by spektrafilm". Film and paper names are trademarks of their manufacturers; the code and data licences do not cover them.</p>
+      <p>Full information: the files <code>THIRD-PARTY.md</code> and <code>UPSTREAM-CHANGES.md</code> in the project repository.</p>
+
+      <h2>Spektrafilm documentation</h2>
+      <ul>
+        <li><a href="https://github.com/andreavolpato/spektrafilm">Spektrafilm repository</a>: description of the model and its parameters.</li>
+        <li><a href="https://spektrafilm.114c.de/">OFX version website</a>, with <a href="https://spektrafilm.114c.de/technical">technical notes</a> and a <a href="https://spektrafilm.114c.de/changelog">changelog</a>.</li>
+        <li><a href="https://jo.dreggn.org/vkdt/src/pipe/modules/filmsim/readme.html">The filmsim module in vkdt</a>: the physical meaning of the parameters.</li>
+        <li><a href="https://discuss.pixls.us/c/software/spektrafilm/">Spektrafilm forum on pixls.us</a>, including threads on contrast and saturation, on grain, on T and D films, and a thread with community presets.</li>
+        <li><a href="https://artraweditor.github.io/SpectralFilmSimHowto">Guide for ART</a>: installation and the LUT bridge.</li>
+      </ul>
+
+      <h2>Manufacturer data sheets</h2>
+      <p>Descriptions of the character of films and papers marked "according to the manufacturer" come from the manufacturers' technical data sheets and websites, mainly:</p>
+      <ul>
+        <li>Kodak: Portra 160, 400 and 800 (with Push curves), Ektar 100, Gold 200, Ultramax 400, Ektachrome E100, Kodachrome 64, Vision3 50D, 250D, 200T and 500T, Verita 200D, Vision 2383, Vision Premier 2393, Portra/Supra Endura, Endura Premier, Ektacolor Edge.</li>
+        <li>Fujifilm: Professional Data Guide (Velvia 100, Velvia 100F, Provia 100F, Superia X-Tra 400, Pro 400H), data sheets for Pro 400H, Velvia 100F and C200, Crystal Archive Type II brochure.</li>
+      </ul>
+      <p>Some descriptions (Ultra Endura, Eterna 250D, C200) are known only from short excerpts of the manufacturer's pages. The descriptions of Vision2 and Ultramax 800 could not be retrieved.</p>
+
+      <h2>Measurements in this manual</h2>
+      <p>Effects described as "in the simulation" were measured on renders from the panel (versions from 19–21 November 2026): contrast (the 5–95% tone range), saturation (mean OKLab chroma), hue (the difference between the R and B channels), black (1st percentile of lightness), and the brightness and spread of the brightest and darkest 5% of the frame. The numbers depend on the photo, so this manual gives the direction of each change rather than photo-specific values; on your photos the size of the effect will differ. The illustrations of this edition are rendered from the example photos listed below.</p>
+
+      <h2>Example photos</h2>
+      <p>Most example photos in this manual are free photos released under CC0 1.0 (public domain dedication), shared on discuss.pixls.us:</p>
+      <ul>
+        <li>Two photos of a heath by Kees Guequierre, from the thread <a href="https://discuss.pixls.us/t/playraw-heath/13804">[PlayRaw] Heath</a>. CC0 1.0.</li>
+        <li>The arcades in Rome, by the discuss.pixls.us user shown as anon42681393, from the thread <a href="https://discuss.pixls.us/t/in-the-style-of-giorgio-de-chirico-rome-2017/35611">In the style of Giorgio de Chirico, Rome 2017</a>. CC0 1.0.</li>
+      </ul>
+      <p>The village with white houses and palms (in <a href="02-quick-start.html">Quick start</a>, <a href="04-films-and-papers.html">Films and papers</a>, <a href="05-exposure-and-contrast.html">Exposure and contrast</a>, <a href="06-colour.html">Colour</a> and <a href="12-recipes.html">Recipes</a>) is a photo by the author of this project, who holds its copyright. It is not covered by the project's licences and may not be reused without the author's permission.</p>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

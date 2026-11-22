@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to think about Spektrafilm | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>How to think about Spektrafilm</h1>
+      <p class="lede">In Capture One you set the look of a photo with sliders that act directly on the image. Spektrafilm works differently: it simulates the path of light through film and paper. The look follows from your choice of materials and exposure, as in a darkroom.</p>
+
+      <h2>Two ways of working</h2>
+      <p>In digital editing you tell the image directly what should happen: lift the shadows, raise saturation, bend the curve. Each slider does one thing and knows nothing about the others.</p>
+      <p>In Spektrafilm you say <em>what</em> you shot on and <em>what</em> you print on. The program calculates how the light of the scene would expose the chosen film, how that film would develop, how the negative would expose the paper and how the paper would develop. Contrast, colour, tonal transitions and the behaviour of highlights come from the technical data of the materials, not from a curve you set by hand.</p>
+      <aside class="note darkroom">
+        <span class="note-title">In the darkroom</span>
+        <p>Nobody in a darkroom "raises contrast by 20". You choose a harder paper or develop the negative longer. Spektrafilm gives you the same decisions, without the chemistry.</p>
+      </aside>
+
+      <h2>The path of light in Print Simulation mode</h2>
+      <p><span class="ui">Print Simulation</span> mode reproduces the classic negative–positive process. Each stage has its own controls in the panel:</p>
+      <ol class="steps">
+        <li><strong>Scene.</strong> Capture One develops the RAW and hands over a 16-bit image. Spektrafilm treats it as the light of the scene falling on the film. <a href="03-capture-one-preparation.html">Chapter 3</a> describes how to prepare this image.</li>
+        <li><strong>Film exposure.</strong> <span class="ui">Film exposure</span> says how much light the film received. By default the panel first meters the photo (<span class="ui">Automatic film exposure</span>), and the slider is an offset from that metering.</li>
+        <li><strong>Emulsion layers.</strong> Film has separate layers sensitive to red, green and blue. Their spectral sensitivity decides how the film "sees" the colours of the scene.</li>
+        <li><strong>Negative development.</strong> The film's characteristic curves turn exposure into dye density. Negative contrast (<span class="ui">Negative gamma</span>) and push/pull act here (<a href="05-exposure-and-contrast.html">chapter 5</a>). During development DIR couplers also work: they strengthen colour separation and local contrast (<a href="06-colour.html">chapter 6</a>). Grain is also formed at this stage.</li>
+        <li><strong>Enlarger.</strong> Light passes through the negative. Colour filtration (<span class="ui">Cyan filtration</span>, <span class="ui">Magenta filter shift</span>, <span class="ui">Yellow filter shift</span>) sets the colour of the print, like the filter head of an enlarger.</li>
+        <li><strong>Paper exposure.</strong> <span class="ui">Print exposure</span> is the exposure time of the print. More light on the paper gives a darker print.</li>
+        <li><strong>Paper development.</strong> The paper's curves turn the light from the negative into a positive image. <span class="ui">Print gamma</span>, the shape of the shadows and highlights and <span class="ui">Preflash exposure</span> change the character of the print.</li>
+        <li><strong>Viewing.</strong> The finished print goes to the screen or to a file. On the way you can add scan finishing: curves, levels, paper, border (<a href="09-finishing.html">chapter 9</a>).</li>
+      </ol>
+
+      <h2>What this means in practice</h2>
+      <h3>You set brightness with two dials</h3>
+      <p><span class="ui">Film exposure</span> and <span class="ui">Print exposure</span> both change brightness, but in different ways. More light on the film gives a denser negative and therefore a <strong>brighter</strong> print: you move the scene along the film curve, which also changes how it renders highlights, shadows and grain. More light on the paper gives a <strong>darker</strong> print: you change only how the negative is printed.</p>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall</span>
+        <p>The sliders work in opposite directions. To brighten the print, raise <span class="ui">Film exposure</span> or lower <span class="ui">Print exposure</span>.</p>
+      </aside>
+
+      <h3>Contrast multiplies</h3>
+      <p>The final contrast is roughly the contrast of the negative times the contrast of the paper. The negative is soft and holds a wide range of tones; the paper is hard and has a short scale. That is why <span class="ui">Negative gamma</span> and <span class="ui">Print gamma</span> act in a similar way, but at a different point in the process. The paper decides where the highlights and shadows of the print end.</p>
+
+      <h3>Colour comes from film and paper together</h3>
+      <p>The paper "reads" the dyes of the negative with its own spectral sensitivity, and the orange mask of the negative is designed for the paper. The same negative on a different paper gives different colours, not only different contrast. A film–paper pair works as one material. You find proven pairs in <a href="04-films-and-papers.html">chapter 4</a>.</p>
+
+      <h3>Highlights roll off softly instead of clipping</h3>
+      <p>The curves of film and paper have gentle ends. Bright areas lose contrast gradually instead of jumping suddenly to white. But when the scene is overexposed or the paper is too hard, the print burns out too. <a href="05-exposure-and-contrast.html">Chapter 5</a> describes how to deal with this.</p>
+
+      <h3>Look strength is not an effect-strength slider</h3>
+      <p><span class="ui">Look strength</span> blends the finished print with the image from C1 before the simulation. At 100% you see the full film process. Lower values dilute the colour, contrast and grain of the film with the digital image. Start at 100% and control the look with materials and exposure. Keep strength for final seasoning.</p>
+
+      <h2>Print and Scan</h2>
+      <p>The panel has two processing modes:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>What it shows</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Print Simulation</span></td><td>A print from the negative on the chosen paper.</td><td>Normal work with negative films. Most recipes in this manual.</td></tr>
+            <tr><td><span class="ui">Scan</span> with a negative film</td><td>The negative itself, as on a light box. With <span class="ui">Invert negative scan</span>, a linear positive that usually needs an exposure correction.</td><td>When you want the look of a negative scan without paper, or want to finish it yourself.</td></tr>
+            <tr><td><span class="ui">Scan</span> with a slide film</td><td>Reversal film directly, without paper.</td><td>Velvia, Provia, Ektachrome, Kodachrome. Slide films work only in this mode.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>In Scan mode the paper functions do not work: <span class="ui">Print exposure</span>, enlarger filtration, print diffusion. The panel greys them out instead of pretending they change something. Details in <a href="04-films-and-papers.html">chapter 4</a>.</p>
+
+      <h2>What Capture One does and what Spektrafilm does</h2>
+      <p>Capture One develops the RAW: it demosaics, applies the camera profile, white balance, exposure, lens correction, crop and your local adjustments. Spektrafilm receives the finished 16-bit image and only then simulates film and paper on it.</p>
+      <ul>
+        <li>Leave technical corrections in C1. They make sure the scene reaches the film correctly.</li>
+        <li>Reduce or switch off "look" adjustments such as curves, colour grading, strong saturation or styles. Otherwise two looks stack on top of each other.</li>
+        <li>C1 clips highlights at the sensor's white point. Halation needs bright highlights, so the panel has a separate <span class="ui">Highlight boost</span> (<a href="07-optics.html">chapter 7</a>).</li>
+      </ul>
+      <p>Spektrafilm settings are saved separately for each variant in the panel's folder (<code>%LOCALAPPDATA%\FilmToolsForCaptureOne\Variant looks</code>), separately for each catalog and session, and not in the C1 catalog file. That is why ordinary Copy/Apply Adjustments and Ctrl+Z in C1 do not include them. The panel has its own copying and undo (<a href="10-tools.html">chapter 10</a>).</p>
+
+      <h2>Glossary in a nutshell</h2>
+      <p>The most common terms. Full explanations are in the <a href="14-glossary.html">glossary</a>.</p>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><td>Density</td><td>How much a material holds back light. On a negative, bright parts of the scene give high density.</td></tr>
+            <tr><td>Gamma</td><td>The slope of a material's curve, that is its contrast in the midtones.</td></tr>
+            <tr><td>Latitude</td><td>The range of scene brightness a material records with detail. Negative film has a wide one, paper and slide film a narrow one.</td></tr>
+            <tr><td>EV</td><td>One stop, that is a doubling or halving of the amount of light.</td></tr>
+            <tr><td>CC</td><td>The unit of colour filtration in an enlarger.</td></tr>
+            <tr><td>DIR</td><td>Couplers in the emulsion that hold back development in neighbouring areas and layers. They give sharper edges and cleaner colours.</td></tr>
+            <tr><td>Halation</td><td>A reddish glow around bright highlights, caused by light reflecting off the film base.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(BaseDensityTests LANGUAGES CXX)
+set(REPO "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(OFX_BUILD "${REPO}/build/full-function-profiles/resources" CACHE PATH "Generated native profiles")
+add_executable(BaseDensityProbe base_probe.cpp "${OFX_BUILD}/generated/SpektraGeneratedProfileCurves.cpp")
+target_compile_features(BaseDensityProbe PRIVATE cxx_std_17)
+target_include_directories(BaseDensityProbe PRIVATE "${REPO}/upstream-ofx/src" "${OFX_BUILD}/generated")

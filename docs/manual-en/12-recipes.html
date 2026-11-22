@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recipes | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Recipes</h1>
+      <p class="lede">Ready-made set-ups for travel, architecture and portraits. Each one starts from <span class="ui">Defaults</span> (Portra 400 on Portra Endura, neutral input, automatic metering) and lists only what you change. The examples with the village photo start instead from the look its author made for it (Kodak Gold 200 on Portra Endura, film exposure +1.4 EV); there a recipe's film exposure is a change of that value. The values were checked by rendering example photos. On your own photo you fine-tune them by eye, but the direction stays the same.</p>
+      <aside class="note tip">
+        <span class="note-title">How to use them</span>
+        <p>Set up a recipe, save it as a preset (<span class="ui">Save preset…</span>), and on the next photos adjust mainly <span class="ui">Film exposure</span> and <span class="ui">Print exposure</span>. Drag the slider on a comparison to see the image before and after.</p>
+      </aside>
+
+      <h2 id="krajobraz-naturalnie">Natural landscape</h2>
+      <p>Goal: believable travel colours, gentle highlights, a calm sky and calm water.</p>
+      <figure class="compare">
+        <img data-local src="img/village-source.webp" alt="White houses and palms in a village, image from Capture One" loading="lazy">
+        <div class="after"><img data-local src="img/village-travel-natural.webp" alt="Village scene after the natural landscape recipe" loading="lazy"></div>
+        <span class="label before">Capture One image</span><span class="label after-label">Natural landscape</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Portra 400, Kodak Professional Portra Endura</td></tr>
+        <tr><td><span class="ui">Film exposure</span></td><td>−0.3 EV</td></tr>
+        <tr><td><span class="ui">Print highlight shape</span></td><td>−0.3</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production</td></tr>
+      </tbody></table></div>
+      <p>What to watch: clouds and other bright areas should keep detail, and greens should not look garish. If the photo looks too pale, switch the paper to Supra Endura.</p>
+
+      <h2 id="krajobraz-zywo">Vivid landscape</h2>
+      <p>Goal: strong blues, rich greens, colours like Ektar.</p>
+      <figure class="compare">
+        <img data-local src="img/village-mylook.webp" alt="Village scene with its starting look" loading="lazy">
+        <div class="after"><img data-local src="img/village-travel-vivid.webp" alt="Village scene after the vivid landscape recipe" loading="lazy"></div>
+        <span class="label before">Starting look</span><span class="label after-label">Vivid landscape</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Ektar 100, Kodak Professional Supra Endura</td></tr>
+        <tr><td><span class="ui">DIR coupler amount</span></td><td>1.2</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production</td></tr>
+      </tbody></table></div>
+      <p>Variants: even stronger on Ultra Endura or Endura Premier. The recipe clearly raises saturation, and most of that change comes from <span class="ui">DIR coupler amount</span> 1.2.</p>
+      <ul class="gallery wide">
+        <li><figure><a href="img/romewarm-vivid.webp"><img data-local src="img/romewarm-vivid.webp" alt="Roman arcades in warm light after the vivid landscape recipe" loading="lazy"></a><figcaption><strong>The same recipe on the Roman arcades</strong></figcaption></figure></li>
+        <li><figure><a href="img/romewarm-default.webp"><img data-local src="img/romewarm-default.webp" alt="Roman arcades in warm light, default settings" loading="lazy"></a><figcaption><strong>Default</strong></figcaption></figure></li>
+      </ul>
+
+      <h2 id="mocne-slonce">Harsh sun and rescuing highlights</h2>
+      <p>Goal: a scene with hard sunlight and deep shadow, where the highlights burn out and the print is too hard.</p>
+      <figure class="compare">
+        <img data-local src="img/heath-default.webp" alt="Misty heath with backlit trees, default settings" loading="lazy">
+        <div class="after"><img data-local src="img/heath-soft-b.webp" alt="Misty heath after the soft print recipe" loading="lazy"></div>
+        <span class="label before">Default</span><span class="label after-label">Soft print</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <ol class="steps">
+        <li><span class="ui">Film exposure</span> −0.5 EV.</li>
+        <li><span class="ui">Print gamma</span> 0.85.</li>
+        <li><span class="ui">Preflash exposure</span> 0.01 and <span class="ui">Print exposure</span> −0.2 EV.</li>
+        <li>If the highlights still look flat: <span class="ui">Print highlight shape</span> −0.3 to −0.5.</li>
+      </ol>
+      <p>What to watch: the brightest parts of the frame, such as the sky. The print becomes darker and calmer; set the brightness last with <span class="ui">Print exposure</span>. Each step is explained in <a href="05-exposure-and-contrast.html">chapter 5</a>.</p>
+
+      <h2 id="biale-sciany">Architecture and white walls</h2>
+      <p>Goal: clean whites that keep detail, neutral concrete, moderate contrast.</p>
+      <figure class="compare">
+        <img data-local src="img/rome-default.webp" alt="Travertine arcades in Rome, default settings" loading="lazy">
+        <div class="after"><img data-local src="img/rome-arch-recipe.webp" alt="Travertine arcades in Rome after the architecture recipe" loading="lazy"></div>
+        <span class="label before">Default</span><span class="label after-label">White walls</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Portra 160, Kodak Professional Portra Endura</td></tr>
+        <tr><td><span class="ui">Film exposure</span></td><td>−0.3 EV</td></tr>
+        <tr><td><span class="ui">Print highlight shape</span></td><td>−0.5</td></tr>
+        <tr><td><span class="ui">Enable scanner controls</span> and <span class="ui">Correct white level</span></td><td>on</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production</td></tr>
+      </tbody></table></div>
+      <p>What to watch: light walls and stone show clearly more tonal separation than with the default settings. If the white has a colour cast, correct it with <span class="ui">Yellow filter shift</span> or <span class="ui">Magenta filter shift</span> by 2–5 CC. A variant with stronger colour: Endura Premier (more saturation and contrast).</p>
+
+      <h2 id="portret-w-kontrze">Backlit portrait, natural skin</h2>
+      <p>Goal: warm, smooth skin, soft highlights in the hair, a gentle glow.</p>
+      <p>The example uses the village scene: judge its white walls and warm roof tiles the way you would judge skin tones.</p>
+      <figure class="compare">
+        <img data-local src="img/look-default.webp" alt="Village scene with its starting look" loading="lazy">
+        <div class="after"><img data-local src="img/look-portrait-final.webp" alt="Village scene after the backlit portrait recipe" loading="lazy"></div>
+        <span class="label before">Starting look</span><span class="label after-label">Backlit portrait</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Portra 400, Kodak Professional Portra Endura</td></tr>
+        <tr><td><span class="ui">Film exposure</span></td><td>−0.3 EV</td></tr>
+        <tr><td><span class="ui">Print gamma</span></td><td>0.9</td></tr>
+        <tr><td><span class="ui">Print highlight shape</span></td><td>−0.4</td></tr>
+        <tr><td><span class="ui">Halation amount</span>, <span class="ui">Highlight boost (EV)</span></td><td>1, 3</td></tr>
+        <tr><td>Camera diffusion</td><td>Black Pro-Mist, <span class="ui">Filter strength</span> 0.3 (type it into the field; the slider moves in steps of 0.125)</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production</td></tr>
+      </tbody></table></div>
+      <ul class="gallery">
+        <li><figure><a href="img/look-soft.webp"><img data-local src="img/look-soft.webp" alt="Village scene, soft print only" loading="lazy"></a><figcaption><strong>Soft print only</strong>No halation, no filter.</figcaption></figure></li>
+        <li><figure><a href="img/look-soft-halation.webp"><img data-local src="img/look-soft-halation.webp" alt="Village scene with halation" loading="lazy"></a><figcaption><strong>With halation</strong>A reddish glow only on the brightest edges.</figcaption></figure></li>
+        <li><figure><a href="img/look-soft-bpm.webp"><img data-local src="img/look-soft-bpm.webp" alt="Village scene with a Black Pro-Mist filter" loading="lazy"></a><figcaption><strong>With Black Pro-Mist 0.4</strong></figcaption></figure></li>
+        <li><figure><a href="img/look-portra160.webp"><img data-local src="img/look-portra160.webp" alt="Village scene on Portra 160" loading="lazy"></a><figcaption><strong>Portra 160</strong>Finer, slightly warmer.</figcaption></figure></li>
+        <li><figure><a href="img/look-pro400h-crystal.webp"><img data-local src="img/look-pro400h-crystal.webp" alt="Village scene on Pro 400H and Crystal Archive" loading="lazy"></a><figcaption><strong>Pro 400H + Crystal Archive</strong>Slightly warmer, a little more contrast.</figcaption></figure></li>
+        <li><figure><a href="img/look-soft-warm.webp"><img data-local src="img/look-soft-warm.webp" alt="Village scene with cyan filtration 5" loading="lazy"></a><figcaption><strong>Cyan filtration 5</strong>Warmer tones.</figcaption></figure></li>
+      </ul>
+      <p>What to watch: skin on the cheeks and forehead. The darkroom rule: add a filter in the colour of the cast. Skin too pink: 2–5 CC magenta. Too yellow: 2–5 CC yellow. Too red: 2–3 CC each of magenta and yellow.</p>
+
+      <h2 id="wyglad-kinowy">Cinematic look</h2>
+      <p>Goal: deep black, a warm tone, glowing highlights, visible grain.</p>
+      <figure class="compare">
+        <img data-local src="img/village-mylook.webp" alt="Village scene with its starting look" loading="lazy">
+        <div class="after"><img data-local src="img/village-cine.webp" alt="Village scene with the cinematic look" loading="lazy"></div>
+        <span class="label before">Starting look</span><span class="label after-label">Vision3 250D + 2383</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Vision3 250D (daylight) or Vision3 500T (evening), Kodak Vision 2383</td></tr>
+        <tr><td><span class="ui">Halation amount</span>, <span class="ui">Highlight boost (EV)</span></td><td>1–2, 3–6</td></tr>
+        <tr><td>Camera diffusion</td><td>Black Pro-Mist, <span class="ui">Filter strength</span> 0.25–0.5</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production; for stronger grain, <span class="ui">Film format</span> Super 35 or 16 mm</td></tr>
+      </tbody></table></div>
+      <ul class="gallery">
+        <li><figure><a href="img/mist-cine.webp"><img data-local src="img/mist-cine.webp" alt="Misty heath into the sun with the cinematic look" loading="lazy"></a><figcaption><strong>Into the sun</strong>500T + 2383, halation 2, boost 6, Black Pro-Mist 0.5.</figcaption></figure></li>
+        <li><figure><a href="img/dusk-dusk-cine.webp"><img data-local src="img/dusk-dusk-cine.webp" alt="Dark heath at dusk with the cinematic look" loading="lazy"></a><figcaption><strong>Dusk</strong>500T + 2383, Film exposure −0.5.</figcaption></figure></li>
+      </ul>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall</span>
+        <p>Vision 2383 goes down to full black: in a dark scene a large part of the frame can turn black. If the shadows merge, raise <span class="ui">Film exposure</span> or set <span class="ui">Print shadow shape</span> to a positive value.</p>
+      </aside>
+
+      <h2 id="zmierzch">Dusk and low light</h2>
+      <p>Goal: keep the mood of a dark scene instead of brightening it into grey.</p>
+      <figure class="compare">
+        <img data-local src="img/dusk-default.webp" alt="Dark heath at dusk, default settings" loading="lazy">
+        <div class="after"><img data-local src="img/dusk-dusk.webp" alt="Dark heath at dusk after the recipe" loading="lazy"></div>
+        <span class="label before">Default</span><span class="label after-label">Portra 800, −0.5 EV</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Portra 800, Kodak Professional Portra Endura</td></tr>
+        <tr><td><span class="ui">Film exposure</span></td><td>−0.5 EV</td></tr>
+        <tr><td><span class="ui">Print shadow shape</span></td><td>−0.3</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production</td></tr>
+      </tbody></table></div>
+      <p>Here <span class="ui">Film exposure</span> sets the mood: −0.5 EV darkens the whole image and keeps its evening character. When centre-weighted metering reads a bright sky, turning metering off gives a brighter print, not a darker one. A variant with more contrast: Portra 800 (Push 1) or (Push 2), each a little harder.</p>
+
+      <h2 id="slajd">Slide</h2>
+      <p>Goal: strong, clean colours and the hard contrast of slide film, without paper.</p>
+      <ol class="steps">
+        <li><span class="ui">Processing mode</span> = <span class="ui">Scan Film</span>.</li>
+        <li><span class="ui">Film stock</span>: Fujifilm Velvia 100 (the most saturated) or Provia 100F (calmer).</li>
+        <li><span class="ui">Film exposure</span> −0.3 EV: slide film has a short tonal range, so highlights easily lose detail.</li>
+        <li><span class="ui">Grain model</span>: Production.</li>
+      </ol>
+      <ul class="gallery wide">
+        <li><figure><a href="img/village-slide-velvia-recipe.webp"><img data-local src="img/village-slide-velvia-recipe.webp" alt="Village scene on Velvia 100" loading="lazy"></a><figcaption><strong>Velvia 100</strong></figcaption></figure></li>
+        <li><figure><a href="img/village-slide-provia-recipe.webp"><img data-local src="img/village-slide-provia-recipe.webp" alt="Village scene on Provia 100F" loading="lazy"></a><figcaption><strong>Provia 100F</strong></figcaption></figure></li>
+      </ul>
+
+      <h2 id="odbitka-z-epoki">Vintage print</h2>
+      <p>Goal: a warm, slightly faded print from an amateur film of years ago.</p>
+      <figure class="compare">
+        <img data-local src="img/romewarm-default.webp" alt="Roman arcades in warm light, default settings" loading="lazy">
+        <div class="after"><img data-local src="img/romewarm-vintage-warm-b.webp" alt="Roman arcades as a vintage print" loading="lazy"></div>
+        <span class="label before">Default</span><span class="label after-label">Vintage print</span>
+        <input type="range" min="0" max="100" value="50" aria-label="Drag to compare"><div class="handle"></div>
+      </figure>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Gold 200, Kodak Professional Ultra Endura</td></tr>
+        <tr><td><span class="ui">Enable emulsion aging</span>, <span class="ui">Age (years)</span></td><td>on, 12</td></tr>
+        <tr><td><span class="ui">Yellow filter shift</span></td><td>−6 CC (warms the image and balances the cool fog of ageing)</td></tr>
+        <tr><td><span class="ui">Print gamma</span></td><td>0.9</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production</td></tr>
+      </tbody></table></div>
+      <p>A "more worn" variant: Endura Premier, 20 years, <span class="ui">Print base</span> › <span class="ui">Base density scale</span> 1.5 and yellow −8 CC.</p>
+      <ul class="gallery wide">
+        <li><figure><a href="img/romewarm-vintage-warm.webp"><img data-local src="img/romewarm-vintage-warm.webp" alt="More worn variant" loading="lazy"></a><figcaption><strong>More worn</strong></figcaption></figure></li>
+        <li><figure><a href="img/romewarm-vintage.webp"><img data-local src="img/romewarm-vintage.webp" alt="Ageing without warming" loading="lazy"></a><figcaption><strong>Without the yellow correction</strong>Ageing on its own gives a cool, bluish print.</figcaption></figure></li>
+      </ul>
+
+      <h2 id="czarno-biel">Black-and-white print from colour film</h2>
+      <p>The panel has no black-and-white films. You make a monochrome image in scan finishing: it is a black-and-white copy of a colour print, not a simulation of black-and-white film.</p>
+      <ol class="steps">
+        <li>Set up the look in colour: film, paper, exposure and contrast. They decide how the tones are distributed.</li>
+        <li>In Post-scan finishing, set <span class="ui">Saturation</span> to 0.</li>
+        <li>Refine the contrast with <span class="ui">Print gamma</span> or the <span class="ui">Master curve</span>.</li>
+        <li>Add a print tone in Split toning: <span class="ui">Shadow strength</span> and <span class="ui">Highlight strength</span> 0.05–0.15, for example warm highlights (45°) and cool shadows (210°).</li>
+        <li>Grain: Production with <span class="ui">Grain saturation</span> 0.</li>
+      </ol>
+      <ul class="gallery">
+        <li><figure><a href="img/rome-bw-color.webp"><img data-local src="img/rome-bw-color.webp" alt="Colour print" loading="lazy"></a><figcaption><strong>In colour</strong>The starting point.</figcaption></figure></li>
+        <li><figure><a href="img/rome-bw-plain.webp"><img data-local src="img/rome-bw-plain.webp" alt="Saturation 0" loading="lazy"></a><figcaption><strong>Saturation 0</strong>Neutral grey.</figcaption></figure></li>
+        <li><figure><a href="img/rome-bw-hard.webp"><img data-local src="img/rome-bw-hard.webp" alt="Saturation 0 and Print gamma 1.2" loading="lazy"></a><figcaption><strong>Print gamma 1.2</strong>Harder contrast.</figcaption></figure></li>
+        <li><figure><a href="img/rome-bw-toned.webp"><img data-local src="img/rome-bw-toned.webp" alt="Saturation 0 and Split toning" loading="lazy"></a><figcaption><strong>Split toning 0.1 / 0.1</strong>Warm highlights, cool shadows.</figcaption></figure></li>
+        <li><figure><a href="img/rome-bw-toned-grain.webp"><img data-local src="img/rome-bw-toned-grain.webp" alt="Toning and Production grain" loading="lazy"></a><figcaption><strong>With Production grain</strong>Grain saturation 0.</figcaption></figure></li>
+      </ul>
+      <p>Enlarger filtration before desaturating works only roughly like colour filters in black-and-white photography.</p>
+      <p class="measure-note">Measurement: Portra 400 on Portra Endura. <span class="ui">Saturation</span> 0 gives an exactly neutral image (R = G = B). <span class="ui">Print gamma</span> 1.2 darkens the midtones, lifts the highlights and deepens the black slightly. Split toning 0.1 / 0.1 with the default hues (highlights 45°, shadows 210°) makes the highlights slightly warm and the shadows slightly blue.</p>
+
+      <h2 id="noc">Artificial light and night</h2>
+      <p>Goal: evening streets, interiors under tungsten bulbs, neon.</p>
+      <div class="table-wrap"><table><tbody>
+        <tr><td>Film, paper</td><td>Kodak Vision3 500T, Kodak Vision 2383; calmer: Portra 800 on Portra Endura</td></tr>
+        <tr><td>White balance in C1</td><td>A T film does not cool the image by itself. Keep the warmth of the bulbs or correct it with white balance in C1; add a cool "night" tone with <span class="ui">Yellow filter shift</span> +5 to +10 CC.</td></tr>
+        <tr><td><span class="ui">Film exposure</span></td><td>−0.5 to −1 EV, so that night stays night</td></tr>
+        <tr><td><span class="ui">Halation amount</span>, <span class="ui">Highlight boost (EV)</span></td><td>1–2 and 4–6: lamps and neon get a glow</td></tr>
+        <tr><td>Camera diffusion</td><td>Black Pro-Mist or CineBloom, <span class="ui">Filter strength</span> 0.25–0.5</td></tr>
+        <tr><td><span class="ui">Grain model</span></td><td>Production; remove high-ISO noise in C1 first</td></tr>
+      </tbody></table></div>
+      <p>Vision 2383 goes down to full black, so keep an eye on the shadows (<span class="ui">Print shadow shape</span> positive). <span class="measure-note">The example photos include no night scene: these values are a starting point put together from measurements on other frames, and they have no illustration.</span></p>
+
+      <h2 id="ziarno-pod-wydruk">Grain for print and for screen</h2>
+      <p>These are starting points from practice, not measurements.</p>
+      <ul>
+        <li>Screen and web: Production, <span class="ui">Grain amount</span> 1–1.5. Downsizing weakens the grain anyway.</li>
+        <li>Large print: Production, amount 0.8–1. Judge it at 100% zoom (<span class="ui">Viewer resolution</span> = Auto or Native resolution).</li>
+        <li>Strong cinema grain: <span class="ui">Film format</span> 16 mm or Super 16.</li>
+      </ul>
+      <p>A comparison of the models and 100% crops are in <a href="08-grain.html">chapter 8</a>.</p>
+
+      <h2 id="seria">A consistent series from a trip</h2>
+      <ol class="steps">
+        <li>Pick an "average" photo from the series: typical light, no extremes.</li>
+        <li>Set up the look on it and save it as a preset.</li>
+        <li><span class="ui">Copy look</span>, select the whole series, <span class="ui">Apply copied look to selected</span>.</li>
+        <li>Go through the photos. Automatic metering evens out the brightness, so you usually only correct <span class="ui">Film exposure</span> on photos taken into the sun or in shade.</li>
+        <li>To compare, use <span class="ui">Pin reference</span> on the reference photo and <span class="ui">Compare reference…</span> on the others.</li>
+        <li>Batch export: <span class="ui">Export selected TIFFs…</span> or a normal C1 export with one recipe.</li>
+      </ol>
+
+      <h2 id="biblioteka">Your own library of looks</h2>
+      <p>Save every successful look as a preset with a name that describes the materials and the use, for example "Portra 400 Endura soft backlight.spektra.json". Keep the presets in one folder. On a new photo: <span class="ui">Load preset…</span>, then only the exposure. The photo's previous look is saved as a version.</p>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

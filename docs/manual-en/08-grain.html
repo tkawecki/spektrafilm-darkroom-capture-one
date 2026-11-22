@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grain | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Grain</h1>
+      <p class="lede">The grain of colour film is clouds of dye in three layers, not noise. It has colour, and it depends on the density of the negative and on the frame size. Spektrafilm has several grain models; new looks start without grain.</p>
+
+      <h2>Grain models</h2>
+      <p>The crops below are 100% crops of sky and stone at full resolution (35 mm film format). On screen, in the normal whole-frame view, grain is much less visible than here.</p>
+      <ul class="gallery">
+        <li><figure><a href="img/grain-g-off-crop.webp"><img data-local src="img/grain-g-off-crop.webp" alt="No grain, 100% crop of sky and stone" loading="lazy"></a><figcaption><strong>Off</strong>No grain.</figcaption></figure></li>
+        <li><figure><a href="img/grain-g-preview-crop.webp"><img data-local src="img/grain-g-preview-crop.webp" alt="Preview grain" loading="lazy"></a><figcaption><strong>Preview</strong>A quick approximation.</figcaption></figure></li>
+        <li><figure><a href="img/grain-g-production-crop.webp"><img data-local src="img/grain-g-production-crop.webp" alt="Production grain" loading="lazy"></a><figcaption><strong>Production</strong>Layered dye clouds.</figcaption></figure></li>
+        <li><figure><a href="img/grain-g-rms-crop.webp"><img data-local src="img/grain-g-rms-crop.webp" alt="RMS calibrated grain" loading="lazy"></a><figcaption><strong>RMS calibrated</strong>Strength taken from the film's granularity.</figcaption></figure></li>
+        <li><figure><a href="img/grain-g4k-synthesis-crop.webp"><img data-local src="img/grain-g4k-synthesis-crop.webp" alt="Grain synthesis with a 4096 px preview" loading="lazy"></a><figcaption><strong>Grain synthesis (4096 px preview)</strong>Experimental; very strong at the default settings.</figcaption></figure></li>
+      </ul>
+
+      <div class="control">
+        <h3>Grain model</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts">
+          <div><dt>Options</dt><dd>Off, Preview, Production, Grain synthesis (experimental), RMS calibrated</dd></div>
+          <div><dt>New look</dt><dd>Off</dd></div>
+        </dl>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Model</th><th>What it does</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td>Off</td><td>No grain. <span class="ui">Film format</span> still scales the optical effects.</td><td>When you add grain separately or do not want it at all.</td></tr>
+              <tr><td>Preview</td><td>A fast particle model.</td><td>Quick work on a slower computer.</td></tr>
+              <tr><td>Production</td><td>Layered dye clouds matched to the RMS curves. The closest to real grain and tonally stable.</td><td>Everyday work and export.</td></tr>
+              <tr><td>RMS calibrated</td><td>A particle model whose strength comes from the RMS granularity of the film (from the profile or entered by hand).</td><td>When you want grain “as in the data sheet” of a specific film.</td></tr>
+              <tr><td>Grain synthesis</td><td>A random field of individual grains, in micrometres on the film plane. Very heavy to compute, experimental.</td><td>Experiments. For photos up to 32 MP.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h5>Pitfalls</h5>
+        <p>The panel greys out the controls that the chosen model does not use. With Synthesis, <span class="ui">Grain amount</span>, <span class="ui">Grain saturation</span>, the RMS granularity section and Particle grain are greyed out; <span class="ui">Final blur (µm)</span>, <span class="ui">Seed</span>, <span class="ui">Keep average colour under grain</span> and <span class="ui">Film format</span> still work. With the other models, the Grain synthesis section is greyed out. The values stay saved.</p>
+      </div>
+
+      <div class="control">
+        <h3>Grain amount</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–2</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>Grain strength for the Preview, Production and RMS models. 1 is the value that follows from the film. Grain synthesis has its own <span class="ui">Amount</span> slider.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/grain-g-production-crop.webp"><img data-local src="img/grain-g-production-crop.webp" alt="Production, amount 1" loading="lazy"></a><figcaption><strong>Amount 1</strong></figcaption></figure></li>
+          <li><figure><a href="img/grain-g-production-amount2-crop.webp"><img data-local src="img/grain-g-production-amount2-crop.webp" alt="Production, amount 2" loading="lazy"></a><figcaption><strong>Amount 2</strong></figcaption></figure></li>
+        </ul>
+      </div>
+
+      <div class="control">
+        <h3>Grain saturation</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–1</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>How colourful the grain is. Colour film grain has colour; 0 reduces it to a neutral, “silver” look.</p>
+      </div>
+
+      <div class="control">
+        <h3>Final blur (µm)</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0–25 µm</dd></div><div><dt>Default</dt><dd>7.17 µm</dd></div></dl>
+        <p>The final blur of the grain, the equivalent of the sharpness of the enlarger or scanner optics. Lower values give sharper, “harder” grain.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/grain-g-production-crop.webp"><img data-local src="img/grain-g-production-crop.webp" alt="Final blur 7.17" loading="lazy"></a><figcaption><strong>7.17 µm</strong></figcaption></figure></li>
+          <li><figure><a href="img/grain-g-production-blur2-crop.webp"><img data-local src="img/grain-g-production-blur2-crop.webp" alt="Final blur 2" loading="lazy"></a><figcaption><strong>2 µm</strong>More distinct, sharper grain.</figcaption></figure></li>
+        </ul>
+      </div>
+
+      <div class="control">
+        <h3>Seed</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts"><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>The number of the random grain pattern. The same value gives identical grain in the preview and in export. Change it when you want a different “copy” of the grain, for example on two photos from a series.</p>
+      </div>
+
+      <div class="control">
+        <h3>Keep average colour under grain</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts"><div><dt>New look</dt><dd>on</dd></div></dl>
+        <p>Grain drawn on pixels shifts the average density and, through the paper, the average colour. Without correction, the image with grain is about 3–8% darker and cooler at 24 MP, and the more so the higher the resolution. With this option on, the local average is brought back to that of the image without grain. The preview and the export then have the same colour.</p>
+        <h5>When to turn it off</h5>
+        <p>Only for comparisons with the original Spektrafilm.</p>
+      </div>
+
+      <div class="control">
+        <h3>Film format</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain</p>
+        <dl class="facts"><div><dt>Options</dt><dd>8 mm, Super 8, 16 mm, Super 16, 35 mm, Super 35, 65 mm, IMAX 70</dd></div><div><dt>Default</dt><dd>35 mm</dd></div></dl>
+        <p>The physical size of the frame. A smaller frame means greater enlargement, so larger grain and wider halation and scatter. It also scales the range of the DIR couplers and the scanner sharpness, so it changes the look even without grain.</p>
+        <ul class="gallery">
+          <li><figure><a href="img/grain-g-production-crop.webp"><img data-local src="img/grain-g-production-crop.webp" alt="35 mm format" loading="lazy"></a><figcaption><strong>35 mm</strong></figcaption></figure></li>
+          <li><figure><a href="img/grain-g-format-16-crop.webp"><img data-local src="img/grain-g-format-16-crop.webp" alt="16 mm format" loading="lazy"></a><figcaption><strong>16 mm</strong>Clearly larger grain.</figcaption></figure></li>
+        </ul>
+        <h5>Format and your camera</h5>
+        <p>This setting describes the film frame you simulate, not the camera sensor. The whole photo is treated as the whole frame of the chosen format. For photos from full-frame, APS-C or medium-format cameras, leave 35 mm if you want the look of 35 mm film. Long side of the frame in the model: 8 mm 4.8 mm, Super 8 5.8 mm, 16 mm 10.3 mm, Super 16 12.5 mm, Super 35 24.9 mm, 35 mm 35 mm, 65 mm 52.5 mm, IMAX 70 70.4 mm. A crop in C1 cuts out part of this frame, like cutting out part of a negative: the grain stays tied to the whole photo, so after a strong crop and enlargement to the same size it looks larger. For even larger grain, use a smaller format or <span class="ui">Enlarger scale</span>.</p>
+        <h5>When to use</h5>
+        <p>The 65 mm format (large cinema frame) for smooth, fine grain; 16 mm or Super 8 for strong, cinematic grain.</p>
+      </div>
+
+      <h2>RMS granularity</h2>
+      <div class="control">
+        <h3>Use stock RMS granularity</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain › RMS granularity, RMS calibrated model only</p>
+        <dl class="facts"><div><dt>Default</dt><dd>on</dd></div></dl>
+        <p>Takes the RMS granularity from the film profile (the data-sheet value, measured on the negative). When it is off, you enter it yourself with the <span class="ui">Red RMS × 1000</span>, <span class="ui">Green RMS × 1000</span> and <span class="ui">Blue RMS × 1000</span> sliders (0.1–100, default 7 / 7 / 12).</p>
+      </div>
+      <div class="control">
+        <h3>RMS strength</h3>
+        <p class="path">Spektrafilm optics › Spektrafilm grain › RMS granularity</p>
+        <dl class="facts"><div><dt>Range</dt><dd>0.001–4</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
+        <p>A multiplier for the RMS grain strength. According to users of the Spektrafilm forum, RMS values of about 12–17 matched their 35 mm scans best, but a lab scan has its own sharpening and noise reduction, so such comparisons are approximate.</p>
+      </div>
+
+      <h2>Particle grain</h2>
+      <p>Details of the particle model used by Preview, Production and RMS. The default values come from the original Spektrafilm; most people never change them.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control</th><th>Range, default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Use emulsion sublayers</span></td><td>on</td><td>Three fixed emulsion sublayers (fast, medium, slow). When off, the number is set by <span class="ui">Sublayers</span> (1–8).</td></tr>
+            <tr><td><span class="ui">Particle area (µm²)</span></td><td>0.01–5, 0.1</td><td>The size of a single particle. Larger gives coarser grain. Set automatically with RMS.</td></tr>
+            <tr><td><span class="ui">Dye cloud blur (µm)</span></td><td>0–10, 1</td><td>The blur of the dye cloud around a particle. Only with sublayers.</td></tr>
+            <tr><td><span class="ui">Microstructure scale</span>, <span class="ui">Microstructure width (nm)</span></td><td>0–4, 0.2; 0–500, 30</td><td>The fine structure of the clouds. Only with sublayers. At 35 mm and typical resolutions it is below the visibility threshold; it appears with small formats.</td></tr>
+            <tr><td><span class="ui">Particle scale · R</span>, <span class="ui">· G</span>, <span class="ui">· B</span></td><td>0.01–20; 1.2 / 1 / 2.5</td><td>The relative particle size in the layers. The blue layer is the coarsest, as in real film.</td></tr>
+            <tr><td><span class="ui">Minimum density · R</span>, <span class="ui">· G</span>, <span class="ui">· B</span></td><td>0–1; 0.04 / 0.05 / 0.06</td><td>The density below which grain fades out.</td></tr>
+            <tr><td><span class="ui">Uniformity · R</span>, <span class="ui">· G</span>, <span class="ui">· B</span></td><td>0–1; 0.99 / 0.97 / 0.98</td><td>How evenly the grains are distributed. Lower gives more “clumpy” grain.</td></tr>
+            <tr><td><span class="ui">Layer 1 scale</span>, <span class="ui">Layer 2 scale</span>, <span class="ui">Layer 3 scale</span></td><td>0.01–20; 6 / 1 / 0.4</td><td>The relative grain size in the fast, medium and slow sublayers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Grain synthesis</h2>
+      <aside class="note pitfall">
+        <span class="note-title">Experimental feature</span>
+        <p>Grain synthesis can change brightness and colour, not only texture. It works up to 32 MP: with a larger preview or export the panel shows an error, and you have to lower the resolution or change the model. At the default settings it gives much stronger grain than Production, and stronger still with <span class="ui">Blur grain as light</span> off. For everyday work, choose Production.</p>
+      </aside>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Control</th><th>Range, default</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Draft synthesis preview</span></td><td>off</td><td>A draft preview with at most two samples: faster, but the grain may look noisier. Does not affect export. The setting is shared by all photos.</td></tr>
+            <tr><td><span class="ui">Layered grain</span></td><td>on</td><td>Grains in three emulsion sublayers.</td></tr>
+            <tr><td><span class="ui">Match grain to output size</span></td><td>on in new looks</td><td>Each pixel averages the grain over its own area of the film. A smaller preview and a downsized export then have the colour and grain of a downsized full-resolution image. Full resolution from 24 MP upwards on 35 mm does not change.</td></tr>
+            <tr><td><span class="ui">Remove sampling noise</span></td><td>on in new looks</td><td>Works together with the previous option. Gives the grain strength you would get with an unlimited number of samples, in the same render time.</td></tr>
+            <tr><td><span class="ui">Blur grain as light</span></td><td>on in new looks</td><td>The final grain blur averages the light passing through the film, as a lens or scanner does, not the density. The colour under the grain stays correct even without <span class="ui">Keep average colour under grain</span>, and the grain is about one third weaker than with the option off. Together with the two previous options, a smaller preview has the grain of a downsized export (a difference of up to about 10%). Saved looks keep the previous setting.</td></tr>
+            <tr><td><span class="ui">Size</span>, <span class="ui">Amount</span>, <span class="ui">Sharpness</span></td><td>0.25–4, 1; 0–3, 1; 0.25–4, 1</td><td>Grain size, grain strength and the sharpness of the grain edges.</td></tr>
+            <tr><td><span class="ui">Quality</span>, <span class="ui">Samples</span></td><td>0.25–4, 1; 1–2048, 128</td><td>Accuracy and the number of samples per pixel. The product Samples × Quality is limited to 1024.</td></tr>
+            <tr><td><span class="ui">Mean radius (µm)</span>, <span class="ui">Radius variation</span></td><td>0.05–10, 0.25; 0–1, 0</td><td>The mean grain radius and its spread.</td></tr>
+            <tr><td><span class="ui">Observation width (µm)</span></td><td>0–20, 1</td><td>The width of a pixel's “observation window” on the film.</td></tr>
+            <tr><td><span class="ui">Cell size ratio</span>, <span class="ui">Radius quantile</span>, <span class="ui">Coverage tolerance</span>, <span class="ui">Max grains per cell</span></td><td>0.25–2, 1; 0.95–0.9999, 0.999; 0.000001–0.01, 0.0001; 1–128, 32</td><td>Technical parameters of the algorithm: the cell grid, the reach of the largest grains, the coverage tolerance and the grain limit per cell.</td></tr>
+            <tr><td><span class="ui">Radius scale · R</span>, <span class="ui">· G</span>, <span class="ui">· B</span></td><td>0.01–20; 1.2 / 1 / 2.5</td><td>The relative grain radius in the layers.</td></tr>
+            <tr><td><span class="ui">Layer 1 scale</span>, <span class="ui">Layer 2 scale</span>, <span class="ui">Layer 3 scale</span> (synthesis)</td><td>0.01–20; 6 / 1 / 0.4</td><td>The relative grain size in the sublayers.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="note pitfall">
+        <span class="note-title">Pitfall: graphics card protection</span>
+        <p>Settings whose work per pixel would exceed the GPU driver's time limit (many samples with a large radius spread, a high quantile or large radius scales) are rejected with a message instead of resetting the graphics card driver.</p>
+      </aside>
+
+      <h2>Capture One Grain</h2>
+      <p>The separate <span class="ui">Capture One Grain (applied to the C1 variant)</span> section sets Capture One's own grain, not Spektrafilm's. The sliders change nothing until you click <span class="ui">Apply grain</span>. The panel then saves the C1 grain in the variant, and the grain acts <strong>before</strong> the film simulation, that is, like scene noise.</p>
+      <div class="control">
+        <h3>Grain type, Grain impact, Grain granularity</h3>
+        <p class="path">Capture One Grain (applied to the C1 variant)</p>
+        <dl class="facts">
+          <div><dt>Grain type</dt><dd>Fine Grain, Silver Rich, Soft, Cubic Grain, Tabular Grain, Harsh; default Soft</dd></div>
+          <div><dt>Grain impact</dt><dd>0–100, default 25</dd></div>
+          <div><dt>Grain granularity</dt><dd>0–100, default 50</dd></div>
+        </dl>
+        <p>The same settings as in the Film Grain tool in C1. <span class="ui">Grain granularity</span> does not work for the Fine Grain type.</p>
+      </div>
+      <div class="control">
+        <h3>Apply grain, Restore grain</h3>
+        <p class="path">Capture One Grain (applied to the C1 variant)</p>
+        <p><span class="ui">Apply grain</span> saves the C1 grain in the current variant; you can undo it with ordinary Ctrl+Z in C1. <span class="ui">Restore grain</span> brings back the grain the variant had before the first of a run of Apply grain clicks in this C1 session. The panel remembers it only until Capture One is closed.</p>
+        <h5>When to use</h5>
+        <p>Rarely. Spektrafilm grain (Production) is more natural, because it forms in the film and passes through the paper. C1 grain can be useful when you want “scene” noise that the film will then soften.</p>
+      </div>
+
+      <h2>Grain for screen and for print</h2>
+      <p>These are starting points from practice, not measurements. Judge the grain strength on your own print or screen.</p>
+      <ul>
+        <li><strong>Screen, Instagram, small images:</strong> Production, <span class="ui">Grain amount</span> 1–1.5. Downsizing weakens the grain anyway.</li>
+        <li><strong>Prints 30×45 cm and larger:</strong> Production, amount 0.8–1, judged in the 100% preview (<span class="ui">Viewer resolution</span> = Auto or Native resolution).</li>
+        <li><strong>Strong, cinematic grain:</strong> <span class="ui">Film format</span> 16 mm or Super 16 and Production.</li>
+      </ul>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>

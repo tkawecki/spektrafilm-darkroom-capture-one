@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+<PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Nullable>enable</Nullable></PropertyGroup>
+<ItemGroup><ProjectReference Include="../../NativePanel/NativePanel.csproj" /><Reference Include="P1.C1.ImageCoreWrapper" HintPath="C:\Program Files\Capture One\Capture One\P1.C1.ImageCoreWrapper.dll" Private="false" /></ItemGroup>
+</Project>

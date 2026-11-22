@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Troubleshooting and limitations | Spektrafilm Darkroom</title>
+<link rel="stylesheet" href="assets/manual.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<div class="frame">
+  <div class="sidebar"><noscript><a href="index.html">Table of contents</a></noscript></div>
+  <div class="content-wrap">
+    <main id="content">
+      <div class="test-strip"></div>
+
+      <h1>Troubleshooting and limitations</h1>
+      <p class="lede">The most common symptoms and their causes, the panel messages, and the things Spektrafilm Darkroom does not do.</p>
+
+      <h2>Symptom, cause, solution</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Most common cause</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td>Too much contrast, burnt-out highlights</td><td>Input with the C1 curve; film exposed too much for a dark scene; hard paper.</td><td><span class="ui">Use recommended input</span>; <span class="ui">Film exposure</span> −0.3 to −1; <span class="ui">Print gamma</span> 0.85; <span class="ui">Print highlight shape</span> −0.5 (<a href="12-recipes.html#mocne-slonce">recipe</a>).</td></tr>
+            <tr><td>The image is softer than in C1</td><td>The neutral input skips C1 sharpening, Clarity and Structure. At 400%, Viewer smoothing adds to it.</td><td><span class="ui">Enable scanner controls</span>, <span class="ui">Scanner MTF50 (lp/mm)</span> 0, <span class="ui">Unsharp amount</span> 0.7–2; or <span class="ui">Micro contrast</span> +0.1 to +0.3 (<a href="09-finishing.html#ostrosc">chapter 9, Sharpness</a>). Judge at 100%.</td></tr>
+            <tr><td>Flat, grey print</td><td>Soft paper in flat light; Look strength below 100%; too much preflash.</td><td><span class="ui">Print gamma</span> 1.1–1.3; Supra or Ultra Endura; preflash 0.</td></tr>
+            <tr><td>Whites are not white</td><td>Paper white is usually 195–215/255. That is a property of a print.</td><td><span class="ui">Enable scanner controls</span> and <span class="ui">Correct white level</span> in the Scanning section (Print or inverted scan).</td></tr>
+            <tr><td>All films look similar</td><td>The “Capture One development” input; the same soft paper.</td><td>Neutral input. Film changes mainly colour, and paper changes contrast and black, so try a different paper too.</td></tr>
+            <tr><td>No visible halation</td><td>C1 clips the highlights at sensor white.</td><td><span class="ui">Highlight boost (EV)</span> 3–6.</td></tr>
+            <tr><td>Colours “drift” after changing the base</td><td>The film base shifts the colour balance.</td><td>Go back to 1 or compensate with filtration.</td></tr>
+            <tr><td>Dark areas print lighter than greys</td><td>DIR couplers above a strength of 1.5.</td><td>Lower <span class="ui">DIR coupler amount</span> or Interlayer inhibition.</td></tr>
+            <tr><td>Shadows merge into black</td><td>2383/2393 print film or strong paper contrast.</td><td>Positive <span class="ui">Print shadow shape</span>, higher <span class="ui">Film exposure</span>.</td></tr>
+            <tr><td>Grain very strong and colourful</td><td>Grain synthesis at a large Viewer size.</td><td>Production model; with Synthesis, lower <span class="ui">Amount</span>.</td></tr>
+            <tr><td>Looks disappeared after moving the catalog</td><td>Looks are tied to the path of the catalog or session.</td><td>Restore the old path; in future, save important looks as presets.</td></tr>
+            <tr><td>The look disappeared after copying adjustments in C1</td><td>Copy/Apply Adjustments in C1 does not carry Spektrafilm.</td><td><span class="ui">Copy look</span> and <span class="ui">Apply copied look to selected</span>.</td></tr>
+            <tr><td>Ctrl+Z does not undo a change in the panel</td><td>The focus is in the Viewer or in another C1 tool.</td><td>Click in the panel or use the <span class="ui">Undo</span> button.</td></tr>
+            <tr><td>The original also has a film look</td><td>Spektrafilm is on by default for every variant without a saved look.</td><td>Clear <span class="ui">Enable Spektrafilm</span> on the variant that should stay without film.</td></tr>
+            <tr><td>No panel, or the export has no film</td><td>Capture One was started with the ordinary shortcut.</td><td>Close C1 and start the Spektrafilm shortcut (<a href="16-running-and-data.html">chapter 16</a>).</td></tr>
+            <tr><td>The Viewer does not change</td><td>The Viewer shows several photos at once, or the Viewer is hidden.</td><td>Show one photo in the main Viewer (<a href="10-tools.html#stan-podgladu">chapter 10</a>).</td></tr>
+            <tr><td>I cannot find a control</td><td>The section is nested, or the name is cut off in a narrow panel.</td><td>Use the manual’s search: the result gives the section path. Widen the panel or use <span class="ui">Float Tool</span>.</td></tr>
+            <tr><td>Controls are greyed out</td><td>Spektrafilm is off; the function does not work in the current mode or waits for another option (filter Off, halation 0, grain model Off).</td><td>Read the text above the control; the panel says what is missing.</td></tr>
+            <tr><td>The C1 export saved files without film</td><td>The panel did not take over the C1 export, or Spektrafilm was off on those variants.</td><td>Check the message at the top of the panel; export with the panel buttons.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Panel messages</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Message</th><th>Meaning and what to do</th></tr></thead>
+          <tbody>
+            <tr><td>Enable and select one Export Recipe to use Spektrafilm.</td><td>Only in a C1 version where the recipe export is unavailable: the panel then falls back to saving with a dialog and needs exactly one recipe that is both enabled and selected.</td></tr>
+            <tr><td>… Capture One has no export recipe for this image.</td><td>C1 would use no recipe for this photo (none is active, or it skipped them all, for example for a photo that is too small). Turn on a recipe in the C1 export window.</td></tr>
+            <tr><td>… the recipe format … is not a processed image</td><td>The recipe copies the original or writes for Affinity; Spektrafilm does not write it. The other recipes work as usual.</td></tr>
+          <tr><td>… this document has no output location. Choose a folder or the image folder as the recipe's destination.</td><td>A catalog has no output folder, so a recipe that writes to the output location has nowhere to write. In the recipe choose a folder or the image folder as the destination. The other recipes work as usual.</td></tr>
+            <tr><td>Export cancelled · … can be resumed.</td><td>The export was stopped. <span class="ui">Resume interrupted export…</span> writes the missing files (<a href="11-export.html#receptury">chapter 11</a>).</td></tr>
+            <tr><td>A matching Capture One Linear Response curve is unavailable…</td><td>C1 has no Linear Response curve for this camera. Choose <span class="ui">Capture One development</span> in <span class="ui">Input preparation</span> for this photo.</td></tr>
+            <tr><td>Native Viewer grain synthesis supports up to 32,000,000 pixels…</td><td>Grain synthesis works up to 32 MP. Lower <span class="ui">Viewer resolution</span> or change the grain model.</td></tr>
+            <tr><td>The export canvas exceeds 16,384 pixels per side or 100 megapixels…</td><td>The export is too large. The full-size export from the panel has no size setting: use an ordinary C1 export with a recipe set to a smaller size.</td></tr>
+            <tr><td>The native Viewer canvas exceeds 16,384 pixels per side or 100 megapixels…</td><td>The Viewer image is too large. Choose a lower <span class="ui">Viewer resolution</span>.</td></tr>
+            <tr><td>The selected crop extends outside the image canvas…</td><td>The C1 crop extends beyond the photo. Move it inside.</td></tr>
+            <tr><td>Connect the original image for the full-resolution Spektrafilm render.</td><td>The original photo is offline. Connect the drive.</td></tr>
+            <tr><td>Could not load this image’s Spektrafilm look…</td><td>The saved look uses something that is missing (for example a deleted film). The file is protected, and a copy of it is kept before it is overwritten. Restore the missing item, load a preset or use Defaults.</td></tr>
+            <tr><td>Recovered this image’s last unsaved Spektrafilm look…</td><td>The last change could not be saved (for example the disk was full); the panel restored it from the recovery copy.</td></tr>
+            <tr><td>Spektrafilm could not save your look…</td><td>Saving failed. The change is protected in a recovery copy; do not close C1 until saving works again.</td></tr>
+            <tr><td>Wait for the full Viewer frame before pinning a reference.</td><td>Wait until the Viewer has finished rendering.</td></tr>
+            <tr><td>Paper textures support at most 16 MP and 8192 pixels per side.</td><td>The paper texture is too large.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A dark red frame with a message in the panel means a rendering error: the renderer rejected the settings. The message says what it concerns; most often the Grain synthesis settings are too heavy or the Viewer image is too large.</p>
+
+      <h2>Functions that work differently from what the name suggests</h2>
+      <ul>
+        <li><strong>Look strength</strong> mixes with the digital image; it does not weaken an “effect” (<a href="05-exposure-and-contrast.html">chapter 5</a>).</li>
+        <li><strong>T films</strong> do not tint the photo blue (<a href="04-films-and-papers.html">chapter 4</a>).</li>
+        <li><strong>Filtration</strong> works the opposite way to a colour slider in an editor (<a href="06-colour.html">chapter 6</a>).</li>
+        <li><strong>Preflash</strong> is very sensitive: 0.01–0.02 is enough.</li>
+        <li><strong>Negative leuco cyan</strong> works only with <span class="ui">Negative bleach bypass</span>.</li>
+        <li><strong>Developer exhaustion</strong> is subtle: on a landscape, even 50% changes almost nothing.</li>
+        <li><strong>Shoulder</strong> in Levels acts only near white, so on a print without white level correction it often changes nothing.</li>
+        <li><strong>The burnt paper border</strong> works only with at least one texture layer.</li>
+        <li><strong>Scan rotation</strong> without a crop leaves white corners.</li>
+        <li><strong>Enable scanner controls</strong> is not neutral: it immediately turns on lens blur, sharpening and flare at their default values (<a href="09-finishing.html#ostrosc">chapter 9</a>).</li>
+      </ul>
+
+      <h2>Capture One limitations</h2>
+      <ul>
+        <li>The integration uses internal mechanisms of C1 16.9. After a Capture One update, the panel has to be checked before you work with it.</li>
+        <li>C1 clips the highlights at sensor white; Spektrafilm receives a 16-bit image, not the full highlight headroom of the RAW file.</li>
+        <li>The preview in the C1 export window does not show the effect; the effect is in the file.</li>
+        <li>Process Negative (developing scanned negatives) is not available, because the C1 processing pipeline does not support it.</li>
+        <li>Ordinary Copy/Apply and Ctrl+Z in C1 do not cover Spektrafilm settings; the panel has its own tools.</li>
+        <li>Each separate processing of a photo by C1 can give a very slightly different input image (differences of up to 1/255), so two exports of the same photo are not always bit-for-bit identical.</li>
+      </ul>
+
+      <h2>What this version does not have</h2>
+      <ul>
+        <li>Black-and-white films (a <a href="12-recipes.html#czarno-biel">recipe</a> describes a monochrome print from colour film), Convert Film and <code>.sfroll</code>, <code>.sfpreset</code>, <code>.sfstock</code> files: they belonged to a second processing engine, which was removed on 17 November 2026.</li>
+        <li>Printer lights (APD): the data for this standard is licensed.</li>
+        <li>Ageing measurements for specific films: the ageing model is creative.</li>
+        <li>Synthesis grain blur that behaves “like light” (in transmittance): it is waiting for testing and implementation.</li>
+      </ul>
+
+      <nav class="pager" aria-label="Previous and next chapter"></nav>
+      <p class="colophon"></p>
+    </main>
+    <aside class="page-toc" aria-label="On this page"></aside>
+  </div>
+</div>
+<script src="assets/search-index.js"></script>
+<script src="assets/manual.js"></script>
+</body>
+</html>
