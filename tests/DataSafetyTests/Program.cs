@@ -200,5 +200,58 @@ string[] PreservedFiles(object store, Guid variant) => Directory.Exists(Preserve
     foreach (var kept in new[] { "SPEKTRAFILM_REFERENCE_CACHE", "SPEKTRAFILM_VULKAN_DEVICE_INDEX", "PATH_TEST_KEEP" })
         Check(start.Environment.ContainsKey(kept), kept + " removed");
 }
+// 9. A catalog that was moved or renamed: its old look folder is found by variant and copied, never replacing a look
+//    made in the new place; a folder whose catalog still exists (a copy) is not offered. After upstream 14f1d5b.
+{
+    object StoreFor(string database) => Activator.CreateInstance(T("VariantLookStore"), all, null, new object[] { root, database }, null)!;
+    var oldCatalog = Path.Combine(scratch, "Old", "Trip.cocatalogdb");
+    var newCatalog = Path.Combine(scratch, "New", "Trip renamed.cocatalogdb");
+    var copyCatalog = Path.Combine(scratch, "Copy", "Trip.cocatalogdb");
+    foreach (var file in new[] { oldCatalog, newCatalog, copyCatalog }) { Directory.CreateDirectory(Path.GetDirectoryName(file)!); File.WriteAllText(file, "db"); }
+    var moved = Guid.NewGuid(); var kept = Guid.NewGuid(); var copied = Guid.NewGuid();
+    var old = StoreFor(oldCatalog);
+    Call(old, "Queue", moved, Look(1.25)); Call(old, "Queue", kept, Look(2)); Call(old, "Flush");
+    var copy = StoreFor(copyCatalog);
+    Call(copy, "Queue", copied, Look(5)); Call(copy, "Flush");
+    var oldFolder = Folder(old);
+    Check(File.Exists(Path.Combine(oldFolder, "catalog.json")), "look folder not marked with its catalog");
+    var fresh = StoreFor(newCatalog);
+    Check(Call(fresh, "MovedLooksFolder", moved) is null, "a catalog that still exists must not be offered");
+    File.Delete(oldCatalog); // the catalog is moved while Capture One is closed; the next opening finds its folder
+    fresh = StoreFor(newCatalog);
+    Call(fresh, "Queue", kept, Look(9)); Call(fresh, "Flush");
+    Check(string.Equals((string?)Call(fresh, "MovedLooksFolder", moved), oldFolder, StringComparison.OrdinalIgnoreCase), "moved catalog's looks not found");
+    Check(Call(fresh, "MovedLooksFolder", copied) is null, "the folder of a copy whose catalog exists was offered");
+    Check((int)Call(fresh, "CopyLooksFrom", oldFolder)! == 1, "copy count wrong (a look made here must not be replaced)");
+    var reread = StoreFor(newCatalog);
+    Check(Exposure(Call(reread, "Read", moved)) == 1.25 && Exposure(Call(reread, "Read", kept)) == 9, "copied looks wrong or a newer look replaced");
+    Check(Call(reread, "MovedLooksFolder", moved) is null, "offered again after copying");
+    Check(Exposure(Call(StoreFor(oldCatalog), "Read", moved)) == 1.25, "old folder changed");
+    Check(Throws<InvalidOperationException>(() => Call(reread, "CopyLooksFrom", scratch)), "copy from outside the looks root accepted");
+}
+// 10. An edit that reaches neither its file nor a recovery copy is reported, so closing Capture One can warn
+//     (after upstream bb5aa9b).
+{
+    var store = Store(); var variant = Guid.NewGuid();
+    var path = Path.Combine(Folder(store), variant.ToString("N") + ".json");
+    var recovery = Path.Combine(scratch, "Look recovery", Path.GetFileName(Folder(store)), variant.ToString("N") + ".pending.json");
+    Directory.CreateDirectory(path); Directory.CreateDirectory(recovery);
+    Call(store, "Queue", variant, Look(6));
+    Check(Throws<IOException>(() => Call(store, "Flush")), "failed save must be reported");
+    Check((bool)P(store, "HasUnprotectedPending")!, "edit kept only in memory not reported");
+    Directory.Delete(path); Directory.Delete(recovery);
+    Call(store, "Flush");
+    Check(!(bool)P(store, "HasUnprotectedPending")!, "saved edit still reported as unprotected");
+}
+// 11. The panel log moves aside past its limit instead of growing without bound (after upstream cd39774).
+{
+    var log = Path.Combine(scratch, "panel.log");
+    File.WriteAllText(log, new string('x', 2048)); File.WriteAllText(log + ".1", "older");
+    Call(T("PanelLog"), "Rotate", log, 1024L);
+    Check(!File.Exists(log) && new FileInfo(log + ".1").Length == 2048, "oversized log not moved to .1");
+    File.WriteAllText(log, "short");
+    Call(T("PanelLog"), "Rotate", log, 1024L);
+    Check(File.ReadAllText(log) == "short", "small log rotated");
+}
 Directory.Delete(scratch, recursive: true);
-Console.WriteLine($"PASS {assertions} data-safety assertions: preserved/recovered looks, grain rollback, path aliases, worker environment.");
+Console.WriteLine($"PASS {assertions} data-safety assertions: preserved/recovered looks, moved catalogs, unsaved edits, grain rollback, path aliases, worker environment, log size.");

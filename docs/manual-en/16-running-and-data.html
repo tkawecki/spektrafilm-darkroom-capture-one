@@ -42,7 +42,7 @@
             <tr><td><code>Look recovery</code></td><td>Recovery copies: a change that could not be saved, and preserved originals of looks the panel could not load.</td></tr>
             <tr><td><code>Panel preferences.json</code></td><td>Settings shared by all photos: <span class="ui">Viewer resolution</span>, <span class="ui">Drag preview resolution</span>, <span class="ui">Draft synthesis preview</span>.</td></tr>
             <tr><td><code>Paper textures</code></td><td>Paper textures imported in the paper editor.</td></tr>
-            <tr><td><code>panel.log</code></td><td>The panel log. Useful when reporting a problem: it contains error messages and rendering times.</td></tr>
+            <tr><td><code>panel.log</code></td><td>The panel log. Useful when reporting a problem: it contains error messages and rendering times. Past 16 MB it is renamed to <code>panel.log.1</code> (replacing the previous one) and a new log starts.</td></tr>
           </tbody>
         </table>
       </div>
@@ -57,7 +57,8 @@
       </ul>
 
       <h2>Moving a catalog and another computer</h2>
-      <p>Looks are tied to the full path of the catalog or session. After you move or rename a catalog, the panel treats it as new and shows the default settings. The old looks are still in <code>Variant looks</code>, but under the old path.</p>
+      <p>Looks are tied to the full path of the catalog or session. After you move or rename a catalog (or its drive letter changes), the panel treats it as new and shows the default settings. The old looks are still in <code>Variant looks</code>, under the old path.</p>
+      <p>When you select a photo that has no look in the new place but one under the old path, the panel says so and shows <span class="ui">Copy looks from the moved catalog</span>. The button copies all looks, versions and grain notes of the old catalog to the new one. It never replaces a look you already made in the new place, and the old folder stays as it was. The panel recognises the old folder when the catalog file is no longer at its old path; a copy of a catalog whose original is still in place is not offered.</p>
       <ul>
         <li>The simplest way: do not move catalogs you work on with Spektrafilm, or restore the old path after moving.</li>
         <li>Before moving, save important looks as presets. You can load a preset on any photo, in any catalog and on another computer.</li>

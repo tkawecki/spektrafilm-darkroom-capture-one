@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 
+// records: the folder where what the panel applied is kept per variant, so "Restore grain" still works after
+// Capture One restarts (after upstream c1a0218, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
 internal static class NativeGrain
 {
     private static readonly Dictionary<Guid, AppliedGrain> Applied = new();
@@ -17,6 +20,7 @@ internal static class NativeGrain
 
     internal static void Apply(
         object window,
+        string records,
         Guid expectedVariantId,
         int type,
         double impact,
@@ -38,32 +42,32 @@ internal static class NativeGrain
         if (current == next)
             return;
 
-        var original = Applied.TryGetValue(target.Id, out var previous) && previous.Last == current
+        var original = Find(records, target.Id) is { } previous && previous.Last == current
             ? previous.Original
             : current;
-        ChangeWithReceipt(target, original, () => SetValues(target, next, current, "Spektrafilm: Capture One Grain"));
+        ChangeWithReceipt(records, target, original, () => SetValues(target, next, current, "Spektrafilm: Capture One Grain"));
     }
 
-    internal static bool HasApplied(object window, Guid expectedVariantId)
+    internal static bool HasApplied(object window, string records, Guid expectedVariantId)
     {
         var target = SelectedTarget(window, expectedVariantId);
-        return Applied.TryGetValue(target.Id, out var previous) && previous.Last == ReadValues(target);
+        return Find(records, target.Id) is { } previous && previous.Last == ReadValues(target);
     }
 
-    internal static void Restore(object window, Guid expectedVariantId)
+    internal static void Restore(object window, string records, Guid expectedVariantId)
     {
         var target = SelectedTarget(window, expectedVariantId);
         var current = ReadValues(target);
-        if (!Applied.TryGetValue(target.Id, out var previous) || previous.Last != current)
+        if (Find(records, target.Id) is not { } previous || previous.Last != current)
             throw new InvalidOperationException("Capture One Grain changed since the panel applied it.");
 
-        ChangeWithReceipt(target, previous.Original,
+        ChangeWithReceipt(records, target, previous.Original,
             () => SetValues(target, previous.Original, current, "Spektrafilm: Restore Capture One Grain"));
     }
 
     // Ported from nothing-complex 285f0aa (HS-19): record what Capture One actually holds after a
     // change, even a failed one, so Restore grain keeps working and never overwrites a later user edit.
-    private static void ChangeWithReceipt((object Variant, Type Type, Guid Id) target, GrainSettings original, Action change)
+    private static void ChangeWithReceipt(string records, (object Variant, Type Type, Guid Id) target, GrainSettings original, Action change)
     {
         Exception? failure = null;
         try { change(); }
@@ -71,12 +75,11 @@ internal static class NativeGrain
         try
         {
             var actual = ReadValues(target);
-            if (actual == original) Applied.Remove(target.Id);
-            else Applied[target.Id] = new(original, actual);
+            Remember(records, target.Id, actual == original ? null : new(original, actual));
         }
         catch (Exception verificationError)
         {
-            Applied.Remove(target.Id);
+            Remember(records, target.Id, null);
             failure = failure is null ? verificationError : new AggregateException(
                 "Capture One Grain could not be changed safely and its resulting values could not be verified.", failure, verificationError);
         }
@@ -161,4 +164,47 @@ internal static class NativeGrain
         type.GetMethod(name, parameters) ?? throw new MissingMethodException(type.FullName, name);
 
     private sealed record AppliedGrain(GrainSettings Original, GrainSettings Last);
+
+    private static string RecordPath(string records, Guid variant) => Path.Combine(records, variant.ToString("N") + ".json");
+
+    private static AppliedGrain? Find(string records, Guid variant)
+    {
+        if (Applied.TryGetValue(variant, out var known))
+            return known;
+        try
+        {
+            var saved = PanelFiles.ReadPreset<AppliedGrain>(RecordPath(records, variant));
+            if (saved.Original.VariantId != variant || saved.Last.VariantId != variant)
+                return null;
+            Applied[variant] = saved;
+            return saved;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException
+            or System.Text.Json.JsonException or NotSupportedException)
+        {
+            return null; // no record (or an unreadable one): Restore is unavailable, as before a restart
+        }
+    }
+
+    // A record that cannot be written leaves Restore working until Capture One closes, as before.
+    private static void Remember(string records, Guid variant, AppliedGrain? applied)
+    {
+        var path = RecordPath(records, variant);
+        try
+        {
+            if (applied is null)
+            {
+                Applied.Remove(variant);
+                if (File.Exists(path)) File.Delete(path);
+                return;
+            }
+            Applied[variant] = applied;
+            Directory.CreateDirectory(records);
+            PanelFiles.WritePreset(path, applied);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            StartupHook.Log("Spektrafilm could not keep the grain restore record: " + error.Message);
+        }
+    }
 }

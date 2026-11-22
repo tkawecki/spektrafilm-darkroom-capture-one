@@ -237,6 +237,9 @@ internal sealed partial class SpatialPreview : IDisposable
     private int inputRevision;
     private string? sourceSize;
     private string? failedSize;
+    // The original file was offline when the last develop failed: develop again once it is connected
+    // (after upstream a4e59ba, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+    private bool failedWhileOffline;
     private bool frameCurrent;
     private bool saveInProgress;
     private CancellationTokenSource? exportWork;
@@ -310,6 +313,7 @@ internal sealed partial class SpatialPreview : IDisposable
     internal TextBlock ExportStatus => status;
     internal int SettingsRevision => inputRevision;
     internal void CancelExport() => exportWork?.Cancel();
+    internal bool IsExporting => exportWork is not null;
     internal event Action? SettingsChanged;
     internal bool CompareSource { get => showSource.IsChecked == true; set => showSource.IsChecked = value; }
     private int DragLongEdge => ((DragSize)dragPreviewSize.SelectedItem).LongEdge;
@@ -1313,7 +1317,7 @@ internal sealed partial class SpatialPreview : IDisposable
     internal void ShowExposureComparison(Action<double> apply)
     {
         if (comparisonWindow is { IsVisible: true }) { comparisonWindow.Activate(); return; }
-        if (!enabled || !frameCurrent || source is not { } captured || sourceSpace is not { } input || getSettings() is not { } look)
+        if (!enabled || !FrameShowsCurrentPhoto() || source is not { } captured || sourceSpace is not { } input || getSettings() is not { } look)
             throw new InvalidOperationException("Wait for the full Viewer frame before comparing exposures.");
         var id = activeVariant; var revision = inputRevision; var adjustment = sourceRevision;
         var encoding = ((Choice)outputSpace.SelectedItem).Id;
@@ -1396,6 +1400,18 @@ internal sealed partial class SpatialPreview : IDisposable
             status.Text = "Rendering Spektrafilm export…";
             try
             {
+                // Capture One's settings read before the save dialog can be minutes old (and hold native pointers
+                // Capture One may have freed since): read them again once our Viewer development has ended.
+                // After upstream 4370ebe and 3c90b88 (Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+                await HostImageSource.WaitForNativeDevelopmentAsync(work.Token);
+                if (!enabled || HostProfile.CaptureTarget(window) != target)
+                {
+                    status.Text = "Export not started: the selected photo changed.";
+                    return false;
+                }
+                snapshot = HostImageSource.Capture(window, target, input.Space, captureRecipe: useRecipeSize, preparation: Preparation);
+                if (snapshot.AdjustmentKey.Counters != sourceRevisionAtDialog.AdjustmentKey.Counters)
+                    throw new InvalidOperationException("The photo changed while the export was starting. Start the export again to use one consistent set of settings.");
                 using var progress = ExportProgressWindow.Show(owner ?? Window.GetWindow(LiveControls), status, work.Cancel);
                 var result = await Task.Run(async () =>
                 {
@@ -1452,6 +1468,7 @@ internal sealed partial class SpatialPreview : IDisposable
         if (exportWork is not null) throw new InvalidOperationException("Wait for the current export to finish.");
         var plan = BatchExportSupport.CreatePlan(entries, outputDirectory, extension);
         var renders = new Dictionary<Guid, BatchRender>();
+        var captures = new Dictionary<Guid, Func<HostImageSource.Snapshot>>();
         LookOptions? catalog = null;
         // Use a detached controls context to normalize each persisted version in
         // exactly the same way as the Viewer. It never attaches to the Viewer,
@@ -1474,6 +1491,8 @@ internal sealed partial class SpatialPreview : IDisposable
                     : InputSpaces.First(x => (int)x.Space == ((int)exportColor < 4 ? (int)exportColor : (int)PreviewInputSpace.LinearRec2020));
                 var preparation = saved.Enabled ? context.Preparation : SourcePreparation.CaptureOne;
                 var source = entry.CaptureSource(window, input.Space, useRecipeSize, preparation);
+                var space = input.Space;
+                captures.Add(entry.Target.VariantId, () => entry.CaptureSource(window, space, useRecipeSize, preparation));
                 var strength = saved.Enabled ? look.Strength : 0;
                 var encoding = exportColor == ExportRgbSpace.Srgb ? ((Choice)context.outputSpace.SelectedItem).Id : "linear_rec709";
                 var args = strength > 0 ? context.RendererOptions(look, input.Id, encoding, export: true) : Array.Empty<string>();
@@ -1485,6 +1504,7 @@ internal sealed partial class SpatialPreview : IDisposable
         }
         using var work = CancellationTokenSource.CreateLinkedTokenSource(token);
         exportWork = work;
+        var ui = status.Dispatcher;
         var progress = new Progress<BatchExportSupport.Progress>(p =>
             status.Text = $"Exporting selected variants · {p.Completed}/{p.Total}" +
                 (p.Current is null ? "" : " · " + Path.GetFileName(p.Current.Target.SourcePath)));
@@ -1492,7 +1512,13 @@ internal sealed partial class SpatialPreview : IDisposable
         {
             var result = await BatchExportSupport.RunAsync(plan, async (entry, temporary, stop) =>
             {
-                var captured = renders[entry.Target.VariantId];
+                // Settings read when the batch started can be minutes old by the time this image is reached: read
+                // them again just before it develops (after upstream 3c90b88, Luka Kauzlaric, GPL-3.0).
+                await HostImageSource.WaitForNativeDevelopmentAsync(stop).ConfigureAwait(false);
+                if (ui.HasShutdownStarted) throw new OperationCanceledException("Capture One is closing.");
+                var fresh = await ui.InvokeAsync(captures[entry.Target.VariantId], DispatcherPriority.Normal, stop).Task.ConfigureAwait(false)
+                    ?? throw new OperationCanceledException("Capture One is closing.");
+                var captured = renders[entry.Target.VariantId] with { Source = fresh };
                 await Task.Run(async () =>
                 {
                     var developed = captured.Source.RenderExport(null, stop, useRecipeSize);
@@ -1616,6 +1642,7 @@ internal sealed partial class SpatialPreview : IDisposable
         sourcePreparation = null;
         sourceSize = null;
         failedRevision = null;
+        failedWhileOffline = false;
         failedSpace = null;
         failedPreparation = null;
         failedSize = null;
@@ -1712,7 +1739,8 @@ internal sealed partial class SpatialPreview : IDisposable
         }
         if (pending is not null)
             return;
-        if (needsSource && (failedRevision != revision || failedSpace != space || failedPreparation != preparation || failedSize != sourceKey))
+        if (needsSource && (failedRevision != revision || failedSpace != space || failedPreparation != preparation || failedSize != sourceKey
+                || failedWhileOffline && activeVariant == selectedVariant && OfflineSourceReturned()))
             queued = true;
 
         if (autoSize && !queued && frameCurrent && !needsSource && source is { } zoomSource && AutoFrameTooSmall(zoomSource))
@@ -1750,6 +1778,7 @@ internal sealed partial class SpatialPreview : IDisposable
         }
         queued = false;
         failedRevision = null;
+        failedWhileOffline = false;
         var settingsVersion = inputRevision;
         var started = Stopwatch.GetTimestamp();
         using var job = new CancellationTokenSource();
@@ -2019,6 +2048,7 @@ internal sealed partial class SpatialPreview : IDisposable
             failedSpace = space;
             failedPreparation = preparation;
             failedSize = sourceKey;
+            failedWhileOffline = !SelectedFileAvailable();
             ClearFrame(error);
         }
         catch (Exception) when (settingsVersion != inputRevision) { }
@@ -2028,6 +2058,36 @@ internal sealed partial class SpatialPreview : IDisposable
             if (!enabled)
                 ReleaseRenderer();
         }
+    }
+
+    // Checked at most every two seconds while a develop failed with the original offline (it may touch the disk).
+    private long nextOfflineCheck;
+    private bool OfflineSourceReturned()
+    {
+        var now = Environment.TickCount64;
+        if (now < nextOfflineCheck) return false;
+        nextOfflineCheck = now + 2000;
+        return SelectedFileAvailable();
+    }
+
+    private bool SelectedFileAvailable()
+    {
+        try { return HostProfile.ReadSelection(window).Variant.CoreImage?.IsFileAvailable == true; }
+        catch (Exception error)
+        {
+            StartupHook.Log("Spektrafilm could not check the original file: " + error.GetBaseException().Message);
+            return false;
+        }
+    }
+
+    // The frame on screen still shows the photo as Capture One has it: no edit in Capture One is being developed.
+    // Save preview, Pin reference and the comparisons wait otherwise (after upstream fc97f9d, Luka Kauzlaric, GPL-3.0).
+    private bool FrameShowsCurrentPhoto()
+    {
+        if (!frameCurrent || sourceRevision is not { } shown || activeVariant is not { } variant)
+            return false;
+        try { return HostImageSource.GetRevision(window, variant) == shown; }
+        catch (InvalidOperationException) { return false; }
     }
 
     private void ReleaseRenderer()
@@ -2390,6 +2450,11 @@ internal sealed partial class SpatialPreview : IDisposable
     {
         if (!frameCurrent || viewerFrame is not { } frame || saveInProgress)
             return;
+        if (!FrameShowsCurrentPhoto())
+        {
+            status.Text = "Wait for the Viewer to show your latest Capture One adjustments, then save the preview.";
+            return;
+        }
         try
         {
             var target = HostProfile.CaptureTarget(window);

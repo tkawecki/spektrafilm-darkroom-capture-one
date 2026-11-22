@@ -17,7 +17,9 @@ internal sealed record RecipeExportResult(int Written, int Skipped, int Failed, 
 // kept as an uncompressed 16-bit intermediate and written by Capture One through every recipe of the group.
 internal sealed partial class SpatialPreview
 {
-    private sealed record RecipeRenderGroup(BatchRender Render, bool LinearDng, IReadOnlyList<RecipeJob> Jobs);
+    // Capture: reads the variant's Capture One settings again on the UI thread just before the group develops; the
+    // settings read while planning can be minutes old by then (after upstream 3c90b88, Luka Kauzlaric, GPL-3.0).
+    private sealed record RecipeRenderGroup(BatchRender Render, Func<HostImageSource.Snapshot> Capture, bool LinearDng, IReadOnlyList<RecipeJob> Jobs);
 
     internal async Task<RecipeExportResult> RunRecipeExportAsync(RecipeExportPlan plan, Action<ExportJournal> saveJournal,
         CancellationToken token = default)
@@ -97,27 +99,28 @@ internal sealed partial class SpatialPreview
         using var context = BuildForPanel(window, () => look, _ => false);
         foreach (var variantJobs in plan.Writing.GroupBy(job => job.Entry.Target.VariantId))
         {
-            var keyed = new Dictionary<string, (BatchRender Render, List<RecipeJob> Jobs)>();
+            var keyed = new Dictionary<string, (BatchRender Render, Func<HostImageSource.Snapshot> Capture, List<RecipeJob> Jobs)>();
             foreach (var job in variantJobs)
             {
                 try
                 {
                     var linearDng = job.Format == RecipeFormat.LinearDng;
-                    var render = PrepareRecipeRender(context, value => look = value, job, linearDng, ref catalog);
+                    var render = PrepareRecipeRender(context, value => look = value, job, linearDng, ref catalog, out var capture);
                     var recipe = render.Source.Recipe!;
                     var key = FormattableString.Invariant($"{recipe.Width}x{recipe.Height}|{recipe.Scale:R}|{recipe.IgnoreCrop}|{recipe.CropMode}|{render.Color}|{linearDng}");
-                    if (!keyed.TryGetValue(key, out var group)) keyed[key] = group = (render, new List<RecipeJob>());
+                    if (!keyed.TryGetValue(key, out var group)) keyed[key] = group = (render, capture, new List<RecipeJob>());
                     group.Jobs.Add(job);
                 }
                 catch (Exception error) { fail(job, error); }
             }
-            groups.AddRange(keyed.Values.Select(group => new RecipeRenderGroup(group.Render, group.Jobs[0].Format == RecipeFormat.LinearDng, group.Jobs)));
+            groups.AddRange(keyed.Values.Select(group => new RecipeRenderGroup(group.Render, group.Capture, group.Jobs[0].Format == RecipeFormat.LinearDng, group.Jobs)));
         }
         return groups;
     }
 
     // The same per-variant preparation as the batch export, at the size of one recipe and in its render space.
-    private BatchRender PrepareRecipeRender(SpatialPreview context, Action<LookSettings?> setLook, RecipeJob job, bool linearDng, ref LookOptions? catalog)
+    private BatchRender PrepareRecipeRender(SpatialPreview context, Action<LookSettings?> setLook, RecipeJob job, bool linearDng,
+        ref LookOptions? catalog, out Func<HostImageSource.Snapshot> capture)
     {
         var saved = job.Entry.Settings;
         var look = saved.Look;
@@ -134,6 +137,8 @@ internal sealed partial class SpatialPreview
             : InputSpaces.First(x => (int)x.Space == ((int)exportColor < 4 ? (int)exportColor : (int)PreviewInputSpace.LinearRec2020));
         var preparation = saved.Enabled ? context.Preparation : SourcePreparation.CaptureOne;
         var source = job.Entry.CaptureSource(window, input.Space, true, preparation, job.Recipe);
+        var space = input.Space;
+        capture = () => job.Entry.CaptureSource(window, space, true, preparation, job.Recipe);
         var strength = saved.Enabled ? look.Strength : 0;
         var encoding = exportColor == ExportRgbSpace.Srgb ? ((Choice)context.outputSpace.SelectedItem).Id : "linear_rec709";
         var arguments = strength > 0 ? context.RendererOptions(look, input.Id, encoding, export: true) : Array.Empty<string>();
@@ -158,6 +163,11 @@ internal sealed partial class SpatialPreview
         internal Action<RecipeJob, Exception> Fail { get; } = fail;
         internal CancellationToken Stop { get; } = stop;
         internal T OnUi<T>(Func<T> action) => ui.Invoke(action);
+        // For a wait the export's Cancel must be able to end (the UI can be busy, or Capture One closing).
+        internal async Task<T> OnUiAsync<T>(Func<T> action) =>
+            ui.HasShutdownStarted ? throw new OperationCanceledException("Capture One is closing.")
+                : await ui.InvokeAsync(action, System.Windows.Threading.DispatcherPriority.Normal, Stop).Task.ConfigureAwait(false)
+                    ?? throw new OperationCanceledException("Capture One is closing.");
         internal void OnUi(Action action) => ui.Invoke(action);
         internal void Note(string note) { lock (Sync) notes.Add(note); }
         internal void Published(string file) { lock (Sync) files.Add(file); }
@@ -169,8 +179,9 @@ internal sealed partial class SpatialPreview
     private static async Task RenderRecipeGroup(RecipeRenderGroup group, RecipeRun run)
     {
         var stop = run.Stop;
-        var render = group.Render;
         run.Starting(group.Jobs[0]);
+        await HostImageSource.WaitForNativeDevelopmentAsync(stop).ConfigureAwait(false);
+        var render = group.Render with { Source = await run.OnUiAsync(group.Capture).ConfigureAwait(false) };
         var developed = render.Source.RenderExport(null, stop, followRecipeSize: true);
         var source = developed.Image;
         if (source.BitDepth < 16) throw new InvalidDataException("Capture One did not produce high-bit-depth export data.");

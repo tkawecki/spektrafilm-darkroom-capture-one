@@ -19,8 +19,17 @@ internal sealed record VariantLook(LookSettings Look, SpatialPreview.Settings Op
 //    so rolling the DLL back and editing does not erase newer settings.
 internal sealed class VariantLookStore
 {
+    // Written in each catalog's look folder: the catalog it belongs to, so a folder left behind by a catalog that was
+    // moved or renamed can be recognised (after upstream 14f1d5b, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+    private const string MarkerName = "catalog.json";
+    private sealed record CatalogMarker(string Database);
+
+    private readonly string root;
+    private readonly string database;
     private readonly string directory;
     private readonly string recoveryDirectory;
+    // Variants whose edit reached neither the look file nor a recovery checkpoint: only in memory.
+    private readonly HashSet<Guid> unprotected = new();
     private readonly Dictionary<Guid, VariantLook> pending = new();
     // Variants whose saved file (or its absence) was read successfully, so it may be overwritten.
     private readonly HashSet<Guid> verified = new();
@@ -30,8 +39,116 @@ internal sealed class VariantLookStore
     {
         var key = CatalogKey(catalogDatabase);
         var fullRoot = Path.GetFullPath(root);
+        this.root = Path.TrimEndingDirectorySeparator(fullRoot);
+        database = Path.GetFullPath(catalogDatabase);
         directory = Path.Combine(fullRoot, key);
         recoveryDirectory = Path.Combine(Path.GetDirectoryName(fullRoot.TrimEnd(Path.DirectorySeparatorChar))!, "Look recovery", key);
+        if (Directory.Exists(directory))
+            WriteMarker();
+    }
+
+    /// <summary>Where "Restore grain" keeps what the panel applied to Capture One's Grain, per variant.</summary>
+    internal string GrainRecords => Path.Combine(directory, "Grain");
+
+    /// <summary>True when an edit could be saved neither to its look file nor to a recovery checkpoint.</summary>
+    internal bool HasUnprotectedPending => unprotected.Overlaps(pending.Keys);
+
+    /// <summary>
+    /// The look folder of a catalog that was moved or renamed and holds a saved look of this variant, when this
+    /// catalog has none. Variant IDs are unique, so such a folder belongs to this catalog (or to a copy of it whose
+    /// file no longer exists where it was).
+    /// </summary>
+    internal string? MovedLooksFolder(Guid variant)
+    {
+        var candidates = orphans ??= FindOrphanFolders();
+        if (candidates.Count == 0 || File.Exists(GetPath(variant)))
+            return null;
+        var name = variant.ToString("N") + ".json";
+        return candidates.FirstOrDefault(folder => File.Exists(Path.Combine(folder, name)));
+    }
+
+    // Look folders of other catalogs whose catalog file is gone (or that were saved before folders were marked; the
+    // user decides). Found once per store, so selecting photos does not scan the folders each time.
+    private IReadOnlyList<string>? orphans;
+    private IReadOnlyList<string> FindOrphanFolders()
+    {
+        var found = new List<string>();
+        try
+        {
+            if (!Directory.Exists(root))
+                return found;
+            foreach (var folder in Directory.EnumerateDirectories(root))
+            {
+                if (string.Equals(Path.GetFullPath(folder), directory, StringComparison.OrdinalIgnoreCase)
+                    || (File.GetAttributes(folder) & FileAttributes.ReparsePoint) != 0)
+                    continue;
+                var marker = Path.Combine(folder, MarkerName);
+                if (!File.Exists(marker))
+                {
+                    found.Add(folder);
+                    continue;
+                }
+                try
+                {
+                    var owner = PanelFiles.ReadPreset<CatalogMarker>(marker).Database;
+                    if (!string.IsNullOrWhiteSpace(owner) && !File.Exists(owner))
+                        found.Add(folder);
+                }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or JsonException) { }
+            }
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            StartupHook.Log("Spektrafilm could not look for the looks of a moved catalog: " + error.Message);
+        }
+        return found;
+    }
+
+    /// <summary>
+    /// Copies the looks, versions and grain records of a moved catalog's folder into this catalog's folder. The old
+    /// folder is left as it was; looks this catalog already has are not replaced. Returns how many looks were copied.
+    /// </summary>
+    internal int CopyLooksFrom(string folder)
+    {
+        var source = Path.GetFullPath(folder);
+        if (!string.Equals(Path.GetDirectoryName(source.TrimEnd(Path.DirectorySeparatorChar)), root, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(source, directory, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("That folder is not another catalog's look folder.");
+        Directory.CreateDirectory(directory);
+        var copied = 0;
+        var walk = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint };
+        foreach (var file in Directory.EnumerateFiles(source, "*", walk))
+        {
+            var relative = Path.GetRelativePath(source, file);
+            if (string.Equals(relative, MarkerName, StringComparison.OrdinalIgnoreCase) || Path.GetFileName(file).StartsWith(".spektra-", StringComparison.Ordinal))
+                continue;
+            var target = Path.Combine(directory, relative);
+            if (File.Exists(target))
+                continue;
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target, overwrite: false);
+            if (Path.GetDirectoryName(relative) is null or "" && relative.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                copied++;
+        }
+        WriteMarker();
+        orphans = null;
+        StartupHook.Log($"Copied {copied} Spektrafilm looks from {source} to {directory}.");
+        return copied;
+    }
+
+    private void WriteMarker()
+    {
+        try
+        {
+            var path = Path.Combine(directory, MarkerName);
+            if (File.Exists(path) && string.Equals(PanelFiles.ReadPreset<CatalogMarker>(path).Database, database, StringComparison.OrdinalIgnoreCase))
+                return;
+            PanelFiles.WritePreset(path, new CatalogMarker(database));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or JsonException)
+        {
+            StartupHook.Log("Spektrafilm could not mark its look folder: " + error.Message);
+        }
     }
 
     /// <summary>Set by <see cref="Read"/> when an unsaved edit was recovered from a checkpoint.</summary>
@@ -59,19 +176,25 @@ internal sealed class VariantLookStore
             JsonObject? json = null;
             try
             {
+                var created = !Directory.Exists(directory);
                 Directory.CreateDirectory(directory);
+                if (created) WriteMarker();
                 json = ToJson(variant, look); // Before PreserveUnverified clears the unloadable mark.
                 PreserveUnverified(variant);
                 var started = PreviewPerformance.Start();
                 PanelFiles.WritePreset(GetPath(variant), json);
                 PreviewPerformance.End(started, "settings.save");
                 pending.Remove(variant);
+                unprotected.Remove(variant);
                 verified.Add(variant);
                 TryDelete(GetRecoveryPath(variant));
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException or JsonException)
             {
-                failures.Add(WriteRecovery(variant, json ?? JsonSerializer.SerializeToNode(look)!.AsObject(), error));
+                var (message, isProtected) = WriteRecovery(variant, json ?? JsonSerializer.SerializeToNode(look)!.AsObject(), error);
+                if (isProtected) unprotected.Remove(variant);
+                else unprotected.Add(variant);
+                failures.Add(message);
             }
         }
         if (failures.Count != 0)
@@ -159,17 +282,17 @@ internal sealed class VariantLookStore
         verified.Add(variant);
     }
 
-    private string WriteRecovery(Guid variant, JsonObject look, Exception error)
+    private (string Message, bool Protected) WriteRecovery(Guid variant, JsonObject look, Exception error)
     {
         try
         {
             Directory.CreateDirectory(recoveryDirectory);
             PanelFiles.WritePreset(GetRecoveryPath(variant), look);
-            return $"{error.Message} The latest edit is protected in {GetRecoveryPath(variant)} and will be restored next time.";
+            return ($"{error.Message} The latest edit is protected in {GetRecoveryPath(variant)} and will be restored next time.", true);
         }
         catch (Exception recoveryError) when (recoveryError is IOException or UnauthorizedAccessException or InvalidDataException or JsonException)
         {
-            return $"{error.Message} A recovery copy could not be written either ({recoveryError.Message}). Keep Capture One open until saving works again.";
+            return ($"{error.Message} A recovery copy could not be written either ({recoveryError.Message}). Keep Capture One open until saving works again.", false);
         }
     }
 

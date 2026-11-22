@@ -10,7 +10,31 @@ internal static class ApprovedCatalog
     internal static bool HasSelection => AllDocuments || SelectedDatabase is not null;
     internal static bool IsApproved(string? activePath) => ApprovedDatabase(activePath) is not null;
 
+    // Capture One's selection is read many times a second (Viewer, export, timer); each answer checked the disk, which
+    // can stall the UI on a sleeping external or network drive. An answer is reused for a few seconds
+    // (after upstream dc9308b, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+    private const long CacheMilliseconds = 5000;
+    private static readonly object CacheGate = new();
+    private static readonly System.Collections.Generic.Dictionary<string, (string? Database, long Until)> Approved =
+        new(StringComparer.OrdinalIgnoreCase);
+
     internal static string? ApprovedDatabase(string? activePath)
+    {
+        if (string.IsNullOrWhiteSpace(activePath)) return null;
+        var now = Environment.TickCount64;
+        lock (CacheGate)
+            if (Approved.TryGetValue(activePath, out var known) && now < known.Until)
+                return known.Database;
+        var database = CheckApproved(activePath);
+        lock (CacheGate)
+        {
+            if (Approved.Count > 64) Approved.Clear();
+            Approved[activePath] = (database, now + CacheMilliseconds);
+        }
+        return database;
+    }
+
+    private static string? CheckApproved(string? activePath)
     {
         var database = ResolveDatabase(activePath);
         if (database is null || (!AllDocuments && !Matches(database, SelectedDatabase)))

@@ -121,6 +121,11 @@ internal static class HostRecipeWriter
     {
         if (recipe is not IMetadataProcessingSettings metadata) return string.Empty;
         var whitelist = Required.KeywordWhitelist?.Invoke(null, new object[] { recipe }) as IEnumerable<string>;
+        // Without Capture One's whitelist a null list means "all keywords": refuse rather than export keywords the
+        // recipe leaves out (after upstream a00f9d7, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+        if (Required.KeywordWhitelist is null && metadata.MetadataIncludeKeywords == MetadataIncludeKeywordsMode.Whitelist)
+            throw new InvalidOperationException("this Capture One version does not tell which keyword libraries the recipe "
+                + "exports. Choose all keywords or none in the recipe's Metadata tab.");
         return variant.SerializeVariantInfoAsXmp(metadata.MetadataIncludeKeywords, whitelist, metadata.MetadataIncludeRating,
             metadata.MetadataIncludeCopyright, metadata.MetadataIncludeGPS, metadata.MetadataIncludeCameraData,
             metadata.MetadataIncludeAllOther) ?? string.Empty;

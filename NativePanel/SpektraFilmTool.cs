@@ -85,12 +85,14 @@ internal static partial class SpektraFilmTool
         internal UserControl DockedContent { get; }
         private ContentControl Holder { get; }
         internal bool IsSpektraExportActive => !disposed && panel.IsSpektraExportActive;
+        internal bool IsExporting => !disposed && panel.IsExporting;
         internal bool IsActiveForExport(bool editMultiple) => !disposed && panel.IsActiveForExport(editMultiple);
         internal void CheckSelectionAndSave()
         {
             panel.SyncSelection();
             panel.FlushLooks();
         }
+        internal bool ProtectPendingLooks() => disposed || panel.ProtectPendingLooks();
         internal Task<bool> ExportAsync(Window? owner, bool editMultiple) =>
             panel.ExportAsync(useRecipeSize: true, owner, editMultiple);
         internal void SetExportBridgeStatus(string? message) => panel.SetExportBridgeStatus(message);
@@ -295,6 +297,9 @@ internal static partial class SpektraFilmTool
         private readonly SpatialPreview opticalPreview;
         private Guid? displayedVariant;
         private readonly Button resumeExport;
+        // Shown when the displayed photo has no look here but one in the folder of a moved or renamed catalog.
+        private readonly Button movedLooks;
+        private string? movedLooksFolder;
         private bool selectionQueued;
         private LookOptions? options;
         private VariantLook? copiedLook;
@@ -317,6 +322,11 @@ internal static partial class SpektraFilmTool
             layout.Children.Add(MakeHistoryControls());
             layout.Children.Add(exportBridgeStatus);
             layout.Children.Add(saveError);
+            movedLooks = Button("Copy looks from the moved catalog", CopyMovedLooksAsync);
+            movedLooks.Visibility = Visibility.Collapsed;
+            movedLooks.Margin = new Thickness(0, 4, 0, 4);
+            movedLooks.ToolTip = "This catalog or session was moved or renamed, or its drive letter changed. Its earlier Spektrafilm looks are kept in a folder for the old location; this copies them here and leaves the old folder unchanged. Looks you already made here are not replaced.";
+            layout.Children.Add(movedLooks);
             layout.Children.Add(controls);
             layout.Children.Add(MakeVersionControls());
             layout.Children.Add(sections);
@@ -575,6 +585,7 @@ internal static partial class SpektraFilmTool
         }
 
         internal bool IsSpektraExportActive => IsActiveForExport(true);
+        internal bool IsExporting => opticalPreview.IsExporting;
         internal bool IsActiveForExport(bool editMultiple)
         {
             if (!SyncSelection()) return false;
@@ -910,10 +921,12 @@ internal static partial class SpektraFilmTool
                     ApplyControls(saved?.Look, saved?.Optics, saved?.Enabled ?? true, saved?.Grain);
                     RecordDisplayedLook();
                     if (recovered is not null) status.Text = recovered;
+                    ShowMovedLooks(saved is null ? looks.MovedLooksFolder(variant) : null);
                 }
                 catch (Exception error)
                 {
                     looks.ProtectUnloadable(variant);
+                    ShowMovedLooks(null);
                     ApplyControls(null, null, false);
                     saveBlockedForInvalidLook = true;
                     status.Text = $"Could not load this image’s Spektrafilm look. Its saved parameters are protected; restore the missing dependency, load a valid preset or use Defaults (a copy of the unreadable file is kept before it is replaced). {error.Message}";
@@ -921,6 +934,42 @@ internal static partial class SpektraFilmTool
                 }
             }
             return IsSpektraFilmEnabled;
+        }
+
+        private void ShowMovedLooks(string? folder)
+        {
+            movedLooksFolder = folder;
+            movedLooks.Visibility = folder is null ? Visibility.Collapsed : Visibility.Visible;
+            if (folder is not null)
+                status.Text = "This photo has a Spektrafilm look saved before its catalog was moved or renamed. Use \"Copy looks from the moved catalog\" to bring the looks here.";
+        }
+
+        private Task CopyMovedLooksAsync()
+        {
+            if (movedLooksFolder is not { } folder || displayedVariant is not { } variant)
+                return Task.CompletedTask;
+            FlushLooks();
+            int copied;
+            try { copied = looks.CopyLooksFrom(folder); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                status.Text = "Not all looks could be copied from the moved catalog; the ones copied are kept, nothing was replaced. " + error.Message;
+                StartupHook.Log(status.Text);
+                return Task.CompletedTask;
+            }
+            // Read the displayed photo again from this catalog's folder.
+            displayedVariant = null;
+            UseSelectedLook(variant);
+            if (movedLooks.Visibility != Visibility.Visible)
+                status.Text = copied == 1 ? "Copied 1 look from the moved catalog." : $"Copied {copied} looks from the moved catalog.";
+            return Task.CompletedTask;
+        }
+
+        /// <summary>Saves pending edits; false when one could be kept neither in its look file nor in a recovery copy.</summary>
+        internal bool ProtectPendingLooks()
+        {
+            FlushLooks();
+            return !looks.HasUnprotectedPending;
         }
 
         private void SaveLook() => SaveLookStep(discrete: false);
@@ -1077,7 +1126,7 @@ internal static partial class SpektraFilmTool
             buttons.Children.Add(Button("Apply grain", () =>
             {
                 if (SyncSelection() && displayedVariant is { } variant && IsSpektraFilmEnabled)
-                    Run(() => NativeGrain.Apply(window, variant,
+                    Run(() => NativeGrain.Apply(window, looks.GrainRecords, variant,
                         grainType.SelectedIndex, grainImpact.Value, grainSize.Value), "Capture One Grain applied.");
                 return Task.CompletedTask;
             }));
@@ -1086,9 +1135,9 @@ internal static partial class SpektraFilmTool
                 Run(() =>
                 {
                     var current = NativeGrain.Read(window);
-                    if (!NativeGrain.HasApplied(window, current.VariantId))
+                    if (!NativeGrain.HasApplied(window, looks.GrainRecords, current.VariantId))
                         throw new InvalidOperationException("No grain adjustment from this panel is active.");
-                    NativeGrain.Restore(window, current.VariantId);
+                    NativeGrain.Restore(window, looks.GrainRecords, current.VariantId);
                     var original = NativeGrain.Read(window);
                     if (SyncSelection() && displayedVariant == original.VariantId)
                     {

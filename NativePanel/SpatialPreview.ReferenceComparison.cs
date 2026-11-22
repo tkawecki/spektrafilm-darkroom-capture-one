@@ -10,7 +10,7 @@ internal sealed partial class SpatialPreview
     private ReferenceComparison? referenceComparison;
     internal void PinReference()
     {
-        if (!enabled || !frameCurrent || viewerFrame is not { } frame)
+        if (!enabled || !FrameShowsCurrentPhoto() || viewerFrame is not { } frame)
             throw new InvalidOperationException("Wait for the full Viewer frame before pinning a reference.");
         var target = HostProfile.CaptureTarget(window);
         if (target.VariantId != activeVariant) throw new InvalidOperationException("Wait for the selected photo to finish rendering.");
@@ -22,7 +22,7 @@ internal sealed partial class SpatialPreview
     internal void ShowReferenceComparison()
     {
         if (pinnedReference is null) throw new InvalidOperationException("Pin a reference frame first.");
-        if (!enabled || !frameCurrent || viewerFrame is not { } frame)
+        if (!enabled || !FrameShowsCurrentPhoto() || viewerFrame is not { } frame)
             throw new InvalidOperationException("Wait for the current Viewer frame before comparing.");
         if (referenceComparison is { IsClosed: false }) { referenceComparison.Update(frame); referenceComparison.Activate(); return; }
         referenceComparison = new ReferenceComparison(Window.GetWindow(LiveControls), pinnedReference, pinnedReferenceLabel, frame);

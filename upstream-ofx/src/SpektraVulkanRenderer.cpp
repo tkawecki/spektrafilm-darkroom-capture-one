@@ -1281,7 +1281,42 @@ constexpr uint32_t kVulkanGrainDebiasRadiusPx = 48u;
 constexpr uint32_t kDefaultVulkanTileWidth = 512u;
 constexpr uint32_t kDefaultVulkanTileHeight = 256u;
 
-uint32_t estimateVulkanTileOverlap(const RenderParams &params) {
+float filmFormatLongEdgeMm(FilmFormat format);
+float resolvedEnlargerScale(const RenderParams &params);
+
+// Spektrafilm C1: tile support of the halation passes, after upstream 3988f61 and b748984 (Spektrafilm for Capture
+// One, Luka Kauzlaric, GPL-3.0). Scatter and the bounce run one after the other, each blurring up to 256 px
+// (SpektraHalation.comp), so the overlap needs both radii; one 256 px allowance for both could leave seams at a
+// large halation scale.
+uint32_t halationPassRadius(float sigmaPx) {
+  if (!(sigmaPx > 1.0e-4f)) return 0u;
+  // One pixel more for rounding at the ceil threshold between CPU and shader.
+  return static_cast<uint32_t>(std::min(std::ceil(3.0f * sigmaPx) + 1.0f, static_cast<float>(kVulkanSpatialEffectRadiusPx)));
+}
+
+uint32_t halationTileOverlap(const RenderParams &params, uint32_t longEdge) {
+  const bool scatter = params.scatterAmount > 0.0f && params.scatterScale > 0.0f;
+  const bool bounce = params.halationAmount > 0.0f && params.halationScale > 0.0f &&
+    (params.halationStrengthR > 0.0f || params.halationStrengthG > 0.0f || params.halationStrengthB > 0.0f);
+  if (!scatter && !bounce) return 0u;
+  if (longEdge == 0u) return (scatter ? kVulkanSpatialEffectRadiusPx : 0u) + (bounce ? kVulkanSpatialEffectRadiusPx : 0u);
+  const float pixelSizeUm = std::max(
+    filmFormatLongEdgeMm(params.filmFormat) * 1000.0f / static_cast<float>(longEdge) / resolvedEnlargerScale(params), 1.0e-6f);
+  const ProfileCurveSet *curves = filmProfileCurves(params.film);
+  if (!curves) curves = filmProfileCurves(static_cast<int32_t>(kSpektraDefaultFilmIndex));
+  float bounceSigmaUm = std::max({params.halationFirstSigmaUmR, params.halationFirstSigmaUmG, params.halationFirstSigmaUmB});
+  if (curves && curves->halationFirstSigmaUm) {
+    const float *sigma = curves->halationFirstSigmaUm;
+    bounceSigmaUm = std::max({sigma[0], sigma[1], sigma[2]});
+  }
+  // Largest sigmas of SpektraHalation.comp: the scatter tail (9.7 um x 2.7684) and the third bounce (x sqrt 3).
+  const uint32_t scatterRadius = scatter ? halationPassRadius(9.7f * 2.7684f * params.scatterScale / pixelSizeUm) : 0u;
+  const uint32_t bounceRadius = bounce
+    ? halationPassRadius(std::max(bounceSigmaUm, 1.0e-6f) * params.halationScale * std::sqrt(3.0f) / pixelSizeUm) : 0u;
+  return scatterRadius + bounceRadius;
+}
+
+uint32_t estimateVulkanTileOverlap(const RenderParams &params, uint32_t longEdge) {
   uint32_t overlap = 0u;
   const bool finalOutput = params.renderOutput == RenderOutputMode::FinalPreview;
   const bool rcmOutput = finalOutput && params.outputRole == OutputRole::Rcm;
@@ -1301,15 +1336,8 @@ uint32_t estimateVulkanTileOverlap(const RenderParams &params) {
       params.cameraDiffusionSpatialScale > 0.0f) {
     overlap += kVulkanSpatialEffectRadiusPx;
   }
-  if (params.halationEnabled &&
-      params.process != ProcessMode::ProcessNegative &&
-      ((params.scatterAmount > 0.0f && params.scatterScale > 0.0f) ||
-       (params.halationAmount > 0.0f &&
-        params.halationScale > 0.0f &&
-        (params.halationStrengthR > 0.0f ||
-         params.halationStrengthG > 0.0f ||
-         params.halationStrengthB > 0.0f)))) {
-    overlap += kVulkanSpatialEffectRadiusPx;
+  if (params.halationEnabled && params.process != ProcessMode::ProcessNegative) {
+    overlap += halationTileOverlap(params, longEdge);
   }
   if (params.dirCouplersAmount > 0.0f &&
       params.process != ProcessMode::ProcessNegative &&
@@ -7835,7 +7863,8 @@ bool VulkanRenderer::Impl::renderTiledBootstrap(
     static_cast<uint32_t>(fullHeight),
     envTileDimension("SPEKTRAFILM_VULKAN_TILE_HEIGHT", kDefaultVulkanTileHeight)
   );
-  const uint32_t overlap = estimateVulkanTileOverlap(params);
+  const uint32_t overlap = estimateVulkanTileOverlap(params,
+    static_cast<uint32_t>(std::max(fullWidth, fullHeight)));
   auto growTileForOverlap = [&](uint32_t current, uint32_t fullDimension) {
     if (overlap <= current) {
       return current;

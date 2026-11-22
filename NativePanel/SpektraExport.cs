@@ -47,12 +47,7 @@ internal static class SpektraExport
         var profile = profilePath is null ? null : new ReadOnlyCollection<ColorContext>(new[] {
             new ColorContext(new Uri(ExportColorSpace.ValidateRgbProfile(profilePath))) });
         encoder.Frames.Add(BitmapFrame.Create(image, null, null, profile));
-        PanelFiles.WriteAtomically(path, stream =>
-        {
-            stop.ThrowIfCancellationRequested();
-            encoder.Save(stream);
-            stop.ThrowIfCancellationRequested();
-        });
+        PanelFiles.WriteAtomically(path, stream => Encode(encoder, stream, stop));
     }
 
     // RGB48 is already encoded in profilePath's space. Quantize explicitly
@@ -85,12 +80,61 @@ internal static class SpektraExport
         var encoder = new JpegBitmapEncoder { QualityLevel = quality };
         var profile = profilePath is null ? null : new ReadOnlyCollection<ColorContext>(new[] { new ColorContext(new Uri(profilePath)) });
         encoder.Frames.Add(BitmapFrame.Create(rgb, null, null, profile));
-        PanelFiles.WriteAtomically(path, stream =>
+        PanelFiles.WriteAtomically(path, stream => Encode(encoder, stream, stop));
+    }
+
+    // The encoder writes through a stream that stops at the next write once the export is cancelled (a 24 MP TIFF
+    // took 2 to 3 seconds to stop otherwise). Ported from upstream ab4d569 (Spektrafilm for Capture One,
+    // Luka Kauzlaric, GPL-3.0).
+    private static void Encode(BitmapEncoder encoder, Stream stream, CancellationToken stop)
+    {
+        stop.ThrowIfCancellationRequested();
+        try
+        {
+            encoder.Save(stop.CanBeCanceled ? new CancelableEncoderStream(stream, stop) : stream);
+        }
+        catch (Exception error) when (stop.IsCancellationRequested && error is not OperationCanceledException)
+        {
+            // WIC can report the stream's cancellation as a codec error.
+            throw new OperationCanceledException("Spektrafilm file encoding was cancelled.", error, stop);
+        }
+        stop.ThrowIfCancellationRequested();
+    }
+
+    private sealed class CancelableEncoderStream(Stream inner, CancellationToken stop) : Stream
+    {
+        public override bool CanRead => inner.CanRead;
+        public override bool CanSeek => inner.CanSeek;
+        public override bool CanWrite => inner.CanWrite;
+        public override long Length => inner.Length;
+        public override long Position { get => inner.Position; set => inner.Position = value; }
+        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+        public override int Read(Span<byte> buffer) => inner.Read(buffer);
+        public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+
+        public override void Flush()
         {
             stop.ThrowIfCancellationRequested();
-            encoder.Save(stream);
+            inner.Flush();
+        }
+
+        public override void SetLength(long value)
+        {
             stop.ThrowIfCancellationRequested();
-        });
+            inner.SetLength(value);
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            stop.ThrowIfCancellationRequested();
+            inner.Write(buffer, offset, count);
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            stop.ThrowIfCancellationRequested();
+            inner.Write(buffer);
+        }
     }
 
     internal static LinearDngInfo SaveLinearDng(string path, ReadOnlyMemory<float> linearBt2020Rgba,

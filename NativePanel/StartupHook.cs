@@ -27,6 +27,9 @@ internal static class StartupHook
     private static IInspectorPaletteTabViewModel? previousTab;
     private static Forms.Form? window;
     private static string? lastState;
+    // Show the panel's tab when it first attaches in this Capture One session, and later only if it was the shown
+    // tab when the palette was rebuilt; otherwise keep the user's tab (after upstream 3acf354, Luka Kauzlaric, GPL-3.0).
+    private static bool selectOnAttach = true;
     private static ICaptureOneDocument? boundDocument;
     private static string? boundDatabase;
     internal static bool IsBoundDocument(ICaptureOneDocument document, object form, string path) =>
@@ -109,6 +112,15 @@ internal static class StartupHook
                 return;
             }
 
+            // Capture One rebuilt the tool palette (a workspace change) for the same document: let a running export
+            // finish first, then attach to the new palette (after upstream 479b709, Luka Kauzlaric, GPL-3.0).
+            if (ReferenceEquals(document, boundDocument) && string.Equals(database, boundDatabase, StringComparison.OrdinalIgnoreCase)
+                && ReferenceEquals(form, window) && hostedTool is { IsExporting: true })
+            {
+                LogState("Waiting for the Spektrafilm export to finish before attaching to the new tool palette.");
+                return;
+            }
+
             Detach();
             Attach(form, palette, document, database);
         }
@@ -128,9 +140,14 @@ internal static class StartupHook
     private static void Attach(Forms.Form form, InspectorPaletteViewModel palette, ICaptureOneDocument document, string database)
     {
         var bus = MessageBusProvider.DefaultInstance;
-        var lastUserTab = palette.Current;
+        var priorSelection = palette.Current;
+        // A workspace saved while the panel was attached keeps an empty tab with the panel's name; reuse its place
+        // instead of adding another one next to it (after upstream d34b6bc, Luka Kauzlaric, GPL-3.0).
+        var emptyTabs = palette.Tabs.Select((item, index) => (Tab: item, Index: index))
+            .Where(item => IsEmptyPanelTab(item.Tab)).ToArray();
+        var lastUserTab = emptyTabs.Any(item => ReferenceEquals(item.Tab, priorSelection)) ? null : priorSelection;
         var names = palette.Tabs.Select(item => item.Name).ToHashSet(StringComparer.Ordinal);
-        var id = CustomTabIds.FirstOrDefault(name => !names.Contains(name))
+        var id = emptyTabs.FirstOrDefault().Tab?.Name ?? CustomTabIds.FirstOrDefault(name => !names.Contains(name))
             ?? throw new InvalidOperationException($"Remove an unused custom tool tab to make room for {ProductName}.");
         var newTab = new FilmToolsTab(id, bus.GlobalBus, document)
         {
@@ -148,14 +165,21 @@ internal static class StartupHook
             // The menu-level AddTool helper also emits a tour event and expects
             // a factory-registered caption. Add the hosted control to its area.
             newTab.ScrollAreaViewModel.AddTool(hosted.Tool);
-            palette.Tabs.Add(newTab);
-            SelectTab(palette, newTab);
+            foreach (var (empty, _) in emptyTabs)
+                palette.Tabs.Remove(empty);
+            palette.Tabs.Insert(emptyTabs.Length == 0 ? palette.Tabs.Count : Math.Min(emptyTabs[0].Index, palette.Tabs.Count), newTab);
+            var selected = selectOnAttach || lastUserTab is null ? newTab : lastUserTab;
+            if (!ReferenceEquals(palette.Current, selected))
+                SelectTab(palette, selected);
         }
         catch
         {
-            if (ReferenceEquals(palette.Current, newTab))
-                SelectTab(palette, lastUserTab);
             palette.Tabs.Remove(newTab);
+            foreach (var (empty, index) in emptyTabs)
+                if (!palette.Tabs.Contains(empty))
+                    palette.Tabs.Insert(Math.Min(index, palette.Tabs.Count), empty);
+            if (!ReferenceEquals(palette.Current, priorSelection))
+                SelectTab(palette, priorSelection);
             hosted?.Dispose();
             boundDocument = null;
             boundDatabase = null;
@@ -164,6 +188,11 @@ internal static class StartupHook
             throw;
         }
 
+        foreach (var (empty, _) in emptyTabs)
+            if (empty is IDisposable disposable) disposable.Dispose();
+        if (emptyTabs.Length > 0)
+            Log($"Replaced {emptyTabs.Length} empty {ProductName} tab(s) left in the workspace.");
+        selectOnAttach = false;
         owner = palette;
         tab = newTab;
         hostedTool = hosted;
@@ -188,6 +217,10 @@ internal static class StartupHook
             }
         }
     }
+
+    private static bool IsEmptyPanelTab(IInspectorPaletteTabViewModel candidate) =>
+        candidate is InspectorPaletteTabViewModel native && native.GetType() == typeof(InspectorPaletteTabViewModel)
+        && native.Text == ProductName && CustomTabIds.Contains(native.Name, StringComparer.Ordinal) && !native.AllTools.Any();
 
     private sealed class FilmToolsTab(string id, IMessageBus bus, ICaptureOneDocument document)
         : InspectorPaletteTabViewModel(id, bus, ProductName, document)
@@ -229,6 +262,21 @@ internal static class StartupHook
             return;
         try
         {
+            // An edit that reached neither its look file nor a recovery copy would be lost silently on close
+            // (after upstream bb5aa9b, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+            if (hostedTool?.ProtectPendingLooks() == false)
+            {
+                Log("Capture One close requested while a Spektrafilm edit is only in memory.");
+                if (args.CloseReason == Forms.CloseReason.UserClosing && Forms.MessageBox.Show(sender as Forms.IWin32Window,
+                        "Spektrafilm could not save your latest look, neither to its normal folder nor to the recovery folder. "
+                        + "Keep Capture One open to let it try again when the drive is available.\n\nClose Capture One and lose that change?",
+                        ProductName, Forms.MessageBoxButtons.YesNo, Forms.MessageBoxIcon.Warning, Forms.MessageBoxDefaultButton.Button2)
+                    != Forms.DialogResult.Yes)
+                {
+                    args.Cancel = true;
+                    return;
+                }
+            }
             Detach(saveWorkspace: true);
         }
         catch (Exception error)
@@ -260,6 +308,7 @@ internal static class StartupHook
             originalWindow.FormClosing -= OnFormClosing;
         try { oldExport?.Dispose(); }
         finally { oldTool?.Dispose(); }
+        selectOnAttach = ReferenceEquals(oldOwner.Current, oldTab);
         if (oldOwner.Tabs.Contains(oldTab))
         {
             if (ReferenceEquals(oldOwner.Current, oldTab))
@@ -291,13 +340,8 @@ internal static class StartupHook
 
     internal static void Log(string text)
     {
-        try
-        {
-            var path = Environment.GetEnvironmentVariable("SPEKTRAFILM_PANEL_LOG");
-            if (!string.IsNullOrWhiteSpace(path))
-                File.AppendAllText(path, $"{DateTime.Now:O} {text}{Environment.NewLine}");
-        }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
+        var path = Environment.GetEnvironmentVariable("SPEKTRAFILM_PANEL_LOG");
+        if (!string.IsNullOrWhiteSpace(path))
+            PanelLog.Write(path, $"{DateTime.Now:O} {text}{Environment.NewLine}");
     }
 }

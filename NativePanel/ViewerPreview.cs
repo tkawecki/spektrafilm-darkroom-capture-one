@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using P1.C1;
 using P1.C1.Core;
 using P1.C1.Core.Interfaces;
 using P1.C1.Core.ModelEntities;
@@ -56,11 +57,16 @@ internal sealed class ViewerPreview : IDisposable
             if (viewer is null || Get(viewer, "VariantGridView") is not FrameworkElement { IsVisible: true } grid)
                 return Unavailable("Show the main Viewer to see the live preview.");
 
+            // The view must still show this variant: while photos are switched quickly Capture One reuses views
+            // (after upstream 5e51d76, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
             if (attachment is { } current && current.Grid == grid && current.VariantId == variantId
-                && grid.IsAncestorOf(current.View))
+                && current.View.Variant?.UUID == variantId && grid.IsAncestorOf(current.View))
             {
                 var reason = Availability(current) ?? current.PaintUnavailable;
+                var changed = UnavailableReason != reason;
                 SetStatus(reason);
+                if (changed)
+                    Invalidate(current.View);
                 if (!ReferenceEquals(current.Bitmap, bitmap) || current.Layout != layout)
                 {
                     current.Bitmap = bitmap;
@@ -76,6 +82,8 @@ internal sealed class ViewerPreview : IDisposable
 
             var item = FindVisibleItem(grid);
             var view = item is null ? null : Field(item, "Viewer") as VariantViewWpf;
+            if (view is not null && view.Variant?.UUID != variantId)
+                return Unavailable("Waiting for the selected image to appear in the main Viewer.");
             if (item is null || view is null)
             {
                 const string reason = "Show one image in the main Viewer.";
@@ -287,8 +295,12 @@ internal sealed class ViewerPreview : IDisposable
     {
         if (!ReferenceEquals(current.Document, current.ActiveDocument()))
             return InactiveDocument;
-        if (!IsSelected(current.Document, current.VariantId))
+        if (!IsSelected(current.Document, current.VariantId) || current.View.Variant?.UUID != current.VariantId)
             return "The selected image changed.";
+        // Capture One's Recipe Proofing shows the recipe's output; the film overlay would hide it
+        // (after upstream 8a0ffea, Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+        if (ApplicationSettings.Default.IsProofingRecipeSettings)
+            return "Turn off Capture One's Recipe Proofing to show the Spektrafilm Viewer.";
         var view = current.View;
         if (current.Item.BeforeAfterLabelsViewModel is not { HasBeforeView: false })
             return "Exit Before/After comparison to resume live preview.";

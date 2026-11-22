@@ -79,6 +79,18 @@ internal static class HostImageSource
         return (selected.UUID, ReadRevision(selected));
     }
 
+    /// <summary>
+    /// Waits until no Capture One development of ours is running (a cancelled Viewer render can return before its
+    /// native callback ends), so an export captures its source only after it. Ported from upstream 4370ebe
+    /// (Spektrafilm for Capture One, Luka Kauzlaric, GPL-3.0).
+    /// </summary>
+    internal static async Task WaitForNativeDevelopmentAsync(CancellationToken token)
+    {
+        if (!await SchedulerSlot.WaitAsync(NativePreviewScheduleTimeout, token).ConfigureAwait(true))
+            throw new TimeoutException("Capture One did not finish the previous image development. Try the export again.");
+        SchedulerSlot.Release();
+    }
+
     internal static Revision GetRevision(object window, Guid variantId) => ReadRevision(RequireSelection(window, variantId).Variant);
 
     internal static RecipeInfo? ActiveRecipe(object window)
@@ -340,7 +352,9 @@ internal static class HostImageSource
                 PreviewPerformance.End(wait, "source.slot", options.Purpose.ToString());
                 releaseSlot = true;
                 var scheduled = PreviewPerformance.Start();
-                var request = new RenderRequest(source =>
+                // The request owns the slot from here: a caller that times out returns while Capture One may still
+                // run the callback, and the slot is released only when that callback has ended (upstream 3c90b88).
+                var request = new RenderRequest(() => SchedulerSlot.Release(), source =>
                 {
                     PreviewPerformance.End(scheduled, "source.schedule", options.Purpose.ToString());
                     workToken.ThrowIfCancellationRequested();
@@ -365,7 +379,8 @@ internal static class HostImageSource
                         throw new OperationCanceledException("Capture One settings changed before the image could render.");
                     return RenderOnScheduler(source, options, requestProxyCheck, workToken, allowStale);
                 });
-                var listener = scheduler.AddListener(null, null, null);
+                releaseSlot = false;
+                var listener = AbandonOnFailure(request, () => scheduler.AddListener(null, null, null));
                 try
                 {
                     scheduler.RequestUpdates(new ImageCoreScheduler.JobAndListener(
@@ -388,6 +403,13 @@ internal static class HostImageSource
                 if (releaseSlot)
                     SchedulerSlot.Release();
             }
+        }
+
+        // The request owns the scheduler slot: give it back if the request cannot even be queued.
+        private static T AbandonOnFailure<T>(RenderRequest request, Func<T> action)
+        {
+            try { return action(); }
+            catch { request.Abandon(); throw; }
         }
 
         // allowStale: the frame is wanted even when Capture One's settings have changed since the snapshot.
@@ -588,9 +610,12 @@ internal static class HostImageSource
     internal sealed class ProxyPendingException(IC_Result result) :
         InvalidOperationException($"Capture One’s native preview is not available yet ({result}).");
 
-    private sealed class RenderRequest(Func<ICoreVariant, ExportFrame> render)
+    // release: called once, when both the caller has abandoned the request and a callback that started has ended.
+    private sealed class RenderRequest(Action releaseSlot, Func<ICoreVariant, ExportFrame> render)
     {
         private Func<ICoreVariant, ExportFrame>? callback = render;
+        private Action? release = releaseSlot;
+        private int holders = 1; // the caller; a running callback adds one
         private readonly TaskCompletionSource<ExportFrame> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         internal Task<ExportFrame> Result => completion.Task;
@@ -599,13 +624,24 @@ internal static class HostImageSource
         {
             Interlocked.Exchange(ref callback, null);
             completion.TrySetCanceled();
+            Leave();
+        }
+
+        private void Leave()
+        {
+            if (Interlocked.Decrement(ref holders) == 0)
+                Interlocked.Exchange(ref release, null)?.Invoke();
         }
 
         internal void Run(ICoreVariant source)
         {
+            Interlocked.Increment(ref holders);
             var run = Interlocked.Exchange(ref callback, null);
             if (run is null)
+            {
+                Leave();
                 return;
+            }
             try
             {
                 completion.TrySetResult(run(source));
@@ -617,6 +653,10 @@ internal static class HostImageSource
             catch (Exception error)
             {
                 completion.TrySetException(error);
+            }
+            finally
+            {
+                Leave();
             }
         }
     }

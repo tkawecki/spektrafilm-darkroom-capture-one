@@ -8,7 +8,19 @@ Spektrafilm Darkroom for Capture One is a **modified version** of three GPL-3.0 
 | Vulkan renderer (`upstream-ofx`) | spektrafilm OFX by Aedan Diez | commit `86476afc5b077de77e2278e3658d1ba9309892a1` |
 | Python reference and film profiles (`upstream-spektrafilm`) | [spektrafilm](https://github.com/andreavolpato/spektrafilm) by Andrea Volpato | commit `3bb2c2d2801ff68b92019cf1dbcbb133d60832bc` |
 
-The changes below were made between 2026-11-15 and 2026-11-21 by tkawecki. Two sets of fixes were later ported from the original panel's commit `285f0aa` ("Harden saved looks, rendering, exports and installer upgrades"); the files concerned say so in their headers.
+The changes below were made between 2026-11-15 and 2026-11-22 by tkawecki. Two sets of fixes were ported from the original panel's commit `285f0aa` ("Harden saved looks, rendering, exports and installer upgrades"); the files concerned say so in their headers. On 2026-11-22 further fixes were ported from the original panel's v0.2.0 (commits after `285f0aa` up to `e7dd26f`), with the author's invitation; each changed place names the upstream commit, and they are listed in the section below.
+
+## Fixes ported from Spektrafilm for Capture One v0.2.0 (Luka Kauzlaric)
+
+Adapted to this fork's code, which writes exports through Capture One's engine; upstream commits in brackets.
+
+- Exports read Capture One's image settings again right before each image develops and wait for the Viewer's development; a timed-out request keeps Capture One's scheduler until its native callback has ended (3c90b88, 4370ebe).
+- TIFF, PNG and JPEG writing stops at once when an export is cancelled (ab4d569). A recipe exporting chosen keyword libraries is refused when Capture One does not provide the library list, instead of exporting all keywords (a00f9d7).
+- Looks of a catalog that was moved or renamed can be copied to its new place (14f1d5b and related); closing Capture One warns when an edit could be saved nowhere (bb5aa9b); "Restore grain" works after a restart (c1a0218).
+- The panel's tab is selected only on its first attach (3acf354); empty tabs left in saved workspaces are reused (d34b6bc); a workspace change waits for a running export (479b709); the catalog check no longer touches the disk several times a second (dc9308b); the panel log is written in the background and kept to 16 MB (cd39774).
+- The Viewer recovers when an offline original is connected (a4e59ba), does not save or compare a stale frame (fc97f9d), steps aside during Recipe Proofing (8a0ffea) and attaches only to the view of the selected image (5e51d76).
+- Renderer: the tile overlap counts the halation scatter and bounce separately (3988f61, b748984).
+- Not ported: the recipe sharpening override (ef1c4e5), which changes no RAW sharpening setting in Capture One 16.9.
 
 ## Panel (`NativePanel`, launcher, installer)
 
