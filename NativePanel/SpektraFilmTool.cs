@@ -251,7 +251,10 @@ internal static partial class SpektraFilmTool
     {
         private const string DefaultFilm = "kodak_portra_400";
         private const string DefaultPaper = "kodak_portra_endura";
-        private const string DefaultSpectralMethod = "hanatos2025";
+        // New looks, Defaults and photos without a look (2026-11-23). "hanatos2026" is the reference's current method
+        // (Python main: hanatos2025 with its fitted adaptation window, tests/ParityTests); "hanatos2025" is the archived
+        // bandpass earlier looks were made with. Each look keeps the method it was saved with.
+        private const string DefaultSpectralMethod = "hanatos2026";
         private readonly object window;
         private readonly ICaptureOneDocument document;
         private readonly ISelectedCollectionsProvider selections;
@@ -511,6 +514,9 @@ internal static partial class SpektraFilmTool
         {
             var section = new StackPanel();
             AddStock(section, "Spectral reconstruction", spectralMethod);
+            spectralMethod.ToolTip = "How the RGB image is turned into the light spectrum that exposes the film. Hanatos 2026 "
+                + "(default for new looks) matches the current Spektrafilm reference; Hanatos 2025 is the archived calibration "
+                + "looks made before 23 November 2026 use. They differ mainly in very saturated colours. Each look keeps its method.";
             AddDevelopment(section, "dir_amount", "DIR coupler amount", 0, 2, 1, 0.05);
             AddDevelopment(section, "dir_same_layer", "Same-layer inhibition", 0, 2, 1, 0.05);
             AddDevelopment(section, "dir_interlayer", "Interlayer inhibition", 0, 2, 1, 0.05);
@@ -771,6 +777,7 @@ internal static partial class SpektraFilmTool
                     SaveLook();
                     var current = looks.Read(displayedVariant!.Value)!;
                     SpatialPreview.RejectRemovedEngine(current.Optics);
+                    SpatialPreview.RejectUnknownFilmModel(current.Optics);
                     copiedLook = BatchExportSupport.Clone(current); status.Text = "Spektrafilm look copied. Select target variants and apply it.";
                 }
                 catch (Exception error) { Report(error); }
@@ -833,6 +840,7 @@ internal static partial class SpektraFilmTool
             try
             {
                 SpatialPreview.RejectRemovedEngine(copiedLook.Optics);
+                SpatialPreview.RejectUnknownFilmModel(copiedLook.Optics);
                 var entries = CaptureBatch(false);
                 foreach (var entry in entries)
                     LookVersions.Save(looks.VersionsFolder(entry.Target.VariantId), entry.Target.VariantId, "Before applying copied look", entry.Settings);

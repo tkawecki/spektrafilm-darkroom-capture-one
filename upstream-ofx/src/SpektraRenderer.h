@@ -76,6 +76,7 @@ struct RendererDiagnostics {
   bool halationPath = false;
   bool cameraDiffusionPath = false;
   bool printDiffusionPath = false;
+  bool filmStageReused = false;  // Spektrafilm C1: the developed negative of the previous render was reused
   bool dirPath = false;
   bool productionGrainPath = false;
   bool grainSynthesisPath = false;

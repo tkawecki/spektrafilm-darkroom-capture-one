@@ -204,6 +204,14 @@ internal static class Program
             Check(((System.Windows.Controls.CheckBox)Control("toggles","grain-synthesis-transmission-blur")).IsChecked==false,"saved looks must keep the density-domain final blur");
             var oldArgs=(string[])type.GetMethod("RendererOptions",Flags)!.Invoke(view,new object?[]{holder.Value,"prophoto","srgb",false,false})!;
             Check(oldArgs[Array.IndexOf(oldArgs,"--halation-protect")+1]=="4","a look saved without the key must keep 4 EV protection");
+            // Film model (2026-11-23): a look saved without the key is model 1 and sends no option, so it renders as before;
+            // Defaults use model 2 (CAT16 input adaptation); an unknown model is refused instead of being reinterpreted.
+            Check(Array.IndexOf(oldArgs,"--film-model")<0,"a look saved without a film model must render with model 1 (no option)");
+            Check(JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(Call("CaptureSettings"))).GetProperty("Selections").GetProperty("film-model").GetString()=="1","an old look must be saved back as model 1");
+            Check(defaultArgs[Array.IndexOf(defaultArgs,"--film-model")+1]=="3","new looks must use film model 3");
+            var futureLook=JsonSerializer.Deserialize("{\"Numbers\":{},\"Selections\":{\"quality-defaults\":\"2\",\"film-model\":\"9\"},\"Switches\":{}}",type.GetNestedType("Settings",Flags)!)!;
+            var refused=false;try{Call("LoadSettings",futureLook);}catch(Exception error)when(error.GetBaseException() is InvalidDataException){refused=true;}
+            Check(refused,"a look with an unknown film model must be refused, not reinterpreted");
             Call("LoadSettings",new object?[]{null});SetChoice("grain-model","production");
             SetChoice("grain-model","synthesis");
             // Recommended input only changes the two input selections.

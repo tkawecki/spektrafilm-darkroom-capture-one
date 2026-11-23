@@ -15,10 +15,36 @@
 
 namespace spektrafilm {
 
+// Spektrafilm C1 film model 2 (2026-11-23): fraction of the grain variance seen through the 48 um aperture that
+// is left after the final grain blur (Gaussian, sigma in film micrometres). White noise blurred by a Gaussian has the
+// autocovariance of a Gaussian with sigma*sqrt(2); the fraction is the mean, over the aperture disc, of the chance
+// that such a displacement stays inside the disc (lens area of two discs at that distance). Checked against a blurred
+// white-noise simulation and the rendered grain (tests/GrainRmsTests/closed_loop_rms.py).
+inline double apertureVarianceAfterBlur(double sigmaUm) {
+  constexpr double radius = 24.0;
+  constexpr double pi = 3.14159265358979323846;
+  if (!(sigmaUm > 1e-6) || !std::isfinite(sigmaUm)) return 1.0;
+  const double sd = sigmaUm * std::sqrt(2.0);
+  const double dMax = std::min(2.0 * radius, 12.0 * sd);  // lens area is zero beyond 2R; Rayleigh tail beyond 12 sd
+  constexpr int steps = 2048;
+  double sum = 0.0;
+  for (int i = 0; i <= steps; ++i) {
+    const double d = dMax * i / steps;
+    const double pdf = d / (sd * sd) * std::exp(-d * d / (2.0 * sd * sd));
+    const double lens = 2.0 * radius * radius * std::acos(std::min(d / (2.0 * radius), 1.0))
+      - 0.5 * d * std::sqrt(std::max(4.0 * radius * radius - d * d, 0.0));
+    sum += (i == 0 || i == steps ? 0.5 : 1.0) * pdf * lens;
+  }
+  return std::clamp(sum * (dMax / steps) / (pi * radius * radius), 1e-6, 1.0);
+}
+
 // Inputs are the same effective net-density curves uploaded to the renderer,
 // including any explicit aging transform. Output is the per-channel particle
 // area in square micrometres (Production area=1, channel scales=these values).
-inline std::array<double, 3> resolveGrainRms(const RenderParams &p, const ProfileCurveSet &curves) {
+// finalBlurSigmaUm (film model 2 only, 0 = none): the final grain blur the renderer applies; the areas are raised so
+// that the RMS of the blurred grain, not of the grain before the blur, meets the target.
+inline std::array<double, 3> resolveGrainRms(const RenderParams &p, const ProfileCurveSet &curves,
+                                             double finalBlurSigmaUm = 0.0) {
   if (!curves.densityCurves || curves.exposureCount == 0)
     throw std::invalid_argument("RMS grain requires sampled density curves");
   const auto targets = p.grainRmsUseStock ? stockGrainRms(curves.stock)
@@ -78,7 +104,7 @@ inline std::array<double, 3> resolveGrainRms(const RenderParams &p, const Profil
       denom = maximum * maximum * probability * (1.0 - probability * uniformity[ch]);
     }
     const double target = std::max(targets[ch], 0.1) / 1000.0 * std::max(double(p.grainRmsStrength), 1e-3);
-    areas[ch] = target * target * apertureArea / std::max(denom, 1e-12);
+    areas[ch] = target * target * apertureArea / std::max(denom, 1e-12) / apertureVarianceAfterBlur(finalBlurSigmaUm);
     if (!std::isfinite(areas[ch])) throw std::invalid_argument("RMS grain calibration is not finite");
   }
   return areas;

@@ -386,8 +386,15 @@ COLOR_SPACES = [
 ]
 
 
+# Spektrafilm C1 film model 3 (2026-11-23): a second, complete set of stock tables generated from the Python
+# reference's profiles (--model3-profile-dir), with its own neutral print filters (--model3-neutral-filters). None
+# while emitting the original set, so models 1 and 2 keep the tables they were made with.
+_PROFILE_DIR_OVERRIDE: Path | None = None
+
+
 def _load_profile(stock: str) -> dict:
-    return json.loads((PROFILE_DIR / f"{stock}.json").read_text(encoding="utf-8"))
+    directory = _PROFILE_DIR_OVERRIDE or PROFILE_DIR
+    return json.loads((directory / f"{stock}.json").read_text(encoding="utf-8"))
 
 
 def _load_archive_profile(stock: str) -> dict | None:
@@ -483,7 +490,9 @@ def _matrix_to_rows(matrix: np.ndarray) -> list[list[float]]:
     return [[float(matrix[row, column]) for column in range(matrix.shape[1])] for row in range(matrix.shape[0])]
 
 
-def _color_space_to_xyz_matrix(matrix_space: str, reference_illuminant: str) -> list[list[float]]:
+def _color_space_to_xyz_matrix(matrix_space: str, reference_illuminant: str, transform: str = "CAT02") -> list[list[float]]:
+    # Spektrafilm C1: film model 1 keeps the OFX plug-in's CAT02; film model 2 uses CAT16 like the Python reference
+    # (spektrafilm 3bb2c2d, utils/spectral_upsampling.py::_rgb_to_tc_b).
     reference_xy = _illuminant_to_xy(reference_illuminant)
     columns = []
     for rgb in np.eye(3):
@@ -493,7 +502,7 @@ def _color_space_to_xyz_matrix(matrix_space: str, reference_illuminant: str) -> 
                 colourspace=matrix_space,
                 apply_cctf_decoding=False,
                 illuminant=reference_xy,
-                chromatic_adaptation_transform="CAT02",
+                chromatic_adaptation_transform=transform,
             )
         )
     return _matrix_to_rows(np.stack(columns, axis=1))
@@ -681,10 +690,10 @@ def _color_space_to_srgb_matrix(matrix_space: str) -> list[list[float]]:
     return _matrix_to_rows(np.stack(columns, axis=1))
 
 
-def _input_to_reference_xyz_matrices(reference_illuminant: str) -> list[list[float]]:
+def _input_to_reference_xyz_matrices(reference_illuminant: str, transform: str = "CAT02") -> list[list[float]]:
     matrices: list[list[float]] = []
     for space in COLOR_SPACES:
-        matrices.extend(_color_space_to_xyz_matrix(space["matrix_space"], reference_illuminant))
+        matrices.extend(_color_space_to_xyz_matrix(space["matrix_space"], reference_illuminant, transform))
     return matrices
 
 
@@ -778,8 +787,8 @@ def _mallett_midgray_green(profile: dict, reference_illuminant: str) -> float:
     return float(np.sum(illuminant * 0.184 * sensitivity[:, 1]))
 
 
-def _neutral_print_filter_table() -> list[list[float]]:
-    filters = read_neutral_print_filters()
+def _neutral_print_filter_table(filters: dict | None = None) -> list[list[float]]:
+    filters = read_neutral_print_filters() if filters is None else filters
     fallback = [0.0, 65.0, 55.0]
     table: list[list[float]] = []
     for paper in PAPERS:
@@ -1028,7 +1037,9 @@ def _dir_coupler_defaults(info: dict) -> dict[str, tuple[float, ...]]:
     return defaults
 
 
-def _emit_group(group_name: str, stocks: list[str]) -> str:
+def _emit_group(group_name: str, stocks: list[str], kind: str | None = None) -> str:
+    """kind: "film" or "paper" (defaults to group_name); group_name also names the emitted arrays."""
+    kind = kind or group_name
     chunks: list[str] = []
     records: list[str] = []
     input_to_srgb = _input_to_srgb_matrices()
@@ -1044,13 +1055,14 @@ def _emit_group(group_name: str, stocks: list[str]) -> str:
         bandpass_hanatos2025 = _hanatos2025_bandpass(profile, stock)
         hanatos2026_window_params = _hanatos2026_window_params(profile)
         input_to_xyz = _input_to_reference_xyz_matrices(reference_illuminant)
+        input_to_xyz_cat16 = _input_to_reference_xyz_matrices(reference_illuminant, "CAT16")
         reference_illuminant_spectrum = [float(value) for value in standard_illuminant(reference_illuminant)]
         scan_illuminant = [float(value) for value in standard_illuminant(viewing_illuminant)]
         scan_to_output_rgb = _scan_to_output_rgb_matrices(viewing_illuminant)
         mallett_basis_illuminant = _mallett_basis_illuminant(reference_illuminant)
         mallett_midgray_green = _mallett_midgray_green(profile, reference_illuminant)
         log_exposure = [float(value) for value in profile["data"]["log_exposure"]]
-        density_curves = _normalized_density_curves(profile) if group_name == "film" else _density_curves(profile)
+        density_curves = _normalized_density_curves(profile) if kind == "film" else _density_curves(profile)
         density_curve_minimum = _density_curve_minimum(profile)
         density_curve_layers = _numeric_layers(profile, "density_curves_layers")
         density_curve_layer_maxima = _density_curve_layer_maxima(profile)
@@ -1083,6 +1095,7 @@ def _emit_group(group_name: str, stocks: list[str]) -> str:
         chunks.append(_array(f"{prefix}_dir_gamma_b_to_rg", [float(value) for value in dir_couplers["b_to_rg"]]))
         chunks.append(_array(f"{prefix}_scan_illuminant", scan_illuminant))
         chunks.append(_array(f"{prefix}_scan_to_output_rgb", scan_to_output_rgb))
+        chunks.append(_array(f"{prefix}_input_to_reference_xyz_cat16", input_to_xyz_cat16))
         bandpass_hanatos2025_ptr = (
             f"{prefix}_bandpass_hanatos2025" if bandpass_hanatos2025 is not None else "nullptr"
         )
@@ -1117,7 +1130,8 @@ def _emit_group(group_name: str, stocks: list[str]) -> str:
             f"{prefix}_dir_gamma_g_to_rb, "
             f"{prefix}_dir_gamma_b_to_rg, "
             f"{prefix}_scan_illuminant, "
-            f"{prefix}_scan_to_output_rgb"
+            f"{prefix}_scan_to_output_rgb, "
+            f"{prefix}_input_to_reference_xyz_cat16"
             "},"
         )
     chunks.append(f"constexpr ProfileCurveSet {group_name}_profiles[] = {{")
@@ -1126,7 +1140,32 @@ def _emit_group(group_name: str, stocks: list[str]) -> str:
     return "\n\n".join(chunks)
 
 
-def generate() -> str:
+def _emit_model3(profile_dir: Path | None, neutral_filters: Path | None) -> str:
+    """Film model 3 tables, or aliases of the original ones when no model 3 data is given."""
+    global _PROFILE_DIR_OVERRIDE
+    if profile_dir is None:
+        return "\n".join([
+            "constexpr const ProfileCurveSet *film_m3_profiles = film_profiles;",
+            "constexpr const ProfileCurveSet *paper_m3_profiles = paper_profiles;",
+            "constexpr const float *neutral_print_filters_m3 = neutral_print_filters;",
+            "constexpr bool kModel3Data = false;",
+        ])
+    _PROFILE_DIR_OVERRIDE = profile_dir
+    try:
+        chunks = [
+            f"// Film model 3: profiles from {profile_dir.as_posix()} (spektrafilm by Andrea Volpato, CC BY-SA 4.0).",
+            _emit_group("film_m3", FILMS, "film"),
+            _emit_group("paper_m3", PAPERS, "paper"),
+        ]
+    finally:
+        _PROFILE_DIR_OVERRIDE = None
+    filters = json.loads(neutral_filters.read_text(encoding="utf-8")) if neutral_filters else read_neutral_print_filters()
+    chunks.append(_array("neutral_print_filters_m3", _neutral_print_filter_table(filters)))
+    chunks.append("constexpr bool kModel3Data = true;")
+    return "\n\n".join(chunks)
+
+
+def generate(model3_profile_dir: Path | None = None, model3_neutral_filters: Path | None = None) -> str:
     return "\n".join(
         [
             "// Generated by OFX/SpektraFilm/tools/generate_profile_curves.py.",
@@ -1142,13 +1181,15 @@ def generate() -> str:
             "",
             _emit_group("paper", PAPERS),
             "",
+            _array("neutral_print_filters", _neutral_print_filter_table()),
+            "",
+            _emit_model3(model3_profile_dir, model3_neutral_filters),
+            "",
             _array("standard_observer_cmfs", _matrix_to_rows(np.asarray(STANDARD_OBSERVER_CMFS[:], dtype=float))),
             "",
             _array("th_kg3_illuminant", [float(value) for value in standard_illuminant("TH-KG3")]),
             "",
             _array("custom_enlarger_filters", _matrix_to_rows(np.asarray(custom_dichroic_filters.filters, dtype=float))),
-            "",
-            _array("neutral_print_filters", _neutral_print_filter_table()),
             "",
             _array("academy_printer_density_responsivities", _st2065_2_apd_responsivities()),
             "",
@@ -1164,18 +1205,22 @@ def generate() -> str:
             "",
             "} // namespace",
             "",
-            "const ProfileCurveSet *filmProfileCurves(int32_t index) {",
+            "const ProfileCurveSet *filmProfileCurves(int32_t index, int32_t dataSet) {",
             "  if (index < 0 || index >= static_cast<int32_t>(sizeof(film_profiles) / sizeof(film_profiles[0]))) {",
             "    return nullptr;",
             "  }",
-            "  return &film_profiles[index];",
+            "  return dataSet >= 3 ? &film_m3_profiles[index] : &film_profiles[index];",
             "}",
             "",
-            "const ProfileCurveSet *paperProfileCurves(int32_t index) {",
+            "const ProfileCurveSet *paperProfileCurves(int32_t index, int32_t dataSet) {",
             "  if (index < 0 || index >= static_cast<int32_t>(sizeof(paper_profiles) / sizeof(paper_profiles[0]))) {",
             "    return nullptr;",
             "  }",
-            "  return &paper_profiles[index];",
+            "  return dataSet >= 3 ? &paper_m3_profiles[index] : &paper_profiles[index];",
+            "}",
+            "",
+            "bool profileDataSetAvailable(int32_t dataSet) {",
+            "  return dataSet < 3 || kModel3Data;",
             "}",
             "",
             "const HanatosSpectraLutInfo &hanatosSpectraLutInfo() {",
@@ -1221,8 +1266,8 @@ def generate() -> str:
             "  return custom_enlarger_filters;",
             "}",
             "",
-            "const float *neutralPrintFilters() {",
-            "  return neutral_print_filters;",
+            "const float *neutralPrintFilters(int32_t dataSet) {",
+            "  return dataSet >= 3 ? neutral_print_filters_m3 : neutral_print_filters;",
             "}",
             "",
             "const float *academyPrinterDensityResponsivities() {",
@@ -1313,10 +1358,12 @@ def main() -> int:
     parser.add_argument("--counts-output", type=Path)
     parser.add_argument("--hanatos-output", type=Path)
     parser.add_argument("--output-gamut-compression-output", type=Path)
+    parser.add_argument("--model3-profile-dir", type=Path, help="film model 3: the Python reference's profiles folder")
+    parser.add_argument("--model3-neutral-filters", type=Path, help="film model 3: neutral_print_filters.json")
     args = parser.parse_args()
     print_missing_st2065_2_disclaimer()
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(generate(), encoding="utf-8")
+    args.output.write_text(generate(args.model3_profile_dir, args.model3_neutral_filters), encoding="utf-8")
     print(f"Wrote {args.output}")
     if args.counts_output:
         args.counts_output.parent.mkdir(parents=True, exist_ok=True)

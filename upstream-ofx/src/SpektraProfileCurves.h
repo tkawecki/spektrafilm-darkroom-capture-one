@@ -53,6 +53,8 @@ struct ProfileCurveSet {
   const float *dirGammaBToRg = nullptr;
   const float *scanIlluminant = nullptr;
   const float *scanToOutputRgb = nullptr;
+  // Spektrafilm C1 film model 2: input RGB to reference-illuminant XYZ with CAT16 (model 1 uses inputToReferenceXyz, CAT02).
+  const float *inputToReferenceXyzCat16 = nullptr;
 };
 
 struct HanatosSpectraLutInfo {
@@ -72,8 +74,10 @@ struct PrintCurveModel {
   double sigmas[3][3];
 };
 
-const ProfileCurveSet *filmProfileCurves(int32_t index);
-const ProfileCurveSet *paperProfileCurves(int32_t index);
+// dataSet: 1 = the tables of film models 1 and 2, 3 = film model 3 (profiles of the Python reference, 2026-11-23).
+const ProfileCurveSet *filmProfileCurves(int32_t index, int32_t dataSet = 1);
+const ProfileCurveSet *paperProfileCurves(int32_t index, int32_t dataSet = 1);
+bool profileDataSetAvailable(int32_t dataSet);
 const HanatosSpectraLutInfo &hanatosSpectraLutInfo();
 const float *inputMeterXyzMatrices();
 const uint32_t *colorTransferKinds();
@@ -84,7 +88,7 @@ const float *colorEncodeLuts();
 const float *standardObserverCmfs();
 const float *thKg3Illuminant();
 const float *customEnlargerFilters();
-const float *neutralPrintFilters();
+const float *neutralPrintFilters(int32_t dataSet = 1);
 const float *academyPrinterDensityResponsivities();
 const float *academyPrinterDensityNeutralOffsets();
 const float *academyPrinterDensityData();

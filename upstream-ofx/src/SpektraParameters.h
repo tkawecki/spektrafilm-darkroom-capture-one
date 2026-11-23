@@ -20,6 +20,18 @@ enum class RenderOutputMode : int32_t {
   PrintDensityCmy = 5,
 };
 
+// Spektrafilm C1 stage taps (2026-11-23, diagnostics only): the still renderer returns the image at a stage boundary
+// instead of the output, for stage-by-stage comparison with the Python reference (tests/ParityTests). Untiled
+// print-simulation and scan renders only; units in the comments name the matching Python tap.
+enum class DebugTap : int32_t {
+  None = 0,
+  FilmLog = 1,             // log10 film exposure after camera diffusion and halation (Python log_e_film)
+  FilmDensityPreGrain = 2, // CMY film density after development and DIR couplers, without grain
+  FilmDensity = 3,         // CMY film density with grain (Python cmy_film)
+  PrintLog = 4,            // log10 print exposure after print diffusion (Python log_e_print), print simulation only
+  PrintDensity = 5,        // CMY print density (Python cmy_print), print simulation only
+};
+
 enum class RgbToRawMethod : int32_t {
   Hanatos2025 = 0,
   Mallett2019 = 1,
@@ -130,6 +142,15 @@ struct RenderParams {
   bool scanNegativeInvert = false;
   RenderOutputMode renderOutput = RenderOutputMode::FinalPreview;
   RgbToRawMethod rgbToRawMethod = RgbToRawMethod::Hanatos2026;
+  // Spektrafilm C1 film model saved in each look: 1 = the model looks were made with until 2026-11-23 (CAT02 input
+  // adaptation), 2 = Python-reference parity fixes (CAT16 input adaptation, grain), 3 = model 2 with the stock
+  // profiles of the Python reference (profileDataSet). Old looks keep their model.
+  int32_t filmModel = 1;
+  // Spektrafilm C1 Viewer stream: set by the still renderer when only print, scan or output options changed since
+  // the previous render of the same source, so the developed negative of that render may be reused. Never parsed
+  // from options; the renderer still checks that its cached negative belongs to this source, size and layout.
+  bool reuseFilmStage = false;
+  DebugTap debugTap = DebugTap::None;
   ColorSpace inputColorSpace = ColorSpace::ArriLogC4;
   ColorSpace outputColorSpace = ColorSpace::Rec709Gamma24;
   OutputRole outputRole = OutputRole::DisplaySdr;
@@ -356,6 +377,12 @@ enum ColorAdaptationFlag : uint32_t {
   kColorAdaptationOutputLightnessCompression = 1u << 2u,
   kColorAdaptationOutputChromaCompression = 1u << 3u,
 };
+
+// Spektrafilm C1 film model 3 (2026-11-23): the stock tables generated from the Python reference's profiles
+// (SpektraProfileCurves.h dataSet 3); models 1 and 2 keep the tables they were made with (dataSet 1).
+inline int32_t profileDataSet(const RenderParams &params) {
+  return params.filmModel >= 3 ? 3 : 1;
+}
 
 inline uint32_t colorAdaptationFlags(const RenderParams &params) {
   if (!params.colorAdaptation) {

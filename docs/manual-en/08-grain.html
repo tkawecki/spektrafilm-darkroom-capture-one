@@ -122,10 +122,11 @@
         <p class="path">Spektrafilm optics › Spektrafilm grain › RMS granularity</p>
         <dl class="facts"><div><dt>Range</dt><dd>0.001–4</dd></div><div><dt>Default</dt><dd>1</dd></div></dl>
         <p>A multiplier for the RMS grain strength. According to users of the Spektrafilm forum, RMS values of about 12–17 matched their 35 mm scans best, but a lab scan has its own sharpening and noise reduction, so such comparisons are approximate.</p>
+        <p>With <a href="03-capture-one-preparation.html">film model</a> 2 or 3 the RMS value describes the finished grain, after the final grain blur, so a film with RMS 10 looks like RMS 10 measured through the standard 48 µm aperture. With model 1 (looks saved before 23 November 2026) the finished grain is about a fifth to a third weaker than the value set, more with the default emulsion sublayers.</p>
       </div>
 
       <h2>Particle grain</h2>
-      <p>Details of the particle model used by Preview, Production and RMS. The default values come from the original Spektrafilm; most people never change them.</p>
+      <p>Details of the particle model used by Preview, Production and RMS. The default values come from the original Spektrafilm; most people never change them. From film model 2 on, a sublayer that is almost fully developed (in the dense, bright parts of a print) keeps its full grain, as in the Spektrafilm reference; model 1 lost part of it there.</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Control</th><th>Range, default</th><th>What it does</th></tr></thead>

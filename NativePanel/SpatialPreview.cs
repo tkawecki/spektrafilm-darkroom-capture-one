@@ -199,6 +199,19 @@ internal sealed partial class SpatialPreview : IDisposable
     };
     private SourcePreparation Preparation => ((Choice)inputPreparation.SelectedItem).Id == "neutral-film"
         ? SourcePreparation.NeutralFilm : SourcePreparation.CaptureOne;
+    // The film model is saved in each look, so an update of the model never changes a saved look. A look without the
+    // key was made with model 1; new looks and Defaults use the latest model.
+    internal const string LatestFilmModel = "3";
+    private static readonly Choice[] FilmModels =
+    {
+        new("3", "Model 3 (current)"), new("2", "Model 2 (looks saved on 23 November 2026)"),
+        new("1", "Model 1 (looks saved before model 2)"),
+    };
+    private readonly ComboBox filmModel = new()
+    {
+        DisplayMemberPath = nameof(Choice.Label), ItemsSource = FilmModels, SelectedIndex = 0,
+        ToolTip = "The version of the film simulation this look uses; each look keeps its model. Model 3 (new looks) is model 2 with the current film and paper profiles of the Python spektrafilm reference and neutral print filters fitted to them. Model 2 follows the reference more closely than model 1: it adapts the input colours to the film's light with CAT16 (most visible with tungsten films and deep blues), counts grain particles exactly where few develop, keeps the full grain of nearly developed emulsion layers, and makes a grain RMS setting hold for the finished, blurred grain. Model 1 keeps looks saved before model 2 existed exactly as they were.",
+    };
     private readonly ComboBox inputSpace = new()
     {
         DisplayMemberPath = nameof(InputChoice.Label),
@@ -328,6 +341,23 @@ internal sealed partial class SpatialPreview : IDisposable
             throw new InvalidDataException("This look was made with a processing engine that is no longer part of Spektrafilm. Its saved settings are kept unchanged; use Defaults or load a Native preset to edit this photo.");
     }
 
+    // A look saved by a newer panel with a film model this version does not know is refused, never reinterpreted.
+    internal static void RejectUnknownFilmModel(Settings? optics)
+    {
+        if (optics?.Selections?.GetValueOrDefault("film-model") is { } model && !FilmModels.Any(item => item.Id == model))
+            throw new InvalidDataException("This look uses film model " + model + ", which this version of the panel does not know. Update the panel to edit it.");
+    }
+
+    // A look with Spektrafilm turned off does not use the film model, so an unknown one must not stop its export.
+    internal static Settings? WithoutUnknownFilmModel(Settings? optics)
+    {
+        if (optics?.Selections?.GetValueOrDefault("film-model") is not { } model || FilmModels.Any(item => item.Id == model))
+            return optics;
+        var selections = new Dictionary<string, string>(optics.Selections);
+        selections.Remove("film-model");
+        return optics with { Selections = selections };
+    }
+
     internal static SpatialPreview BuildForPanel(object window, Func<LookSettings?> getSettings, Func<Guid, bool> useSelectedLook) =>
         new(window, getSettings, useSelectedLook);
 
@@ -344,6 +374,7 @@ internal sealed partial class SpatialPreview : IDisposable
             selections.Add(key, ((Choice)chooser.SelectedItem).Id);
         selections.Add("input-color", ((InputChoice)inputSpace.SelectedItem).Id);
         selections.Add("input-preparation", ((Choice)inputPreparation.SelectedItem).Id);
+        selections.Add("film-model", ((Choice)filmModel.SelectedItem).Id);
         selections.Add("quality-defaults", "2");
         selections.Add("output-color", ((Choice)outputSpace.SelectedItem).Id);
         selections.Add("export-color", ((Choice)exportSpace.SelectedItem).Id);
@@ -373,6 +404,10 @@ internal sealed partial class SpatialPreview : IDisposable
 
     private void LoadControlValues(Settings settings)
     {
+        // A look without the key was saved before film models existed (model 1). Checked before any control changes.
+        var modelId = settings.Selections?.GetValueOrDefault("film-model") ?? "1";
+        var savedModel = FilmModels.FirstOrDefault(item => item.Id == modelId)
+            ?? throw new InvalidDataException("This look uses film model " + modelId + ", which this version of the panel does not know. Update the panel to edit it.");
         var savedPaper = PaperDecorationStorage.FromSettings(settings.Selections);
         // Validate the complete curve snapshot before changing any controls.
         var savedCurves = new Dictionary<string, string>();
@@ -409,6 +444,7 @@ internal sealed partial class SpatialPreview : IDisposable
         }
         var colorId = settings.Selections?.GetValueOrDefault("input-color");
         inputSpace.SelectedItem = InputSpaces.FirstOrDefault(space => space.Id == colorId) ?? InputSpaces[currentDefaults ? 2 : 0];
+        filmModel.SelectedItem = savedModel;
         var preparationId = settings.Selections?.GetValueOrDefault("input-preparation");
         inputPreparation.SelectedItem = PreparationModes.FirstOrDefault(item => item.Id == preparationId)
             ?? PreparationModes[currentDefaults ? 0 : 1];
@@ -473,6 +509,7 @@ internal sealed partial class SpatialPreview : IDisposable
         });
 
         var color = new StackPanel();
+        AddPreviewChoice(color, filmModel, "Film model");
         AddPreviewChoice(color, inputPreparation, "Input preparation");
         color.Children.Add(new TextBlock { Text = "Input color space", Margin = new Thickness(0, 4, 0, 1) });
         AutomationProperties.SetName(inputSpace, "Input color space");
@@ -1480,8 +1517,8 @@ internal sealed partial class SpatialPreview : IDisposable
             {
                 token.ThrowIfCancellationRequested();
                 var saved = entry.Settings; look = saved.Look;
-                if (saved.Enabled) RejectRemovedEngine(saved.Optics);
-                context.LoadSettings(saved.Optics);
+                if (saved.Enabled) { RejectRemovedEngine(saved.Optics); RejectUnknownFilmModel(saved.Optics); }
+                context.LoadSettings(saved.Enabled ? saved.Optics : WithoutUnknownFilmModel(saved.Optics));
                 catalog ??= System.Text.Json.JsonSerializer.Deserialize<LookOptions>(File.ReadAllText(Path.Combine(
                     Environment.GetEnvironmentVariable("SPEKTRAFILM_ROOT")!, "stocks.json")))!;
                 look = saved.Enabled && look.Strength > 0 ? BatchExportSupport.RenderingLook(look, catalog) : look;
@@ -2509,7 +2546,7 @@ internal sealed partial class SpatialPreview : IDisposable
         for (var index = 0; index < arguments.Length; index += 2)
         {
             var option = arguments[index];
-            if (option is "--stock" or "--paper" or "--mode" or "--input-color" or "--output-color" or "--grain-model" or "--camera-diffusion-family"
+            if (option is "--stock" or "--paper" or "--mode" or "--film-model" or "--input-color" or "--output-color" or "--grain-model" or "--camera-diffusion-family"
                 or "--auto-exposure" or "--film-exposure" or "--print-exposure"
                 or "--print-diffusion-family" or "--halation-amount" or "--scatter-amount" or "--scanner-enabled"
                 or "--enlarger-scale")
@@ -2538,6 +2575,8 @@ internal sealed partial class SpatialPreview : IDisposable
         Set("output-color", outputColor);
         Set("mode", look.Mode.Contains("scan", StringComparison.Ordinal) ? (look.ScanInvert ? "scan_inverted" : "scan") : "print");
         Set("spectral-method", look.SpectralMethod);
+        // Model 1 sends no option, so its arguments (and renders) stay exactly as before model 2.
+        if (((Choice)filmModel.SelectedItem).Id is var model && model != "1") Set("film-model", model);
         Set("film-push-pull-mode", look.FilmPushPullMode);
         Numeric("film-exposure", look.Exposure);
         Numeric("print-exposure", look.PrintExposure);

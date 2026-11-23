@@ -97,6 +97,12 @@ window.MANUAL_INDEX = [
 "k": ""
 },
 {
+"t": "Film model",
+"u": "03-capture-one-preparation.html#film-model",
+"s": "Funkcja panelu",
+"k": "Spektrafilm optics › Color management Preparation in Capture One"
+},
+{
 "t": "Input preparation",
 "u": "03-capture-one-preparation.html#input-preparation",
 "s": "Funkcja panelu",

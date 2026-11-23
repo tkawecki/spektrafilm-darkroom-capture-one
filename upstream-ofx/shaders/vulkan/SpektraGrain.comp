@@ -68,6 +68,7 @@ const uint kFrameGrainSynthesisTransmissionBlur = 109u;
 const uint kFrameGrainSynthesisReferenceLagWeight0 = 110u;
 const uint kFrameGrainSynthesisNativeLagWeight0 = 120u;
 const uint kFrameGrainSynthesisReferenceSigmaUm = 130u;
+const uint kFrameGrainExactParticleCounts = 131u;
 const float kGrainSynthesisReferencePixelUm = 6.0;
 
 const uint kFrameIntFilmPositive = 10u;
@@ -391,6 +392,8 @@ vec3 applyGrainControls(vec3 baseDensity, vec3 grainedDensity) {
   return max(baseDensity + delta, vec3(0.0));
 }
 
+uint poissonSample(float lambda, uint seed, uint cap);
+
 float particleDevelopedDensity(
   float density,
   float densityMax,
@@ -405,8 +408,21 @@ float particleDevelopedDensity(
   const float saturation = max(1.0 - probability * uniformity * (1.0 - 1.0e-6), 1.0e-6);
   const float expectedSeeds = safeParticles / saturation;
   const float expectedDeveloped = expectedSeeds * probability;
+  // Spektrafilm C1 film model 2: like Python's layer_particle_model (Binomial(Poisson(N / s), p), i.e.
+  // Poisson(N p / s)), few developed particles are counted exactly. A Gaussian clamped at zero raises the mean
+  // there (by 8% at one particle, 82% at 0.1), more at export size than in the Viewer. blurDamping scales the
+  // deviation as before, so the mean stays exact. No cap at the expected seed count: the composite has none (the
+  // binomial is bounded only by the random number of seeds). Model 1 keeps the clamped Gaussian.
+  if (f(kFrameGrainExactParticleCounts) > 0.5 && expectedDeveloped < 8.0) {
+    const float count = float(poissonSample(expectedDeveloped, seed ^ 0x2545f491u, 64u));
+    return (expectedDeveloped + (count - expectedDeveloped) * blurDamping) * (safeDensityMax / safeParticles) * saturation;
+  }
   const float variance = max(expectedSeeds * probability, 1.0e-6);
-  const float developed = clamp(expectedDeveloped + sqrt(variance) * gaussian(seed) * blurDamping, 0.0, expectedSeeds);
+  // Film model 2: no cap at the expected seed count here either. The seed count is itself random, so a nearly
+  // fully developed layer (probability near 1) still deviates upward; the cap removed up to 42% of its RMS and
+  // lowered its mean (tests/GrainRmsTests, tests/ParityTests/README.md). Model 1 keeps the cap.
+  const float developedCap = f(kFrameGrainExactParticleCounts) > 0.5 ? 3.0e38 : expectedSeeds;
+  const float developed = clamp(expectedDeveloped + sqrt(variance) * gaussian(seed) * blurDamping, 0.0, developedCap);
   return developed * (safeDensityMax / safeParticles) * saturation;
 }
 

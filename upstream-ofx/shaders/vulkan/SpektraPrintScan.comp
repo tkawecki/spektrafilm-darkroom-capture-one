@@ -1493,6 +1493,20 @@ vec3 applyFilmScanOutputContract(vec4 scan) {
   return scannerBlackWhiteCorrection(normalizedRgb, normalizedY, 0.0, 1.0);
 }
 
+// Spektrafilm C1 stage taps (diagnostics, tests/ParityTests): _pad2 = 1 stores the log10 print exposure, 2 the print
+// density, instead of the output. 0 (every normal render) changes nothing.
+bool storePrintStageTap(uint index, vec3 printLog, vec3 printDensity, float alpha) {
+  if (params._pad2 == 1u) {
+    storeDestinationPixel(index, vec4(printLog, alpha));
+    return true;
+  }
+  if (params._pad2 == 2u) {
+    storeDestinationPixel(index, vec4(printDensity, alpha));
+    return true;
+  }
+  return false;
+}
+
 void main() {
   const uvec2 activeGid = gl_GlobalInvocationID.xy;
   if (params._pad0 == kPrintScanOpFrameConstants) {
@@ -1531,7 +1545,11 @@ void main() {
 
   if (params._pad0 == kPrintScanOpFinalFromPrintRaw) {
     if (printLikeFinal) {
-      const vec3 printDensity = developPrintDensity(log(max(pixel.rgb, vec3(0.0)) + vec3(1.0e-10)) * kLog10E);
+      const vec3 printLog = log(max(pixel.rgb, vec3(0.0)) + vec3(1.0e-10)) * kLog10E;
+      const vec3 printDensity = developPrintDensity(printLog);
+      if (storePrintStageTap(index, printLog, printDensity, pixel.a)) {
+        return;
+      }
       const vec3 bypassedPrintDensity = bleachBypassDyeDensity(printDensity, f(9u), true);
       const float retainedSilver = bleachBypassRetainedSilverDensity(printDensity, f(9u), true);
       vec4 scan = scanDensityToOutputRgbLinearY(
@@ -1550,7 +1568,11 @@ void main() {
 
   if (finalPrintSimulation || finalProcessNegative) {
     const vec3 printRaw = finalProcessNegative ? timedPrintRawFromNegativeLight(pixel.rgb) : timedPrintRaw(pixel.rgb);
-    const vec3 printDensity = developPrintDensity(log(max(printRaw, vec3(0.0)) + vec3(1.0e-10)) * kLog10E);
+    const vec3 printLog = log(max(printRaw, vec3(0.0)) + vec3(1.0e-10)) * kLog10E;
+    const vec3 printDensity = developPrintDensity(printLog);
+    if (storePrintStageTap(index, printLog, printDensity, pixel.a)) {
+      return;
+    }
     const vec3 bypassedPrintDensity = bleachBypassDyeDensity(printDensity, f(9u), true);
     const float retainedSilver = bleachBypassRetainedSilverDensity(printDensity, f(9u), true);
     vec4 scan = scanDensityToOutputRgbLinearY(

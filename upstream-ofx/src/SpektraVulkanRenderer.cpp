@@ -1008,7 +1008,7 @@ float filteredEnlargerIlluminantCpu(
     std::max<uint32_t>(kSpektraPaperCount, 1u) - 1u
   );
   const uint32_t neutralOffset = (paper * kSpektraFilmCount + film) * 3u;
-  const float *neutral = neutralPrintFilters();
+  const float *neutral = neutralPrintFilters(profileDataSet(params));
   const float cc0 = std::max(neutral[neutralOffset] + cFilter, 0.0f);
   const float cc1 = std::max(neutral[neutralOffset + 1u] + mFilterShift, 0.0f);
   const float cc2 = std::max(neutral[neutralOffset + 2u] + yFilterShift, 0.0f);
@@ -1302,8 +1302,8 @@ uint32_t halationTileOverlap(const RenderParams &params, uint32_t longEdge) {
   if (longEdge == 0u) return (scatter ? kVulkanSpatialEffectRadiusPx : 0u) + (bounce ? kVulkanSpatialEffectRadiusPx : 0u);
   const float pixelSizeUm = std::max(
     filmFormatLongEdgeMm(params.filmFormat) * 1000.0f / static_cast<float>(longEdge) / resolvedEnlargerScale(params), 1.0e-6f);
-  const ProfileCurveSet *curves = filmProfileCurves(params.film);
-  if (!curves) curves = filmProfileCurves(static_cast<int32_t>(kSpektraDefaultFilmIndex));
+  const ProfileCurveSet *curves = filmProfileCurves(params.film, profileDataSet(params));
+  if (!curves) curves = filmProfileCurves(static_cast<int32_t>(kSpektraDefaultFilmIndex), profileDataSet(params));
   float bounceSigmaUm = std::max({params.halationFirstSigmaUmR, params.halationFirstSigmaUmG, params.halationFirstSigmaUmB});
   if (curves && curves->halationFirstSigmaUm) {
     const float *sigma = curves->halationFirstSigmaUm;
@@ -1437,7 +1437,7 @@ struct VulkanDiffusionComponent {
 static_assert(sizeof(VulkanDiffusionInfo) == 16u);
 static_assert(sizeof(VulkanDiffusionComponent) == 16u);
 
-constexpr uint32_t kCoreFrameFloatCount = 131u;
+constexpr uint32_t kCoreFrameFloatCount = 132u;
 constexpr uint32_t kCoreFrameIntCount = 30u;
 constexpr uint32_t kCoreHalationSetCount = 13u;
 constexpr uint32_t kCoreDiffusionSetCount = 3u;
@@ -2834,6 +2834,10 @@ struct VulkanRenderer::Impl {
     ScratchBuffer grainDensityA;
     ScratchBuffer grainDensityB;
     ScratchBuffer grainMeanTemp;
+    // Spektrafilm C1 developed-negative cache: dedicated copies of the film density the print stage reads (and of
+    // the grain-free density the grain mean restore reads), so a print, scan or output change skips the film stages.
+    ScratchBuffer filmCacheFinal;
+    ScratchBuffer filmCachePreGrain;
     ScratchBuffer grainMicroA;
     ScratchBuffer grainMicroB;
     ScratchBuffer grainLayerA;
@@ -2869,6 +2873,7 @@ struct VulkanRenderer::Impl {
     AgedFilmCurves agedCurves;
     ProfileCurveSet agedProfile;
     RgbToRawMethod rgbToRawMethod = RgbToRawMethod::Hanatos2026;
+    int32_t filmModel = 1;
     bool cameraUvFilterEnabled = false;
     float cameraUvCutNm = 0.0f;
     bool cameraIrFilterEnabled = false;
@@ -2996,6 +3001,15 @@ struct VulkanRenderer::Impl {
   VkPipeline scannerPostPipeline = VK_NULL_HANDLE;
   VkPipeline grainPipeline = VK_NULL_HANDLE;
   CoreFrameResources coreFrame;
+  // What the developed-negative cache in coreFrame holds; valid only after a completed untiled render.
+  struct FilmStageCache {
+    bool valid = false;
+    uint64_t sourceRevision = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    VkBuffer finalBuffer = VK_NULL_HANDLE;
+    VkBuffer preGrainBuffer = VK_NULL_HANDLE;
+  } filmStageCache;
   StaticFilmResources staticFilm;
   std::vector<float> hanatosSpectraData;
   static std::mutex transientRegistryMutex;
@@ -3224,6 +3238,8 @@ uint64_t VulkanRenderer::Impl::transientAllocationBytes() const {
   add(coreFrame.source);
   add(coreFrame.filmRaw);
   add(coreFrame.filmDensity);
+  add(coreFrame.filmCacheFinal);
+  add(coreFrame.filmCachePreGrain);
   add(coreFrame.destination);
   add(coreFrame.destinationHalf);
   add(coreFrame.destinationStaging);
@@ -3623,6 +3639,7 @@ void VulkanRenderer::Impl::destroyStaticFilmResources() {
   staticFilm.agedCurves = {};
   staticFilm.agedProfile = {};
   staticFilm.rgbToRawMethod = RgbToRawMethod::Hanatos2026;
+  staticFilm.filmModel = 1;
   staticFilm.cameraUvFilterEnabled = false;
   staticFilm.cameraUvCutNm = 0.0f;
   staticFilm.cameraIrFilterEnabled = false;
@@ -4081,6 +4098,7 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
     staticFilm.film == params.film &&
     staticFilm.aging == aging &&
     staticFilm.rgbToRawMethod == params.rgbToRawMethod &&
+    staticFilm.filmModel == params.filmModel &&
     staticFilm.cameraUvFilterEnabled == params.cameraUvFilterEnabled &&
     staticFilm.cameraUvCutNm == params.cameraUvCutNm &&
     staticFilm.cameraIrFilterEnabled == params.cameraIrFilterEnabled &&
@@ -4135,15 +4153,19 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
     return true;
   }
 
-  const ProfileCurveSet *curves = filmProfileCurves(params.film);
+  if (!profileDataSetAvailable(profileDataSet(params))) {
+    lastError = "This renderer was built without the film model 3 stock tables.";
+    return false;
+  }
+  const ProfileCurveSet *curves = filmProfileCurves(params.film, profileDataSet(params));
   if (!curves) {
-    curves = filmProfileCurves(static_cast<int32_t>(kSpektraDefaultFilmIndex));
+    curves = filmProfileCurves(static_cast<int32_t>(kSpektraDefaultFilmIndex), profileDataSet(params));
   }
   const ProfileCurveSet *paperCurves = nullptr;
   if (includePrintScanResources) {
-    paperCurves = paperProfileCurves(params.paper);
+    paperCurves = paperProfileCurves(params.paper, profileDataSet(params));
     if (!paperCurves) {
-      paperCurves = paperProfileCurves(static_cast<int32_t>(kSpektraDefaultPaperIndex));
+      paperCurves = paperProfileCurves(static_cast<int32_t>(kSpektraDefaultPaperIndex), profileDataSet(params));
     }
   }
   if (!curves || curves->exposureCount == 0u || !curves->logExposure || !curves->densityCurves) {
@@ -4171,7 +4193,9 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
     lastError = "Unable to locate generated paper density curves.";
     return false;
   }
-  if (!curves->inputToReferenceXyz || !curves->inputToSrgb || !colorDecodeLuts() || !colorTransferKinds()) {
+  // Film model 1 keeps the CAT02 input adaptation its looks were made with; model 2 uses CAT16 (Python reference).
+  const float *inputToReferenceXyz = params.filmModel >= 2 ? curves->inputToReferenceXyzCat16 : curves->inputToReferenceXyz;
+  if (!inputToReferenceXyz || !curves->inputToSrgb || !colorDecodeLuts() || !colorTransferKinds()) {
     lastError = "Unable to locate generated Vulkan input color transform data.";
     return false;
   }
@@ -4202,7 +4226,7 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
     return false;
   }
   if (includePrintScanResources &&
-      (!thKg3Illuminant() || !customEnlargerFilters() || !neutralPrintFilters() || !academyPrinterDensityData())) {
+      (!thKg3Illuminant() || !customEnlargerFilters() || !neutralPrintFilters(profileDataSet(params)) || !academyPrinterDensityData())) {
     lastError = "Unable to locate generated Vulkan print exposure data.";
     return false;
   }
@@ -4303,7 +4327,7 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
 
   if (!uploadStaticBuffer(staticFilm.logExposure, packedFilmCurveExposure.data(), logExposureBytes, "packed film curve exposure") ||
       !uploadStaticBuffer(staticFilm.densityCurves, curves->densityCurves, densityCurveBytes, "film density curves") ||
-      !uploadStaticBuffer(staticFilm.inputToReferenceXyz, curves->inputToReferenceXyz, inputMatrixBytes, "input to reference XYZ matrices") ||
+      !uploadStaticBuffer(staticFilm.inputToReferenceXyz, inputToReferenceXyz, inputMatrixBytes, "input to reference XYZ matrices") ||
       !uploadStaticBuffer(staticFilm.inputToSrgb, curves->inputToSrgb, inputMatrixBytes, "input to sRGB matrices") ||
       !uploadStaticBuffer(staticFilm.colorDecodeLuts, colorDecodeLuts(), transferLutBytes, "color decode LUTs") ||
       !uploadStaticBuffer(staticFilm.colorTransferKinds, colorTransferKinds(), transferKindBytes, "color transfer kinds") ||
@@ -4374,7 +4398,7 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
         !uploadStaticBuffer(staticFilm.paperLogSensitivity, paperSensitivityLinear.data(), spectralTripletBytes, "paper linear sensitivity") ||
         !uploadStaticBuffer(staticFilm.thKg3Illuminant, thKg3Illuminant(), wavelengthBytes, "TH-KG3 illuminant") ||
         !uploadStaticBuffer(staticFilm.customEnlargerFilters, customEnlargerFilters(), spectralTripletBytes, "custom enlarger filters") ||
-        !uploadStaticBuffer(staticFilm.neutralPrintFilters, neutralPrintFilters(), neutralPrintFilterBytes, "neutral print filters") ||
+        !uploadStaticBuffer(staticFilm.neutralPrintFilters, neutralPrintFilters(profileDataSet(params)), neutralPrintFilterBytes, "neutral print filters") ||
         !uploadStaticBuffer(staticFilm.paperChannelDensity, packedPaperSpectralDensity.data(), packedPaperSpectralDensity.size() * sizeof(float), "packed paper spectral density") ||
         !uploadStaticBuffer(staticFilm.paperBaseDensity, printBaseDensity, wavelengthBytes, "paper base density") ||
         !uploadStaticBuffer(staticFilm.filmScanIlluminant, scanProducts.data(), scanProducts.size() * sizeof(float), "packed scan products") ||
@@ -4420,6 +4444,7 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
   staticFilm.printBase = printBase;
   staticFilm.aging = aging;
   staticFilm.rgbToRawMethod = params.rgbToRawMethod;
+  staticFilm.filmModel = params.filmModel;
   staticFilm.cameraUvFilterEnabled = params.cameraUvFilterEnabled;
   staticFilm.cameraUvCutNm = params.cameraUvCutNm;
   staticFilm.cameraIrFilterEnabled = params.cameraIrFilterEnabled;
@@ -4678,6 +4703,9 @@ void VulkanRenderer::Impl::destroyCoreFrameResources() {
   destroyScratchBuffer(coreFrame.grainLayerA);
   destroyScratchBuffer(coreFrame.grainMicroB);
   destroyScratchBuffer(coreFrame.grainMicroA);
+  destroyScratchBuffer(coreFrame.filmCacheFinal);
+  destroyScratchBuffer(coreFrame.filmCachePreGrain);
+  filmStageCache = {};
   destroyScratchBuffer(coreFrame.grainMeanTemp);
   destroyScratchBuffer(coreFrame.grainDensityB);
   destroyScratchBuffer(coreFrame.grainDensityA);
@@ -5084,6 +5112,25 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
   const bool grainMeanRestorePath =
     grainPath && params.grainMeanRestore && printScanPassEnabled && finalPostProcessPath && !rcmOutput;
   const bool scannerPostPath = printGlarePath || scannerBlurPath || scannerUnsharpPath || grainMeanRestorePath;
+  // Spektrafilm C1 stage taps: diagnostics for untiled frames; the film stages keep their own buffers there.
+  const bool debugTapActive = params.debugTap != DebugTap::None;
+  const bool filmDebugTap = params.debugTap == DebugTap::FilmLog || params.debugTap == DebugTap::FilmDensityPreGrain ||
+    params.debugTap == DebugTap::FilmDensity;
+  const bool printDebugTap = params.debugTap == DebugTap::PrintLog || params.debugTap == DebugTap::PrintDensity;
+  if (debugTapActive) {
+    if (activeTileContext.enabled) {
+      lastError = "Stage taps need an untiled render.";
+      return false;
+    }
+    if (!filmDebugTap && !printDebugTap) {
+      lastError = "Unknown stage tap.";
+      return false;
+    }
+    if (!(finalPrintSimulation || finalScanNegative) || (printDebugTap && !finalPrintSimulation)) {
+      lastError = "This stage tap does not exist in the selected mode.";
+      return false;
+    }
+  }
   const bool diffusionFeatureEnabled =
     envFlagEnabledOrDefault("SPEKTRAFILM_VULKAN_DIFFUSION_PASS", true);
   VulkanDiffusionInfo cameraDiffusionInfo{};
@@ -5555,8 +5602,18 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     frameFloats[52] = params.grainParticleScaleR;
     frameFloats[53] = params.grainParticleScaleG;
     frameFloats[54] = params.grainParticleScaleB;
+    const float grainFormatScale = std::pow(
+      std::max(filmFormatLongEdgeMm(params.filmFormat) / 35.0f, 1.0e-6f),
+      0.62f
+    );
     if (grainFeatureEnabled && params.grainModel == GrainModel::RmsCalibrated) {
-      const auto areas = resolveGrainRms(params, *staticFilm.curves);
+      // Film model 2: the RMS target holds for the finished grain, after the final blur SpektraGrain.comp applies
+      // (densityBlurX/Y: skipped below 0.4 px without sublayers). Model 1 keeps the target before the blur.
+      const float finalBlurUm = std::max(params.grainFinalBlurUm, 0.0f) * grainFormatScale;
+      const float finalBlurPx = finalBlurUm / std::max(filmPixelSizeUm, 1.0e-6f);
+      const bool finalBlurApplied = finalBlurPx > 0.0f && (params.grainSublayersEnabled || finalBlurPx > 0.4f);
+      const auto areas = resolveGrainRms(params, *staticFilm.curves,
+                                         params.filmModel >= 2 && finalBlurApplied ? finalBlurUm : 0.0);
       frameFloats[51] = 1.0f;
       for (unsigned ch = 0; ch < 3; ++ch) frameFloats[52 + ch] = static_cast<float>(areas[ch]);
     }
@@ -5572,10 +5629,6 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     frameFloats[61] = params.grainUniformityR;
     frameFloats[62] = params.grainUniformityG;
     frameFloats[63] = params.grainUniformityB;
-    const float grainFormatScale = std::pow(
-      std::max(filmFormatLongEdgeMm(params.filmFormat) / 35.0f, 1.0e-6f),
-      0.62f
-    );
     frameFloats[64] = std::max(params.grainFinalBlurUm, 0.0f) * grainFormatScale /
       std::max(filmPixelSizeUm, 1.0e-6f);
     frameFloats[65] = params.grainBlurDyeCloudsUm;
@@ -5592,6 +5645,8 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     frameFloats[76] = params.halationBoostRange;
     frameFloats[77] = params.halationProtectEv;
     frameFloats[105] = params.halationProtectRelative ? 1.0f : 0.0f;
+    // Spektrafilm C1 film model 2: exact Poisson counts for few developed grain particles (SpektraGrain.comp).
+    frameFloats[131] = params.filmModel >= 2 ? 1.0f : 0.0f;
     frameFloats[106] = 1.0f; // scanner level slope, set by the print/scan frame constants
     frameFloats[107] = 0.0f;
     const float grainSynthesisQuality = std::clamp(params.grainSynthesisQuality, 0.25f, 4.0f);
@@ -6018,6 +6073,32 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     ? grainFinalDensityBufferInfo
     : (dirPath ? (printScanPassEnabled ? dirDensityBufferInfo : destinationBufferInfo) : filmDensityBufferInfo);
   const VkDescriptorBufferInfo &developInputBufferInfo = preExposureRawPath ? halationLogRawBufferInfo : filmRawBufferInfo;
+  // Spektrafilm C1 developed-negative cache (untiled Viewer renders of a resident source). The print stage reads only
+  // the final film density and, for the grain mean restore, the grain-free density; both are kept in dedicated
+  // buffers, so a later stage that reuses scratch memory cannot spoil them. A hit skips exposure, camera diffusion,
+  // halation, development, DIR couplers and grain, and restores the two densities instead.
+  const bool filmCacheNeedsPreGrain = grainMeanRestorePath;
+  const bool filmCacheEligible = !debugTapActive && !activeTileContext.enabled && !fullFrameSourcePath && sourceRevision != 0u &&
+    !finalProcessNegative && printScanPassEnabled && (!grainMeanRestorePath || grainPath) &&
+    finalFilmDensityBufferInfo.buffer != VK_NULL_HANDLE &&
+    (!filmCacheNeedsPreGrain || preGrainFilmDensityBufferInfo.buffer != VK_NULL_HANDLE);
+  const bool filmCacheHit = filmCacheEligible && params.reuseFilmStage && filmStageCache.valid &&
+    coreFrame.filmCacheFinal.buffer != VK_NULL_HANDLE && coreFrame.filmCacheFinal.capacity >= pixelStorageByteCount &&
+    (!filmCacheNeedsPreGrain ||
+     (coreFrame.filmCachePreGrain.buffer != VK_NULL_HANDLE && coreFrame.filmCachePreGrain.capacity >= pixelStorageByteCount)) &&
+    filmStageCache.sourceRevision == sourceRevision && filmStageCache.width == width && filmStageCache.height == height &&
+    filmStageCache.finalBuffer == finalFilmDensityBufferInfo.buffer &&
+    filmStageCache.preGrainBuffer == (filmCacheNeedsPreGrain ? preGrainFilmDensityBufferInfo.buffer : VK_NULL_HANDLE);
+  if (!filmCacheHit) {
+    filmStageCache.valid = false;  // this render rewrites (or stops keeping) the cached negative
+  }
+  diagnostics.filmStageReused = filmCacheHit;
+  if (filmCacheEligible &&
+      (!ensurePrivateScratchBuffer(coreFrame.filmCacheFinal, pixelStorageByteCount, "developed negative cache") ||
+       (filmCacheNeedsPreGrain &&
+        !ensurePrivateScratchBuffer(coreFrame.filmCachePreGrain, pixelStorageByteCount, "grain-free negative cache")))) {
+    return false;
+  }
   VkDescriptorBufferInfo frameFloatsBufferInfo{};
   frameFloatsBufferInfo.buffer = coreFrame.frameFloats.buffer;
   frameFloatsBufferInfo.offset = 0;
@@ -6720,6 +6801,28 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     insertComputeBarrier();
   };
 
+  auto copyWholeBuffer = [&](VkBuffer from, VkBuffer to) {
+    VkBufferCopy region{};
+    region.size = pixelStorageByteCount;
+    vkCmdCopyBuffer(commandBuffer, from, to, 1, &region);
+  };
+  auto insertBarrier = [&](VkAccessFlags srcAccess, VkPipelineStageFlags srcStage, VkAccessFlags dstAccess, VkPipelineStageFlags dstStage) {
+    VkMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrier.srcAccessMask = srcAccess;
+    barrier.dstAccessMask = dstAccess;
+    vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+  };
+  if (filmCacheHit) {
+    insertBarrier(VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                  VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    copyWholeBuffer(coreFrame.filmCacheFinal.buffer, finalFilmDensityBufferInfo.buffer);
+    if (filmCacheNeedsPreGrain) {
+      copyWholeBuffer(coreFrame.filmCachePreGrain.buffer, preGrainFilmDensityBufferInfo.buffer);
+    }
+    insertBarrier(VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                  VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+  } else {
   if (!finalProcessNegative) {
     pushConstants._pad0 = preExposureRawPath ? 1u : 0u;
     pushConstants._pad1 = colorAdaptationFlags(params);
@@ -6855,8 +6958,36 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     }
   }
 
-  if (printScanPassEnabled) {
+  if (filmCacheEligible) {
+    insertBarrier(VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                  VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    copyWholeBuffer(finalFilmDensityBufferInfo.buffer, coreFrame.filmCacheFinal.buffer);
+    if (filmCacheNeedsPreGrain) {
+      copyWholeBuffer(preGrainFilmDensityBufferInfo.buffer, coreFrame.filmCachePreGrain.buffer);
+    }
+    insertBarrier(VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                  VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+  }
+  }  // film stages (skipped on a developed-negative cache hit)
+
+  if (filmDebugTap) {
+    const VkDescriptorBufferInfo &tapBufferInfo = params.debugTap == DebugTap::FilmLog
+      ? developInputBufferInfo
+      : (params.debugTap == DebugTap::FilmDensityPreGrain ? preGrainFilmDensityBufferInfo : finalFilmDensityBufferInfo);
+    if (tapBufferInfo.buffer != destinationBufferInfo.buffer) {
+      insertBarrier(VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                    VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+      copyWholeBuffer(tapBufferInfo.buffer, destinationBufferInfo.buffer);
+      insertBarrier(VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    }
+  }
+
+  if (printScanPassEnabled && !filmDebugTap) {
     insertComputeBarrier();
+    // SpektraPrintScan.comp stores the print stage instead of the output for 1 (log print exposure), 2 (print density).
+    const uint32_t printDebugTapCode = params.debugTap == DebugTap::PrintLog ? 1u
+      : (params.debugTap == DebugTap::PrintDensity ? 2u : 0u);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, printScanPipeline);
     pushConstants._pad0 = kPrintScanOpFrameConstants;
@@ -6884,20 +7015,20 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
 
       pushConstants._pad0 = kPrintScanOpFinalFromPrintRaw;
       pushConstants._pad1 = scannerPostPath ? 1u : 0u;
-      pushConstants._pad2 = 0u;
+      pushConstants._pad2 = printDebugTapCode;
       vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, printScanPipeline);
       vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, corePipelineLayout, 0, 1, &coreFrame.printDiffusionDescriptorSets[1], 0, nullptr);
     } else {
       pushConstants._pad0 = kPrintScanOpFull;
       pushConstants._pad1 = scannerPostPath ? 1u : 0u;
-      pushConstants._pad2 = 0u;
+      pushConstants._pad2 = printDebugTapCode;
       vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, corePipelineLayout, 0, 1, &coreFrame.finalDescriptorSet, 0, nullptr);
     }
     vkCmdPushConstants(commandBuffer, corePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pushConstants), &pushConstants);
     vkCmdDispatch(commandBuffer, activeGroupsX(), activeGroupsY(), 1);
   }
 
-  if (grainMeanRestorePath) {
+  if (grainMeanRestorePath && !debugTapActive) {
     // Spektrafilm C1: grain mean-colour restore (after flx-film-lab). The grainy print keeps its texture;
     // only its 3 px neighbourhood mean is scaled to the grain-free print's.
     insertComputeBarrier();
@@ -6947,7 +7078,7 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     insertComputeBarrier();
   };
 
-  if (scannerPostPath) {
+  if (scannerPostPath && !debugTapActive) {
     insertComputeBarrier();
     if (printGlarePath) {
       dispatchScannerPost(coreFrame.scannerPostDescriptorSets[0], kScannerPostOpPrintGlareGenerate);
@@ -7101,6 +7232,10 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     return false;
   }
   if (uploadSource) coreFrame.sourceRevision = sourceRevision;
+  if (filmCacheEligible && !filmCacheHit) {
+    filmStageCache = {true, sourceRevision, width, height, finalFilmDensityBufferInfo.buffer,
+                      filmCacheNeedsPreGrain ? preGrainFilmDensityBufferInfo.buffer : VK_NULL_HANDLE};
+  }
   diagnostics.commandBufferMs = elapsedMilliseconds(commandStart, commandEnd);
 
   const PerfClock::time_point outputCopyStart = PerfClock::now();

@@ -8,7 +8,17 @@ Spektrafilm Darkroom for Capture One is a **modified version** of three GPL-3.0 
 | Vulkan renderer (`upstream-ofx`) | spektrafilm OFX by Aedan Diez | commit `86476afc5b077de77e2278e3658d1ba9309892a1` |
 | Python reference and film profiles (`upstream-spektrafilm`) | [spektrafilm](https://github.com/andreavolpato/spektrafilm) by Andrea Volpato | commit `3bb2c2d2801ff68b92019cf1dbcbb133d60832bc` |
 
-The changes below were made between 2026-11-15 and 2026-11-22 by tkawecki. Two sets of fixes were ported from the original panel's commit `285f0aa` ("Harden saved looks, rendering, exports and installer upgrades"); the files concerned say so in their headers. On 2026-11-22 further fixes were ported from the original panel's v0.2.0 (commits after `285f0aa` up to `e7dd26f`), with the author's invitation; each changed place names the upstream commit, and they are listed in the section below.
+The changes below were made between 2026-11-15 and 2026-11-23 by tkawecki. Two sets of fixes were ported from the original panel's commit `285f0aa` ("Harden saved looks, rendering, exports and installer upgrades"); the files concerned say so in their headers. On 2026-11-22 further fixes were ported from the original panel's v0.2.0 (commits after `285f0aa` up to `e7dd26f`), with the author's invitation; each changed place names the upstream commit, and they are listed in the section below.
+
+## Film models and parity with the Python reference (2026-11-23)
+
+Each look records the version of the simulation it uses (`film-model`), so an update never changes a saved look: a look without the key renders exactly as before (model 1). New looks use model 3.
+
+- **Model 2:** input chromatic adaptation with CAT16 instead of CAT02, as in the Python reference; exact Poisson counts where few grain particles develop; no cap at the expected seed count for nearly developed sublayers; the RMS grain model includes the final grain blur, so the RMS target holds for the finished grain.
+- **Model 3:** model 2 with stock tables generated from the Python reference's film and paper profiles at the commit above (the OFX plug-in shipped older profiles), and neutral print filters fitted by this renderer so that a mid grey prints neutral (`upstream-ofx/tools/fit_neutral_print_filters.py`). Profile-derived data stays CC BY-SA 4.0.
+- **Measured:** a stage-by-stage comparison with the Python reference (`tests/ParityTests`, the renderer's diagnostic `--debug-tap`) gives an output difference of 0.7-1.4/255 on average for all 26 films with model 3; a closed-loop test (`tests/GrainRmsTests/closed_loop_rms.py`) gives 1.00-1.04 of the RMS target with models 2 and 3.
+- New looks use the spectral reconstruction Hanatos 2026, which is the reference's default method (its `hanatos2025` with the fitted adaptation window).
+- A cache of the developed negative makes print, scan and output changes in the Viewer faster (identical output).
 
 ## Fixes ported from Spektrafilm for Capture One v0.2.0 (Luka Kauzlaric)
 

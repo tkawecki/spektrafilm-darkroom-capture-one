@@ -247,6 +247,11 @@ constexpr Option<RgbToRawMethod> kUpsampling[] = {
     {"mallett2019", RgbToRawMethod::Mallett2019},
 };
 
+constexpr Option<DebugTap> kDebugTaps[] = {
+    {"off", DebugTap::None}, {"film-log", DebugTap::FilmLog}, {"film-density-pre-grain", DebugTap::FilmDensityPreGrain},
+    {"film-density", DebugTap::FilmDensity}, {"print-log", DebugTap::PrintLog}, {"print-density", DebugTap::PrintDensity},
+};
+
 constexpr Option<DiffusionFilterFamily> kDiffusion[] = {
     {"glimmerglass", DiffusionFilterFamily::Glimmerglass}, {"black_pro_mist", DiffusionFilterFamily::BlackProMist},
     {"pro_mist", DiffusionFilterFamily::ProMist}, {"cine_bloom", DiffusionFilterFamily::CineBloom},
@@ -282,7 +287,7 @@ int stockIndex(const std::string &id, bool film) {
 }
 
 void setStockCalibration(RenderParams &p) {
-    const auto *stock = filmProfileCurves(p.film);
+    const auto *stock = filmProfileCurves(p.film, profileDataSet(p));
     if (!stock) return;
     if (stock->halationStrength) {
         p.halationStrengthR = stock->halationStrength[0];
@@ -321,6 +326,8 @@ void configure(RenderParams &p, std::string_view key, const std::string &value) 
     if (key == "input-color") p.inputColorSpace = select(value, kInputColorSpaces);
     else if (key == "output-color") p.outputColorSpace = select(value, kOutputColorSpaces);
     else if (key == "spectral-method") p.rgbToRawMethod = select(value, kUpsampling);
+    else if (key == "film-model") p.filmModel = integer(value, 1, 3);
+    else if (key == "debug-tap") p.debugTap = select(value, kDebugTaps);
     else if (key == "mode") {
         p.process = select(value, kProcesses);
         p.scanNegativeInvert = value == "scan_inverted";
@@ -374,6 +381,8 @@ RenderParams readParameters(const std::vector<std::string> &args) {
         const std::string_view name(args[arg]);
         if (name == "--stock") params.film = stockIndex(args[arg + 1], true);
         if (name == "--paper") params.paper = stockIndex(args[arg + 1], false);
+        // The stock defaults below come from the film model's own tables (film model 3 has its own data set).
+        if (name == "--film-model") params.filmModel = integer(args[arg + 1], 1, 3);
     }
     setStockCalibration(params);
     for (std::size_t arg = 0; arg < args.size(); arg += 2) {
@@ -928,12 +937,46 @@ void configureLargeFrame(RenderParams &params, FrameSize size, bool exporting) {
     params.gpuRenderTiling = GpuRenderTilingMode::Tiled;
 }
 
+// Options that act only after the developed negative (print, enlarger filtration, scan and output). When a Viewer
+// request changes nothing else, the renderer may reuse the negative it developed for the previous request. An option
+// missing from this list only costs speed: any other change develops the negative again.
+bool isPrintSideOption(const std::string &option) {
+    static const std::array<std::string_view, 43> kPrintSide = {
+        "--paper", "--print-exposure", "--print-gamma", "--print-push-pull", "--print-bleach-bypass",
+        "--print-shadow-shape", "--print-highlight-shape", "--cyan-filter", "--magenta-filter", "--yellow-filter",
+        "--preflash", "--preflash-magenta", "--preflash-yellow", "--print-exhaustion",
+        "--print-diffusion-family", "--print-diffusion-strength", "--print-diffusion-scale", "--print-diffusion-warmth",
+        "--print-diffusion-core-intensity", "--print-diffusion-core-size", "--print-diffusion-halo-intensity",
+        "--print-diffusion-halo-size", "--print-diffusion-bloom-intensity", "--print-diffusion-bloom-size",
+        "--print-base-enabled", "--print-base-scale", "--print-base-cyan", "--print-base-magenta", "--print-base-yellow",
+        "--scanner-enabled", "--scanner-white-level", "--scanner-black-level", "--scanner-white", "--scanner-black",
+        "--scanner-glare", "--scanner-glare-roughness", "--scanner-glare-blur", "--scanner-mtf",
+        "--scanner-unsharp-radius", "--scanner-unsharp-amount", "--output-color",
+        "--color-output-lightness-compression", "--color-output-chroma-compression",
+    };
+    return std::find(kPrintSide.begin(), kPrintSide.end(), option) != kPrintSide.end();
+}
+
+// The options that decide the developed negative: all except the print-side ones (option/value pairs).
+std::vector<std::string> filmStageArguments(const std::vector<std::string> &args) {
+    std::vector<std::string> film;
+    for (std::size_t i = 0; i < args.size(); i += 2) {
+        if (i + 1 < args.size() && isPrintSideOption(args[i])) continue;
+        film.push_back(args[i]);
+        if (i + 1 < args.size()) film.push_back(args[i + 1]);
+    }
+    return film;
+}
+
 void processStream(const FrameLimit &limit) {
     enableBinaryPipes();
     std::unique_ptr<Renderer> renderer;
     InputFrame input{};
     std::vector<float> output;
     std::optional<std::vector<std::string>> renderedArguments;
+    // Film-side options of the last completed Viewer render; equal options of the next request let the renderer
+    // reuse its developed negative.
+    std::optional<std::vector<std::string>> renderedFilmArguments;
     const bool nativePreview = &limit == &kNativePreviewLimit;
     SharedPreviewBuffer sharedOutput, sharedInput;
     uint64_t nextRevision = 0;
@@ -1023,6 +1066,10 @@ void processStream(const FrameLimit &limit) {
             }
             if (replacesInput || !renderedArguments || args != *renderedArguments) {
                 renderedArguments.reset();
+                auto filmArguments = filmStageArguments(args);
+                params.reuseFilmStage = nativePreview && !replacesInput && renderedFilmArguments &&
+                    filmArguments == *renderedFilmArguments;
+                renderedFilmArguments.reset();
                 try {
                     if (!renderer) renderer = startRenderer();
                     renderFrame(*renderer, replacesInput ? replacement : input, params, output);
@@ -1032,7 +1079,10 @@ void processStream(const FrameLimit &limit) {
                     continue;
                 }
                 if (replacesInput) input = std::move(replacement);
-                if (nativePreview) renderedArguments = std::move(args);
+                if (nativePreview) {
+                    renderedArguments = std::move(args);
+                    renderedFilmArguments = std::move(filmArguments);
+                }
             }
             std::optional<DisplayBlend> blend;
             if (displayStrength && *displayStrength < 1.0) {

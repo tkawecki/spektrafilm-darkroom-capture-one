@@ -125,8 +125,8 @@ internal sealed partial class SpatialPreview
         var saved = job.Entry.Settings;
         var look = saved.Look;
         setLook(look);
-        if (saved.Enabled) RejectRemovedEngine(saved.Optics);
-        context.LoadSettings(saved.Optics);
+        if (saved.Enabled) { RejectRemovedEngine(saved.Optics); RejectUnknownFilmModel(saved.Optics); }
+        context.LoadSettings(saved.Enabled ? saved.Optics : WithoutUnknownFilmModel(saved.Optics));
         catalog ??= System.Text.Json.JsonSerializer.Deserialize<LookOptions>(File.ReadAllText(Path.Combine(
             Environment.GetEnvironmentVariable("SPEKTRAFILM_ROOT")!, "stocks.json")))!;
         look = saved.Enabled && look.Strength > 0 ? BatchExportSupport.RenderingLook(look, catalog) : look;
