@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in the panel does not work or looks wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting. Security problems go through **Report a vulnerability** on the Security tab, not here.
+        Please do not attach photos of people without their consent.
+  - type: input
+    id: panel-version
+    attributes:
+      label: Panel version
+      description: The release you installed, for example 1.3.0.
+    validations:
+      required: true
+  - type: input
+    id: c1-version
+    attributes:
+      label: Capture One version
+      description: Help › About Capture One. Only 16.9.0.3894 is tested.
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU and driver
+      description: For example NVIDIA RTX 4070, driver 581.57.
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead. Film stock, print stock and the settings you changed help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a raw file in a session
+        2. Choose Kodak Portra 400 and ...
+        3. ...
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: The relevant lines of %LOCALAPPDATA%\FilmToolsForCaptureOne\panel.log. Check them for folder or file names you do not want to share.
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Optional. A screenshot of the panel or the Viewer often helps.

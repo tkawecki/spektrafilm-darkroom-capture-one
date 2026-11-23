@@ -67,7 +67,7 @@ The first command builds the renderer and the panel and stages a runtime in the 
 
 ## Contributing
 
-Bug reports, suggestions and pull requests are welcome. When you report a problem, include your Capture One version, your GPU and the relevant lines of `%LOCALAPPDATA%\FilmToolsForCaptureOne\panel.log`. Fixes that also apply to the original project are best offered there as well.
+Bug reports, suggestions and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). When you report a problem, include your Capture One version, your GPU and the relevant lines of `%LOCALAPPDATA%\FilmToolsForCaptureOne\panel.log`. Report security problems privately as described in [SECURITY.md](SECURITY.md). Fixes that also apply to the original project are best offered there as well.
 
 ## Credits
 
