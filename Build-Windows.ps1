@@ -65,7 +65,7 @@ if (!$SkipSmoke) {
     Invoke-Checked $PythonPath @((Join-Path $PSScriptRoot 'ofx-still-renderer\smoke.py'), '--exe', $executable)
 }
 
-$files = @('SpektraStillRenderer.exe', 'SpektraHanatos2025Spectra.f32', 'SpektraOutputGamutCompression.f32')
+$files = @('SpektraStillRenderer.exe', 'SpektraHanatos2025Spectra.f32', 'SpektraOutputGamutCompression.f32', 'SpektraOutputGamutCam16.f32')
 $shaders = 'Copy', 'FormatConvert', 'FilmExposure', 'CurveDevelop', 'PrintScan', 'Halation', 'Diffusion', 'Dir', 'ScannerPost', 'Grain'
 $files += $shaders | ForEach-Object { "shaders\Spektra$_.comp.spv" }
 $runtime = Join-Path $PSScriptRoot 'renderer'

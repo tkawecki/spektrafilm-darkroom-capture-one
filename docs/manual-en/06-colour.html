@@ -76,7 +76,7 @@
         <h5>Typical values</h5>
         <p>0.8–1.2. With slides and scenes with a lot of green, try lower values.</p>
         <h5>Pitfalls</h5>
-        <p>When the effective strength, Amount × (0.4 × Same-layer + 0.6 × Interlayer), exceeds 1.5, the model starts to reverse tones: darker areas print lighter. This happens with 15 of the 26 films in the 1.6–2.0 range. The panel then shows a warning below the sliders, but it does not block the value.</p>
+        <p>When the effective strength, Amount × (0.4 × Same-layer + 0.6 × Interlayer), exceeds 1.5, the model starts to reverse tones: darker areas print lighter. This happens with 15 of the 26 films in the 1.6–2.0 range. The panel then shows a warning below the sliders, but it does not block the value. With film model 4 the renderer holds each film at the strength where its tones would start to reverse, so tones stay in order and the sliders change little or nothing beyond that point; the warning then says so.</p>
       </div>
 
       <div class="control">
@@ -149,7 +149,7 @@
           <li><span class="ui">Input spectral gamut compression</span>: pulls colours outside the visible range inside it before spectral reconstruction.</li>
           <li><span class="ui">Density curve smoothing</span>: smoother interpolation of the density curves.</li>
           <li><span class="ui">Output lightness compression</span>: a soft lightness knee at the output.</li>
-          <li><span class="ui">Output chroma compression</span>: soft saturation compression at the output.</li>
+          <li><span class="ui">Output chroma compression</span>: soft saturation compression at the output. With film model 4 both output compressions work in CAM16-UCS, as in the Python reference; older models use OkLch.</li>
         </ul>
         <p>When you turn it off, saturation rises a little and the image becomes slightly cooler. Saturated colours may then clip.</p>
         <h5>When to use</h5>

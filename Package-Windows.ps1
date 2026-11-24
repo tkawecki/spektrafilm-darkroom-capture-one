@@ -20,7 +20,7 @@ $files = @(
     'assets\Spektrafilm.ico', 'assets\Spektrafilm.png', 'panel\NativePanel.dll',
     'profiles\preview\Linear Rec.2020.icc', 'profiles\preview\ProPhoto RGB.icc',
     'renderer\SpektraStillRenderer.exe', 'renderer\SpektraHanatos2025Spectra.f32',
-    'renderer\SpektraOutputGamutCompression.f32', 'upstream-ofx\LICENSE.txt',
+    'renderer\SpektraOutputGamutCompression.f32', 'renderer\SpektraOutputGamutCam16.f32', 'upstream-ofx\LICENSE.txt',
     'upstream-ofx\Legal\THIRD_PARTY_NOTICES.txt', 'upstream-ofx\Legal\SPEKTRAFILM_OFX_LICENSE.txt',
     'upstream-ofx\Legal\SPEKTRAFILM_OFX_LUT_LICENSE.txt'
 )

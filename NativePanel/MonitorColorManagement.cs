@@ -215,7 +215,8 @@ internal sealed class MonitorColorCache
 
     private MonitorColorFrame Keep(MonitorColorFrame prepared)
     {
-        if (frames.Count == 2) frames.RemoveAt(0);
+        // Base frame, Viewer window (SpatialPreview's zoomed-in window) and the frame replacing one of them.
+        if (frames.Count == 3) frames.RemoveAt(0);
         frames.Add(prepared);
         return prepared;
     }

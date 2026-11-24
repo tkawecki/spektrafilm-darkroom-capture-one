@@ -14,11 +14,16 @@ internal static class DirToneGuard
         amount * (0.4 * sameLayer + 0.6 * interlayer);
 
     /// <summary>The warning to show, or null when tones stay in order.</summary>
-    internal static string? Warning(double amount, double sameLayer, double interlayer)
+    internal static string? Warning(double amount, double sameLayer, double interlayer, bool guardedModel = false)
     {
         var strength = EffectiveStrength(amount, sameLayer, interlayer);
         if (!(strength > Limit))
             return null;
+        // Film model 4 (2026-11-24): the renderer holds the strength at each film's limit (dirStrengthGuard).
+        if (guardedModel)
+            return string.Format(CultureInfo.InvariantCulture,
+                "Strong DIR couplers (effective strength {0:0.00}, above {1:0.0}). Film model 4 holds each film at the strength where its tones "
+                + "would start to reverse, so beyond that point these sliders change little or nothing on that film.", strength, Limit);
         return string.Format(CultureInfo.InvariantCulture,
             "Strong DIR couplers (effective strength {0:0.00}, above {1:0.0}) can reverse tones: on some films darker areas print brighter, "
             + "most visibly on slide films (Velvia, Provia) and Fujifilm C200 / X-Tra 400 or pushed Portra 800. "

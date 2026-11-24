@@ -201,16 +201,16 @@ internal sealed partial class SpatialPreview : IDisposable
         ? SourcePreparation.NeutralFilm : SourcePreparation.CaptureOne;
     // The film model is saved in each look, so an update of the model never changes a saved look. A look without the
     // key was made with model 1; new looks and Defaults use the latest model.
-    internal const string LatestFilmModel = "3";
+    internal const string LatestFilmModel = "4";
     private static readonly Choice[] FilmModels =
     {
-        new("3", "Model 3 (current)"), new("2", "Model 2 (looks saved on 23 November 2026)"),
-        new("1", "Model 1 (looks saved before model 2)"),
+        new("4", "Model 4 (current)"), new("3", "Model 3 (looks saved before model 4)"),
+        new("2", "Model 2 (looks saved on 23 November 2026)"), new("1", "Model 1 (looks saved before model 2)"),
     };
     private readonly ComboBox filmModel = new()
     {
         DisplayMemberPath = nameof(Choice.Label), ItemsSource = FilmModels, SelectedIndex = 0,
-        ToolTip = "The version of the film simulation this look uses; each look keeps its model. Model 3 (new looks) is model 2 with the current film and paper profiles of the Python spektrafilm reference and neutral print filters fitted to them. Model 2 follows the reference more closely than model 1: it adapts the input colours to the film's light with CAT16 (most visible with tungsten films and deep blues), counts grain particles exactly where few develop, keeps the full grain of nearly developed emulsion layers, and makes a grain RMS setting hold for the finished, blurred grain. Model 1 keeps looks saved before model 2 existed exactly as they were.",
+        ToolTip = "The version of the film simulation this look uses; each look keeps its model. Model 4 (new looks) is model 3 with three more defaults of the Python spektrafilm reference: out-of-gamut colours are brought into the output colour space in CAM16-UCS instead of OkLch (saturated colours keep their hue and lightness as in the reference), auto exposure measures the photo as the reference does, and strong DIR coupler settings can no longer fold a density curve back on itself. Model 3 is model 2 with the current film and paper profiles of the Python spektrafilm reference and neutral print filters fitted to them. Model 2 follows the reference more closely than model 1: it adapts the input colours to the film's light with CAT16 (most visible with tungsten films and deep blues), counts grain particles exactly where few develop, keeps the full grain of nearly developed emulsion layers, and makes a grain RMS setting hold for the finished, blurred grain. Model 1 keeps looks saved before model 2 existed exactly as they were.",
     };
     private readonly ComboBox inputSpace = new()
     {
@@ -328,6 +328,10 @@ internal sealed partial class SpatialPreview : IDisposable
     internal void CancelExport() => exportWork?.Cancel();
     internal bool IsExporting => exportWork is not null;
     internal event Action? SettingsChanged;
+    // Film model 4 limits strong DIR settings in the renderer (dirStrengthGuard), so the panel's DIR warning changes.
+    internal event Action? FilmModelChanged;
+    internal bool FilmModelGuardsDir =>
+        int.TryParse(((Choice)filmModel.SelectedItem).Id, NumberStyles.Integer, CultureInfo.InvariantCulture, out var model) && model >= 4;
     internal bool CompareSource { get => showSource.IsChecked == true; set => showSource.IsChecked = value; }
     private int DragLongEdge => ((DragSize)dragPreviewSize.SelectedItem).LongEdge;
 
@@ -510,6 +514,7 @@ internal sealed partial class SpatialPreview : IDisposable
 
         var color = new StackPanel();
         AddPreviewChoice(color, filmModel, "Film model");
+        filmModel.SelectionChanged += (_, _) => FilmModelChanged?.Invoke();
         AddPreviewChoice(color, inputPreparation, "Input preparation");
         color.Children.Add(new TextBlock { Text = "Input color space", Margin = new Thickness(0, 4, 0, 1) });
         AutomationProperties.SetName(inputSpace, "Input color space");
@@ -981,7 +986,11 @@ internal sealed partial class SpatialPreview : IDisposable
         var meter = MakeChoice("auto-exposure-meter", "Metering", new[]
         {
             new Choice("center_weighted", "Center weighted"), new Choice("median", "Median"),
+            new Choice("average", "Average"), new Choice("partial", "Partial (center circle)"),
+            new Choice("matrix", "Matrix (5 × 5 zones)"), new Choice("multi_zone", "Multi-zone (center rings)"),
+            new Choice("highlight_weighted", "Highlight weighted"),
         });
+        meter.ToolTip = "How the source is metered to mid grey, as in the Python spektrafilm reference: Center weighted favours the middle of the frame, Median ignores very bright and very dark areas, Average weighs the whole frame evenly, Partial meters a circle in the center, Matrix weighs 5 × 5 zones less towards the corners, Multi-zone weighs a center spot and two rings, and Highlight weighted favours bright areas so they keep detail. With film model 4 the source is reduced and metered exactly as in the reference.";
         var label = new TextBlock { Text = "Metering", Margin = new Thickness(14, 0, 6, 0), VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(label, 1);
         Grid.SetColumn(meter, 2);
@@ -1010,7 +1019,7 @@ internal sealed partial class SpatialPreview : IDisposable
         AddRow(0, "Viewer resolution", previewSize);
         AddRow(1, "Drag preview resolution", dragPreviewSize);
         previewSize.SelectionChanged += (_, _) => { SaveViewerPreferences(); OnSettingsChanged(); };
-        previewSize.ToolTip = "Resolution of the final Viewer frame. Auto renders the size the image has on screen (1600–2560 px) and switches to native resolution when you zoom in; judge grain and sharpness zoomed in or at Native resolution. Save preview PNG saves the frame as shown. "
+        previewSize.ToolTip = "Resolution of the final Viewer frame. Auto renders the size the image has on screen (1600–2560 px) and full resolution when you zoom in (at high zoom only the visible part, which is faster); judge grain and sharpness zoomed in or at Native resolution. Save preview PNG saves the frame as shown. "
             + "Viewer settings apply to all photos; they are not part of a look. Export does not use this setting.";
         dragPreviewSize.SelectionChanged += (_, _) =>
         {
@@ -1665,6 +1674,8 @@ internal sealed partial class SpatialPreview : IDisposable
 
     private void ResetSource(bool keepDraftRenderer = false)
     {
+        ForgetWindow();
+        baseSource = null;
         ResetDraft(keepRenderer: keepDraftRenderer);
         source = null;
         sourceGeneration++;
@@ -1766,6 +1777,15 @@ internal sealed partial class SpatialPreview : IDisposable
         {
             if (pendingDraft is null && lastDraftRevision != inputRevision && getSettings() is { } draftLook)
             {
+                // Zoomed in: the window itself is the interactive preview, sharp and about as fast as a draft.
+                if (nativeSize && draftLook.Strength > 0 && encoding.Id == "srgb" && viewerFrame is not null
+                    && WindowDraftReady(liveSource) && CaptureFinishingSettings() is var draftFinishing
+                    && new FinishingTransform(draftFinishing).IsIdentity && CaptureGeometrySettings().IsIdentity && paperDecoration.IsIdentity
+                    && WantedWindow(liveSource) is { } draftWindow)
+                {
+                    await RefreshWindowDraftAsync(selectedVariant, revision, liveSource, selectedSpace, encoding, draftLook, size, draftWindow);
+                    return;
+                }
                 await RefreshDraftAsync(selectedVariant, revision, liveSource, selectedSpace, encoding, draftLook, size, dragEdge,
                     QuickLongEdge(liveSource, dragEdge));
                 // Re-read selection and controls on the next tick after the await.
@@ -1780,7 +1800,8 @@ internal sealed partial class SpatialPreview : IDisposable
                 || failedWhileOffline && activeVariant == selectedVariant && OfflineSourceReturned()))
             queued = true;
 
-        if (autoSize && !queued && frameCurrent && !needsSource && source is { } zoomSource && AutoFrameTooSmall(zoomSource))
+        if (autoSize && !queued && frameCurrent && !needsSource && source is { } zoomSource && AutoFrameTooSmall(zoomSource)
+            && !WindowCovers(zoomSource))
         {
             // Zoomed in on an Auto frame: render the larger frame once the zoom has rested for a moment.
             var now = Environment.TickCount64;
@@ -1795,6 +1816,11 @@ internal sealed partial class SpatialPreview : IDisposable
         }
         else
             autoZoomNeededSince = 0;
+        if (!queued && frameCurrent && !needsSource && source is { } panSource && WindowPanSettled(panSource))
+        {
+            queued = true;
+            TraceJob("job.pan", $"window={windowRect}");
+        }
         if (!queued || getSettings() is not { } look)
         {
             if (viewerFrame is not null)
@@ -1939,7 +1965,51 @@ internal sealed partial class SpatialPreview : IDisposable
             }
 
             var input = source!;
-            if (autoSize && AutoLongEdge(input) is > 0 and var autoEdge)
+            // Zoomed in: render only the visible part (SpatialPreview.ViewerWindow.cs) over the frame on screen.
+            var windowEligible = nativeSize && highDepthPreview && strength > 0 && finishing.IsIdentity && encoding.Id == "srgb"
+                && geometry.IsIdentity && paper.IsIdentity && WindowModelAllowed();
+            var refreshWindowBase = false;
+            if (windowEligible && viewerFrame is not null && WantedWindow(input) is { } wantedWindow)
+            {
+                var windowCurrent = WindowCovers(input) && windowArguments is { } heldArguments && heldArguments.SequenceEqual(args)
+                    && windowStrength == strength;
+                if (!windowCurrent && await RenderViewerWindowAsync(input, wantedWindow, args, strength, job.Token) is { } windowBitmap)
+                {
+                    if (settingsVersion != inputRevision)
+                    {
+                        TraceJob("job.abort", "settings changed while rendering the window");
+                        return;
+                    }
+                    if (HostImageSource.GetRevision(window, selectedVariant) != sourceRevision)
+                    {
+                        TraceJob("job.abort", "source revision changed while rendering the window");
+                        queued = true;
+                        return;
+                    }
+                    PresentViewerWindow(selectedVariant, input, wantedWindow, windowBitmap, args, strength, started);
+                    {
+                        frameCurrent = true;
+                        awaitingSource = false;
+                        showSource.IsEnabled = true;
+                        TraceJob("job.window", $"{wantedWindow}");
+                        // The frame around the window still shows the previous settings: refresh it next.
+                        if (!WindowBaseCurrent(args, strength, input))
+                            queued = true;
+                        return;
+                    }
+                }
+                else if (windowCurrent && WindowBaseCurrent(args, strength, input))
+                {
+                    frameCurrent = true;
+                    awaitingSource = false;
+                    return;
+                }
+                refreshWindowBase = windowCurrent;
+            }
+            if (!refreshWindowBase)
+                ForgetWindow(); // a whole frame follows; no window may stay over it
+            var reduceEdge = refreshWindowBase ? WindowBaseLongEdge(input) : autoSize ? AutoLongEdge(input) : 0;
+            if (reduceEdge > 0 && reduceEdge is var autoEdge)
             {
                 if (settleSource is null || settleEdge != autoEdge)
                 {
@@ -2063,7 +2133,13 @@ internal sealed partial class SpatialPreview : IDisposable
             pendingInitial?.Cancel();
             showSource.IsEnabled = true;
             previewDetail = comparing ? "Source preview" : "Live Viewer";
-            ShowFrame(selectedVariant, output);
+            ShowFrame(selectedVariant, output, keepWindow: refreshWindowBase);
+            RememberBase(args, strength, source!);
+            // Start the window renderer and give it this source now, so the first zoom-in waits neither for its
+            // Vulkan start (about 4 s) nor for the upload of the whole source (about 1.5 s for 18 MP).
+            if (nativeSize && highDepthPreview && strength > 0 && WindowModelAllowed()
+                && (long)source!.Width * source.Height <= WindowSourcePixelsMax)
+                PrefetchWindowSource(source, args);
             TraceJob("job.shown", viewer.UnavailableReason ?? "visible");
             StartupHook.Log($"Live Viewer frame {input.Width} × {input.Height} in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F0} ms. {DescribeRender(args)}");
         }
@@ -2129,6 +2205,7 @@ internal sealed partial class SpatialPreview : IDisposable
 
     private void ReleaseRenderer()
     {
+        ReleaseWindowRenderer();
         renderer?.Dispose();
         renderer = null;
         rendererWarmup = null;
@@ -2457,8 +2534,14 @@ internal sealed partial class SpatialPreview : IDisposable
 
     private void HideRenderError() => renderError.Visibility = Visibility.Collapsed;
 
-    private void ShowFrame(Guid variant, BitmapSource frame)
+    private BitmapSource? shownFrame;
+
+    private void ShowFrame(Guid variant, BitmapSource frame, bool keepWindow = false)
     {
+        // A new frame (not the refreshed base under a window) replaces the Viewer window.
+        if (!keepWindow && !ReferenceEquals(frame, shownFrame))
+            ForgetWindow();
+        shownFrame = frame;
         referenceComparison?.Update(frame);
         if (scopesWindow is { IsClosed: false })
         {
@@ -2467,7 +2550,7 @@ internal sealed partial class SpatialPreview : IDisposable
         }
         nextViewerCheck = Environment.TickCount64 + SelectionCheckIntervalMs;
         HideRenderError();
-        viewer.Show(variant, frame, viewerLayout);
+        viewer.Show(variant, frame, viewerLayout, keepWindow);
         UpdateViewerStatus();
     }
 
@@ -2547,7 +2630,7 @@ internal sealed partial class SpatialPreview : IDisposable
         {
             var option = arguments[index];
             if (option is "--stock" or "--paper" or "--mode" or "--film-model" or "--input-color" or "--output-color" or "--grain-model" or "--camera-diffusion-family"
-                or "--auto-exposure" or "--film-exposure" or "--print-exposure"
+                or "--auto-exposure" or "--auto-exposure-meter" or "--film-exposure" or "--print-exposure"
                 or "--print-diffusion-family" or "--halation-amount" or "--scatter-amount" or "--scanner-enabled"
                 or "--enlarger-scale")
                 settings.Add($"{option[2..]}={arguments[index + 1]}");

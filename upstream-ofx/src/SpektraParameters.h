@@ -41,6 +41,12 @@ enum class RgbToRawMethod : int32_t {
 enum class AutoExposureMethod : int32_t {
   CenterWeighted = 0,
   Median = 1,
+  // Spektrafilm C1 2026-11-24: the other metering methods of the Python reference (SpektraAutoExposure.h).
+  Average = 2,
+  Partial = 3,
+  Matrix = 4,
+  MultiZone = 5,
+  HighlightWeighted = 6,
 };
 
 enum class PushPullMode : int32_t {
@@ -137,6 +143,17 @@ enum class ColorSpace : int32_t {
   Rec709Gamma24 = 25,
 };
 
+// Spektrafilm C1 Viewer window (2026-11-23): render only this rectangle of the render window (frame coordinates),
+// with every full-frame step (auto exposure, halation boost milestone, spatial-effect context, grain positions)
+// taken from the whole frame, so the pixels equal the same pixels of a full render. Uses the tiled path.
+struct ViewWindow {
+  bool enabled = false;
+  int32_t x = 0;
+  int32_t y = 0;
+  int32_t width = 0;
+  int32_t height = 0;
+};
+
 struct RenderParams {
   ProcessMode process = ProcessMode::PrintSimulation;
   bool scanNegativeInvert = false;
@@ -144,13 +161,15 @@ struct RenderParams {
   RgbToRawMethod rgbToRawMethod = RgbToRawMethod::Hanatos2026;
   // Spektrafilm C1 film model saved in each look: 1 = the model looks were made with until 2026-11-23 (CAT02 input
   // adaptation), 2 = Python-reference parity fixes (CAT16 input adaptation, grain), 3 = model 2 with the stock
-  // profiles of the Python reference (profileDataSet). Old looks keep their model.
+  // profiles of the Python reference (profileDataSet), 4 = model 3 with the Python reference defaults of 2026-11-24
+  // (CAM16-UCS output gamut compression, auto exposure metering, DIR curve guard). Old looks keep their model.
   int32_t filmModel = 1;
   // Spektrafilm C1 Viewer stream: set by the still renderer when only print, scan or output options changed since
   // the previous render of the same source, so the developed negative of that render may be reused. Never parsed
   // from options; the renderer still checks that its cached negative belongs to this source, size and layout.
   bool reuseFilmStage = false;
   DebugTap debugTap = DebugTap::None;
+  ViewWindow viewWindow;
   ColorSpace inputColorSpace = ColorSpace::ArriLogC4;
   ColorSpace outputColorSpace = ColorSpace::Rec709Gamma24;
   OutputRole outputRole = OutputRole::DisplaySdr;
@@ -376,6 +395,8 @@ enum ColorAdaptationFlag : uint32_t {
   kColorAdaptationCurveSmoothing = 1u << 1u,
   kColorAdaptationOutputLightnessCompression = 1u << 2u,
   kColorAdaptationOutputChromaCompression = 1u << 3u,
+  // Spektrafilm C1 film model 4: output compression in CAM16-UCS (the Python reference default) instead of OkLch.
+  kColorAdaptationOutputCam16Ucs = 1u << 4u,
 };
 
 // Spektrafilm C1 film model 3 (2026-11-23): the stock tables generated from the Python reference's profiles
@@ -393,6 +414,9 @@ inline uint32_t colorAdaptationFlags(const RenderParams &params) {
   flags |= params.colorAdaptationCurveSmoothing ? kColorAdaptationCurveSmoothing : 0u;
   flags |= params.colorAdaptationOutputLightnessCompression ? kColorAdaptationOutputLightnessCompression : 0u;
   flags |= params.colorAdaptationOutputChromaCompression ? kColorAdaptationOutputChromaCompression : 0u;
+  if (params.filmModel >= 4 && (flags & (kColorAdaptationOutputLightnessCompression | kColorAdaptationOutputChromaCompression)) != 0u) {
+    flags |= kColorAdaptationOutputCam16Ucs;
+  }
   return flags;
 }
 

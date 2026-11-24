@@ -369,6 +369,7 @@ internal static partial class SpektraFilmTool
             opticalPreview = SpatialPreview.BuildForPanel(window, CurrentSettings, UseSelectedLook);
             opticalPreview.SettingsChanged += OnOpticalSettingsChanged;
             opticalPreview.RecommendedInputRequested += OnRecommendedInputRequested;
+            opticalPreview.FilmModelChanged += UpdateDirWarning;
             exposure.ToolTip = "Light on the film. With Automatic film exposure on, the source is metered first and this is an offset from that. The print is timed for 0 EV, so more film exposure gives a denser negative and a brighter print; use Print exposure to bring brightness back while keeping the film's tone and grain.";
             opticalPreview.TrackSliderDrag(exposure);
             opticalPreview.TrackSliderDrag(printExposure);
@@ -535,7 +536,8 @@ internal static partial class SpektraFilmTool
         private void UpdateDirWarning()
         {
             var text = DirToneGuard.Warning(development["dir_amount"].Slider.Value,
-                development["dir_same_layer"].Slider.Value, development["dir_interlayer"].Slider.Value);
+                development["dir_same_layer"].Slider.Value, development["dir_interlayer"].Slider.Value,
+                opticalPreview?.FilmModelGuardsDir == true);
             dirWarning.Text = text ?? "";
             dirWarning.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
         }

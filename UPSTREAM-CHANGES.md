@@ -8,11 +8,21 @@ Spektrafilm Darkroom for Capture One is a **modified version** of three GPL-3.0 
 | Vulkan renderer (`upstream-ofx`) | spektrafilm OFX by Aedan Diez | commit `86476afc5b077de77e2278e3658d1ba9309892a1` |
 | Python reference and film profiles (`upstream-spektrafilm`) | [spektrafilm](https://github.com/andreavolpato/spektrafilm) by Andrea Volpato | commit `3bb2c2d2801ff68b92019cf1dbcbb133d60832bc` |
 
-The changes below were made between 2026-11-15 and 2026-11-23 by tkawecki. Two sets of fixes were ported from the original panel's commit `285f0aa` ("Harden saved looks, rendering, exports and installer upgrades"); the files concerned say so in their headers. On 2026-11-22 further fixes were ported from the original panel's v0.2.0 (commits after `285f0aa` up to `e7dd26f`), with the author's invitation; each changed place names the upstream commit, and they are listed in the section below.
+The changes below were made between 2026-11-15 and 2026-11-24 by tkawecki. Two sets of fixes were ported from the original panel's commit `285f0aa` ("Harden saved looks, rendering, exports and installer upgrades"); the files concerned say so in their headers. On 2026-11-22 further fixes were ported from the original panel's v0.2.0 (commits after `285f0aa` up to `e7dd26f`), with the author's invitation; each changed place names the upstream commit, and they are listed in the section below.
+
+## Film model 4 and the Viewer at high zoom (2026-11-24)
+
+New looks use film model 4; looks saved with models 1-3 render exactly as before (checked bit for bit, `tests/ParityTests/model_identity.py`).
+
+- **Output gamut compression in CAM16-UCS**, the Python reference's default, instead of OkLch. The table of the largest in-gamut chroma per output colour space is built by the generator exactly as the reference builds it (new runtime file `renderer/SpektraOutputGamutCam16.f32`). Over all 26 films the largest output difference to the reference fell from 14-22/255 to 1.8-6.7/255.
+- **Auto exposure measured as in the reference:** the photo is reduced to 256 px with the reference's anti-aliasing filter before metering (point sampling differed by up to 0.11 EV), and the reference's seven metering methods are available: center weighted, median, average, partial, matrix, multi-zone and highlight weighted (`upstream-ofx/src/SpektraAutoExposure.h`; within 0.0001 EV of the reference).
+- **DIR curve guard:** strong DIR coupler settings no longer fold the corrected density curves (reversed tones); each film is held at the strength where its exposure axis would stop rising. The idea comes from darktable's spektrafilm module (`spektra_sim.c`, GPL-3.0); the limit is computed exactly. The reference's default DIR settings are below it for every film.
+- **Scanner order as in the reference:** with the scanner blur or unsharp mask on, the output gamut is compressed before them, not after the sharpening.
+- **Viewer at high zoom:** when less than half of the photo is visible, only the visible part (with a margin) is rendered at full resolution, by a second renderer process that keeps the source; the window's pixels equal those of a full-resolution frame. While a slider is dragged at high zoom the window follows it, instead of a low-resolution draft of the whole photo.
 
 ## Film models and parity with the Python reference (2026-11-23)
 
-Each look records the version of the simulation it uses (`film-model`), so an update never changes a saved look: a look without the key renders exactly as before (model 1). New looks use model 3.
+Each look records the version of the simulation it uses (`film-model`), so an update never changes a saved look: a look without the key renders exactly as before (model 1). New looks used model 3 until model 4 (above).
 
 - **Model 2:** input chromatic adaptation with CAT16 instead of CAT02, as in the Python reference; exact Poisson counts where few grain particles develop; no cap at the expected seed count for nearly developed sublayers; the RMS grain model includes the final grain blur, so the RMS target holds for the finished grain.
 - **Model 3:** model 2 with stock tables generated from the Python reference's film and paper profiles at the commit above (the OFX plug-in shipped older profiles), and neutral print filters fitted by this renderer so that a mid grey prints neutral (`upstream-ofx/tools/fit_neutral_print_filters.py`). Profile-derived data stays CC BY-SA 4.0.

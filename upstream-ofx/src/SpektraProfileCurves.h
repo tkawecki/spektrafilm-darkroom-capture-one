@@ -13,6 +13,10 @@ constexpr uint32_t kSpektraColorTransferLutSize = 4096u;
 constexpr uint32_t kSpektraOutputGamutCompressionStride = 18u;
 constexpr uint32_t kSpektraOutputGamutCompressionElementCount =
   kSpektraColorSpaceCount * kSpektraOutputGamutCompressionStride;
+// Spektrafilm C1 film model 4: CAM16-UCS output gamut data per colour space (generate_profile_curves.py
+// write_output_gamut_cam16_data): a 32-float header and the 64 x 720 Cp_max(Jp, hp) table.
+constexpr uint32_t kSpektraOutputGamutCam16Stride = 32u + 64u * 720u;
+constexpr uint32_t kSpektraOutputGamutCam16ElementCount = kSpektraColorSpaceCount * kSpektraOutputGamutCam16Stride;
 
 #ifndef SPEKTRA_GENERATED_PROFILE_COUNTS
 constexpr uint32_t kSpektraFilmCount = 20u;

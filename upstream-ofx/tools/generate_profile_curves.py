@@ -1352,12 +1352,100 @@ def write_output_gamut_compression_data(output: Path) -> None:
     output.write_bytes(data.tobytes(order="C"))
 
 
+# Spektrafilm C1 film model 4 (2026-11-24): CAM16-UCS output gamut compression, the Python reference's default
+# (spektrafilm.utils.gamut_compression.compress_rgb_cam16ucs_chroma, GPLv3, Andrea Volpato). Per output colour
+# space: a 32-float header for the shader's CAM16-UCS forward and inverse (fixed viewing conditions L_A = 64 cd/m²,
+# Y_b = 20, Average surround, adapting white = the space's white at Y = 1) and the maximum in-gamut chroma table
+# Cp_max(Jp, hp) built exactly like the reference (_build_polar_perceptual_c_max_table with colour's own CAM16-UCS
+# inverse and the colour space's XYZ to RGB matrix).
+CAM16UCS_L_A = 64.0
+CAM16UCS_Y_B = 20.0
+CAM16UCS_TABLE_N_J = 64
+CAM16UCS_TABLE_N_H = 720
+CAM16UCS_TABLE_N_BISECT = 18
+CAM16UCS_TABLE_J_MIN = 1.0
+CAM16UCS_TABLE_J_MAX = 110.0
+CAM16UCS_TABLE_CHROMA_UPPER = 150.0
+CAM16UCS_HEADER = 32
+CAM16UCS_STRIDE = CAM16UCS_HEADER + CAM16UCS_TABLE_N_J * CAM16UCS_TABLE_N_H
+_CAM16_M16 = np.array(
+    [[0.401288, 0.650173, -0.051461], [-0.250268, 1.204414, 0.045854], [-0.002079, 0.048952, 0.953127]],
+    dtype=np.float64,
+)
+
+
+def _cam16ucs_white_xyz(matrix_space: str) -> np.ndarray:
+    return _xy_to_xyz_unit_y(np.asarray(colour.RGB_COLOURSPACES[matrix_space].whitepoint, dtype=np.float64))
+
+
+def _cam16ucs_header(matrix_space: str) -> list[float]:
+    """Forward matrix RGB -> adapted cone responses, inverse matrix and the viewing-condition constants."""
+    cs = colour.RGB_COLOURSPACES[matrix_space]
+    xyz_w = _cam16ucs_white_xyz(matrix_space) * 100.0
+    surround_f, surround_c = 1.0, 0.69
+    rgb_w = _CAM16_M16 @ xyz_w
+    degree = float(np.clip(surround_f * (1.0 - (1.0 / 3.6) * np.exp((-CAM16UCS_L_A - 42.0) / 92.0)), 0.0, 1.0))
+    d_rgb = degree * xyz_w[1] / rgb_w + 1.0 - degree
+    k = 1.0 / (5.0 * CAM16UCS_L_A + 1.0)
+    f_l = 0.2 * k**4 * (5.0 * CAM16UCS_L_A) + 0.1 * (1.0 - k**4) ** 2 * np.cbrt(5.0 * CAM16UCS_L_A)
+    n = CAM16UCS_Y_B / xyz_w[1]
+    z = 1.48 + np.sqrt(n)
+    n_bb = 0.725 * (1.0 / n) ** 0.2
+    compressed = (f_l * np.abs(d_rgb * rgb_w) / 100.0) ** 0.42
+    rgb_aw = 400.0 * compressed / (27.13 + compressed) + 0.1
+    a_w = (2.0 * rgb_aw[0] + rgb_aw[1] + 0.05 * rgb_aw[2] - 0.305) * n_bb
+    forward = np.diag(d_rgb) @ _CAM16_M16 @ (100.0 * np.asarray(cs.matrix_RGB_to_XYZ, dtype=np.float64))
+    inverse = np.asarray(cs.matrix_XYZ_to_RGB, dtype=np.float64) @ np.linalg.inv(_CAM16_M16) @ np.diag(1.0 / d_rgb) / 100.0
+    white = _cam16ucs_white_xyz(matrix_space)
+    jp_white = float(np.asarray(colour.XYZ_to_CAM16UCS(white, XYZ_w=white, L_A=CAM16UCS_L_A, Y_b=CAM16UCS_Y_B))[0])
+    header = [float(v) for v in forward.reshape(-1)] + [float(v) for v in inverse.reshape(-1)]
+    header += [float(f_l), float(n_bb), float(surround_c * z), float(a_w), float((1.64 - 0.29**n) ** 0.73),
+               float(f_l**0.25), jp_white]
+    return header + [0.0] * (CAM16UCS_HEADER - len(header))
+
+
+def _cam16ucs_c_max_table(matrix_space: str) -> np.ndarray:
+    cs = colour.RGB_COLOURSPACES[matrix_space]
+    white = np.asarray(cs.whitepoint, dtype=np.float64)
+    xyz_w = _cam16ucs_white_xyz(matrix_space)
+    j_grid = np.linspace(CAM16UCS_TABLE_J_MIN, CAM16UCS_TABLE_J_MAX, CAM16UCS_TABLE_N_J)
+    h_grid = np.linspace(-np.pi, np.pi, CAM16UCS_TABLE_N_H, endpoint=False)
+    j_mesh, h_mesh = np.meshgrid(j_grid, h_grid, indexing="ij")
+    lo = np.zeros_like(j_mesh)
+    hi = np.full_like(j_mesh, CAM16UCS_TABLE_CHROMA_UPPER)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        for _ in range(CAM16UCS_TABLE_N_BISECT):
+            mid = (lo + hi) * 0.5
+            jab = np.stack([j_mesh, mid * np.cos(h_mesh), mid * np.sin(h_mesh)], axis=-1).reshape(-1, 3)
+            xyz = np.asarray(colour.CAM16UCS_to_XYZ(jab, XYZ_w=xyz_w, L_A=CAM16UCS_L_A, Y_b=CAM16UCS_Y_B))
+            rgb = np.asarray(colour.XYZ_to_RGB(xyz, colourspace=matrix_space, illuminant=white, apply_cctf_encoding=False))
+            in_gamut = np.all((rgb >= -1e-6) & (rgb <= 1.0 + 1e-6), axis=-1).reshape(j_mesh.shape)
+            lo = np.where(in_gamut, mid, lo)
+            hi = np.where(in_gamut, hi, mid)
+    return lo
+
+
+def write_output_gamut_cam16_data(output: Path) -> None:
+    data: list[float] = []
+    for space in COLOR_SPACES:
+        data.extend(_cam16ucs_header(space["matrix_space"]))
+        data.extend(float(v) for v in _cam16ucs_c_max_table(space["matrix_space"]).reshape(-1))
+    array = np.asarray(data, dtype="<f4")
+    expected_count = len(COLOR_SPACES) * CAM16UCS_STRIDE
+    if array.size != expected_count or not np.all(np.isfinite(array)):
+        raise ValueError(f"Unexpected CAM16-UCS output gamut data ({array.size} values; expected {expected_count}).")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_bytes(array.tobytes(order="C"))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--counts-output", type=Path)
     parser.add_argument("--hanatos-output", type=Path)
     parser.add_argument("--output-gamut-compression-output", type=Path)
+    parser.add_argument("--output-gamut-cam16-output", type=Path, help="film model 4: CAM16-UCS output gamut data")
     parser.add_argument("--model3-profile-dir", type=Path, help="film model 3: the Python reference's profiles folder")
     parser.add_argument("--model3-neutral-filters", type=Path, help="film model 3: neutral_print_filters.json")
     args = parser.parse_args()
@@ -1375,6 +1463,9 @@ def main() -> int:
     if args.output_gamut_compression_output:
         write_output_gamut_compression_data(args.output_gamut_compression_output)
         print(f"Wrote {args.output_gamut_compression_output}")
+    if args.output_gamut_cam16_output:
+        write_output_gamut_cam16_data(args.output_gamut_cam16_output)
+        print(f"Wrote {args.output_gamut_cam16_output}")
     return 0
 
 

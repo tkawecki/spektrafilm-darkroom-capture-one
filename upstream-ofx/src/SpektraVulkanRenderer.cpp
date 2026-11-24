@@ -4,6 +4,7 @@
 #include "SpektraPrintCurvesMorph.h"
 #include "SpektraBaseDensity.h"
 #include "SpektraFilmAging.h"
+#include "SpektraAutoExposure.h"
 
 #include <vulkan/vulkan.h>
 
@@ -1443,7 +1444,7 @@ constexpr uint32_t kCoreHalationSetCount = 13u;
 constexpr uint32_t kCoreDiffusionSetCount = 3u;
 constexpr uint32_t kCorePrintDiffusionSetCount = 2u;
 constexpr uint32_t kCoreDirSetCount = 7u;
-constexpr uint32_t kCoreScannerPostSetCount = 9u;
+constexpr uint32_t kCoreScannerPostSetCount = 10u;
 constexpr uint32_t kCoreGrainSetCount = 5u;
 constexpr uint32_t kCoreGrainMeanSetCount = 14u;
 constexpr uint32_t kCoreDescriptorSetCount =
@@ -1525,6 +1526,7 @@ enum : uint32_t {
   kScannerPostOpGrainBiasBlurX = 14u,
   kScannerPostOpGrainBiasBlurY = 15u,
   kScannerPostOpGrainDebias = 16u,
+  kScannerPostOpOutputCompress = 17u,
 };
 
 enum : uint32_t {
@@ -2269,6 +2271,17 @@ float measureAutoExposureEv(
   if (!source || width <= 0 || height <= 0) {
     return 0.0f;
   }
+  if (params.filmModel >= 4) {
+    const autoexposure::Preview preview = autoexposure::referencePreview(source, width, height);
+    std::vector<double> referenceLuminance(static_cast<size_t>(preview.width) * static_cast<size_t>(preview.height));
+    for (size_t i = 0; i < referenceLuminance.size(); ++i) {
+      referenceLuminance[i] = autoExposureMeterY(static_cast<float>(preview.rgb[i * 3u]),
+                                                 static_cast<float>(preview.rgb[i * 3u + 1u]),
+                                                 static_cast<float>(preview.rgb[i * 3u + 2u]), params);
+    }
+    return autoexposure::exposureCompensationEv(
+      autoexposure::meterLuminance(referenceLuminance, preview.width, preview.height, params.autoExposureMethod));
+  }
 
   int32_t previewWidth = width;
   int32_t previewHeight = height;
@@ -2309,6 +2322,10 @@ float measureAutoExposureEv(
       );
       meteredY = 0.5 * (static_cast<double>(luminance[mid - 1u]) + static_cast<double>(upper));
     }
+  } else if (params.autoExposureMethod != AutoExposureMethod::CenterWeighted) {
+    // Methods added on 2026-11-24 on the earlier sampling (models 1-3; no saved look uses them).
+    meteredY = autoexposure::meterLuminance(std::vector<double>(luminance.begin(), luminance.end()), previewWidth,
+                                            previewHeight, params.autoExposureMethod);
   } else {
     const double normX = static_cast<double>(previewWidth) / static_cast<double>(std::max(previewWidth, previewHeight));
     const double normY = static_cast<double>(previewHeight) / static_cast<double>(std::max(previewWidth, previewHeight));
@@ -2692,6 +2709,41 @@ std::array<float, kDirFloatCount> makeDirFloatParams(
   return out;
 }
 
+// Spektrafilm C1 film model 4 (2026-11-24): DIR curve guard, after darktable's spektra_sim.c sf_sim_build (d81ccfe23,
+// GPLv3). The DIR correction moves each exposure of the curve by the inhibitor its own densities make; with strong
+// DIR settings the moved exposure axis turns back on itself and the corrected curve folds. The inhibitor is linear in
+// the DIR strength (dirFloats 0-8), so the largest strength that keeps the axis rising is exact: per step of the
+// curve, the axis slope is 1 - s * (inhibitor step / exposure step). The guard keeps that slope at least
+// kDirMinAxisSlope (a corrected curve at most 20 times steeper than the film's own) and returns the factor s <= 1
+// for the DIR strength; settings within it are unchanged.
+constexpr float kDirMinAxisSlope = 0.05f;
+
+float dirInhibitor(const ProfileCurveSet &filmCurves, const std::array<float, kDirFloatCount> &dirFloats,
+                   uint32_t receiver, uint32_t index) {
+  const bool positive = dirFloats[17] > 0.5f;
+  float silver[3];
+  for (uint32_t layer = 0; layer < 3u; ++layer) {
+    const float density = filmCurves.densityCurves[index * 3u + layer];
+    silver[layer] = positive ? dirFloats[9u + layer] - density : density;
+  }
+  return silver[0] * dirFloats[receiver] + silver[1] * dirFloats[3u + receiver] + silver[2] * dirFloats[6u + receiver];
+}
+
+float dirStrengthGuard(const ProfileCurveSet &filmCurves, const std::array<float, kDirFloatCount> &dirFloats) {
+  double limit = 1.0;
+  for (uint32_t receiver = 0; receiver < 3u; ++receiver) {
+    for (uint32_t i = 0; i + 1u < filmCurves.exposureCount; ++i) {
+      const double exposureStep = static_cast<double>(filmCurves.logExposure[i + 1u]) - filmCurves.logExposure[i];
+      const double inhibitorStep = static_cast<double>(dirInhibitor(filmCurves, dirFloats, receiver, i + 1u)) -
+        dirInhibitor(filmCurves, dirFloats, receiver, i);
+      if (exposureStep > 0.0 && std::isfinite(inhibitorStep) && inhibitorStep > 0.0) {
+        limit = std::min(limit, (1.0 - kDirMinAxisSlope) * exposureStep / inhibitorStep);
+      }
+    }
+  }
+  return static_cast<float>(std::clamp(limit, 0.0, 1.0));
+}
+
 std::vector<float> makeDirCorrectedDensityCurves(
   const ProfileCurveSet &filmCurves,
   const std::array<float, kDirFloatCount> &dirFloats
@@ -2930,6 +2982,7 @@ struct VulkanRenderer::Impl {
   RendererDiagnostics diagnostics;
   std::string lastError;
   std::vector<float> outputGamutCompressionData;
+  std::vector<float> outputGamutCam16Data;
   bool available = false;
   bool preferPrivateScratch = true;
   bool grainBlurRecurrence = true;
@@ -3010,6 +3063,34 @@ struct VulkanRenderer::Impl {
     VkBuffer finalBuffer = VK_NULL_HANDLE;
     VkBuffer preGrainBuffer = VK_NULL_HANDLE;
   } filmStageCache;
+  // Spektrafilm C1: the auto exposure of a resident source, measured once per source and metering (the model 4
+  // metering filters the whole source).
+  struct AutoExposureCache {
+    uint64_t revision = 0;
+    int32_t width = 0;
+    int32_t height = 0;
+    AutoExposureMethod method = AutoExposureMethod::CenterWeighted;
+    int32_t inputColorSpace = -1;
+    bool referenceMetering = false;
+    float ev = 0.0f;
+  } autoExposureCache;
+  float meteredAutoExposureEv(const float *source, int32_t width, int32_t height, const RenderParams &params,
+                              uint64_t revision) {
+    const AutoExposureCache key{revision, width, height, params.autoExposureMethod,
+                                static_cast<int32_t>(params.inputColorSpace), params.filmModel >= 4, 0.0f};
+    if (revision != 0u && autoExposureCache.revision == key.revision && autoExposureCache.width == key.width &&
+        autoExposureCache.height == key.height && autoExposureCache.method == key.method &&
+        autoExposureCache.inputColorSpace == key.inputColorSpace &&
+        autoExposureCache.referenceMetering == key.referenceMetering) {
+      return autoExposureCache.ev;
+    }
+    const float ev = measureAutoExposureEv(source, width, height, params);
+    if (revision != 0u) {
+      autoExposureCache = key;
+      autoExposureCache.ev = ev;
+    }
+    return ev;
+  }
   StaticFilmResources staticFilm;
   std::vector<float> hanatosSpectraData;
   static std::mutex transientRegistryMutex;
@@ -3182,6 +3263,7 @@ struct VulkanRenderer::Impl {
   bool copyBufferImmediate(VkBuffer source, VkBuffer destination, VkDeviceSize size, const char *name);
   bool loadHanatosSpectraData();
   bool loadOutputGamutCompressionData();
+  bool loadOutputGamutCam16Data();
   bool prepareStaticFilmResources(const RenderParams &params, bool includePrintScanResources, bool includeGrainResources);
   bool ensureCopyFrameResources();
   bool ensureCoreFrameResources();
@@ -4072,6 +4154,26 @@ bool VulkanRenderer::Impl::loadOutputGamutCompressionData() {
   return true;
 }
 
+// Spektrafilm C1 film model 4: loaded only for looks that use it, so models 1-3 run without the file.
+bool VulkanRenderer::Impl::loadOutputGamutCam16Data() {
+  if (outputGamutCam16Data.size() == kSpektraOutputGamutCam16ElementCount) {
+    return true;
+  }
+  const std::filesystem::path dataPath = findResourcePath("SpektraOutputGamutCam16.f32");
+  if (dataPath.empty()) {
+    lastError = "Unable to locate SpektraOutputGamutCam16.f32 for film model 4 output gamut compression.";
+    return false;
+  }
+  std::string resourceError;
+  std::vector<float> data = readFloatResourceFile(dataPath, kSpektraOutputGamutCam16ElementCount, resourceError);
+  if (data.empty()) {
+    lastError = resourceError;
+    return false;
+  }
+  outputGamutCam16Data = std::move(data);
+  return true;
+}
+
 bool VulkanRenderer::Impl::prepareStaticFilmResources(
   const RenderParams &params,
   bool includePrintScanResources,
@@ -4246,6 +4348,10 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
   if (includePrintScanResources && !loadOutputGamutCompressionData()) {
     return false;
   }
+  const bool cam16OutputGamut = includePrintScanResources && params.filmModel >= 4;
+  if (cam16OutputGamut && !loadOutputGamutCam16Data()) {
+    return false;
+  }
 
   const std::vector<float> packedFilmCurveExposure =
     makePackedCurveExposure(curves->logExposure, curves->exposureCount);
@@ -4280,6 +4386,9 @@ bool VulkanRenderer::Impl::prepareStaticFilmResources(
       colorTransferParams(),
       colorTransferParams() + static_cast<size_t>(kSpektraColorSpaceCount)
     );
+    if (cam16OutputGamut) {
+      colorEncodeAndGamutData.insert(colorEncodeAndGamutData.end(), outputGamutCam16Data.begin(), outputGamutCam16Data.end());
+    }
   }
   const VkDeviceSize transferKindBytes = static_cast<VkDeviceSize>(kSpektraColorSpaceCount) * sizeof(uint32_t);
   const VkDeviceSize mallettRawMatrixBytes = 9u * sizeof(float);
@@ -5112,6 +5221,12 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
   const bool grainMeanRestorePath =
     grainPath && params.grainMeanRestore && printScanPassEnabled && finalPostProcessPath && !rcmOutput;
   const bool scannerPostPath = printGlarePath || scannerBlurPath || scannerUnsharpPath || grainMeanRestorePath;
+  // Spektrafilm C1 film model 4 (2026-11-24): output gamut compression before the scanner blur and unsharp mask,
+  // after the glare, in the Python reference's order (stages/scanning.py: _density_to_rgb compresses, then
+  // _apply_blur_and_unsharp). Finalize then only encodes. Older models compress in Finalize, after the scanner.
+  const bool earlyOutputCompression = params.filmModel >= 4 && (scannerBlurPath || scannerUnsharpPath) &&
+    params.outputRole == OutputRole::DisplaySdr &&
+    (colorAdaptationFlags(params) & (kColorAdaptationOutputLightnessCompression | kColorAdaptationOutputChromaCompression)) != 0u;
   // Spektrafilm C1 stage taps: diagnostics for untiled frames; the film stages keep their own buffers there.
   const bool debugTapActive = params.debugTap != DebugTap::None;
   const bool filmDebugTap = params.debugTap == DebugTap::FilmLog || params.debugTap == DebugTap::FilmDensityPreGrain ||
@@ -5457,7 +5572,7 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
   float autoExposureEv = 0.0f;
   const PerfClock::time_point sourceCopyStart = PerfClock::now();
   if (sourceRevision != 0u && params.autoExposure) {
-    autoExposureEv = measureAutoExposureEv(static_cast<const float *>(source.data), width, height, params);
+    autoExposureEv = meteredAutoExposureEv(static_cast<const float *>(source.data), width, height, params, sourceRevision);
   }
   if (uploadSource) {
     if (!coreFrame.sourceStaging.mapped) {
@@ -5515,7 +5630,14 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
       lastError = "Unable to locate generated film density curves for DIR correction.";
       return false;
     }
-    const std::array<float, kDirFloatCount> dirFloats = makeDirFloatParams(*staticFilm.curves, params, filmPixelSizeUm);
+    std::array<float, kDirFloatCount> dirFloats = makeDirFloatParams(*staticFilm.curves, params, filmPixelSizeUm);
+    if (params.filmModel >= 4) {
+      // The same strength for the corrected curves and the spatial inhibitor in the shader.
+      const float guard = dirStrengthGuard(*staticFilm.curves, dirFloats);
+      for (uint32_t i = 0; i < 9u; ++i) {
+        dirFloats[i] *= guard;
+      }
+    }
     const std::vector<float> correctedDensityCurves = makeDirCorrectedDensityCurves(*staticFilm.curves, dirFloats);
     if (!uploadScratchBuffer(coreFrame.dirFloats, dirFloats.data(), dirFloats.size() * sizeof(float), "DIR params") ||
         !uploadScratchBuffer(
@@ -6322,6 +6444,9 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
       writeScannerPostSet(coreFrame.scannerPostDescriptorSets[6], postBlurBufferInfo, scannerPostCBufferInfo, postBlurBufferInfo, scannerPostCBufferInfo);
       writeScannerPostSet(coreFrame.scannerPostDescriptorSets[7], scannerPostCBufferInfo, unsharpBlurBufferInfo, scannerPostCBufferInfo, unsharpBlurBufferInfo);
     }
+    if (earlyOutputCompression) {  // in place on the buffer the scanner blur or unsharp mask reads
+      writeScannerPostSet(coreFrame.scannerPostDescriptorSets[9], postGlareBufferInfo, scannerPostCBufferInfo, postGlareBufferInfo, postGlareBufferInfo);
+    }
     writeScannerPostSet(
       coreFrame.scannerPostDescriptorSets[8],
       postBlurBufferInfo,
@@ -7067,9 +7192,9 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
     consumeSpatialRadius(grainMeanRestoreRadius);
   }
 
-  auto dispatchScannerPost = [&](VkDescriptorSet descriptorSet, uint32_t operation) {
+  auto dispatchScannerPost = [&](VkDescriptorSet descriptorSet, uint32_t operation, uint32_t flags = 0u) {
     pushConstants._pad0 = operation;
-    pushConstants._pad1 = 0u;
+    pushConstants._pad1 = flags;
     pushConstants._pad2 = 0u;
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, scannerPostPipeline);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, corePipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
@@ -7088,6 +7213,9 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
       }
       dispatchScannerPost(coreFrame.scannerPostDescriptorSets[3], kScannerPostOpPrintGlareApply);
     }
+    if (earlyOutputCompression) {
+      dispatchScannerPost(coreFrame.scannerPostDescriptorSets[9], kScannerPostOpOutputCompress);
+    }
     if (scannerBlurPath) {
       dispatchScannerPost(coreFrame.scannerPostDescriptorSets[4], kScannerPostOpScannerBlurX);
       dispatchScannerPost(coreFrame.scannerPostDescriptorSets[5], kScannerPostOpScannerBlurY);
@@ -7096,7 +7224,7 @@ bool VulkanRenderer::Impl::renderCoreBootstrap(
       dispatchScannerPost(coreFrame.scannerPostDescriptorSets[6], kScannerPostOpUnsharpBlurX);
       dispatchScannerPost(coreFrame.scannerPostDescriptorSets[7], kScannerPostOpUnsharpBlurY);
     }
-    dispatchScannerPost(coreFrame.scannerPostDescriptorSets[8], kScannerPostOpFinalize);
+    dispatchScannerPost(coreFrame.scannerPostDescriptorSets[8], kScannerPostOpFinalize, earlyOutputCompression ? 1u : 0u);
     consumeSpatialRadius(scannerPostRadius);
   }
 
@@ -7954,8 +8082,21 @@ bool VulkanRenderer::Impl::renderTiledBootstrap(
     lastError = "Only RGBA 16-bit half and 32-bit float images are supported by the Windows Vulkan path.";
     return false;
   }
+  // Spektrafilm C1 Viewer window: the planned area is the requested rectangle instead of the whole window; the
+  // destination only has to hold that rectangle. Everything else (source, metering, context) stays full-frame.
+  const ViewWindow &view = params.viewWindow;
+  if (view.enabled && (view.width <= 0 || view.height <= 0 || view.x < window.x1 || view.y < window.y1 ||
+                       view.x + view.width > window.x2 || view.y + view.height > window.y2)) {
+    lastError = "The requested Viewer window lies outside the frame.";
+    return false;
+  }
+  const RenderWindow planWindow = view.enabled
+    ? RenderWindow{view.x, view.y, view.x + view.width, view.y + view.height}
+    : window;
+  const int32_t planWidth = planWindow.x2 - planWindow.x1;
+  const int32_t planHeight = planWindow.y2 - planWindow.y1;
   if (!windowFitsView(source, window, fullWidth, fullHeight) ||
-      !windowFitsView(destination, window, fullWidth, fullHeight)) {
+      !windowFitsView(destination, planWindow, planWidth, planHeight)) {
     lastError = "The requested tiled render window does not fit inside the Vulkan source or destination image view.";
     return false;
   }
@@ -7986,7 +8127,7 @@ bool VulkanRenderer::Impl::renderTiledBootstrap(
       }
       meterSource = fullSourcePixels.data();
     }
-    tileParams.filmExposureEv += measureAutoExposureEv(meterSource, fullWidth, fullHeight, params);
+    tileParams.filmExposureEv += meteredAutoExposureEv(meterSource, fullWidth, fullHeight, params, sourceRevision);
     tileParams.autoExposure = false;
   }
 
@@ -8011,17 +8152,26 @@ bool VulkanRenderer::Impl::renderTiledBootstrap(
   };
   centerTileWidth = growTileForOverlap(centerTileWidth, static_cast<uint32_t>(fullWidth));
   centerTileHeight = growTileForOverlap(centerTileHeight, static_cast<uint32_t>(fullHeight));
+  // The halation boost milestone walks the whole frame in tiles of the normal size, so a Viewer window gets the
+  // same value as a full render.
+  const uint32_t milestoneTileWidth = centerTileWidth;
+  const uint32_t milestoneTileHeight = centerTileHeight;
+  if (view.enabled) {
+    // One tile whose centre is the Viewer window (its working area adds the overlap, clipped to the frame).
+    centerTileWidth = static_cast<uint32_t>(planWidth);
+    centerTileHeight = static_cast<uint32_t>(planHeight);
+  }
   const uint32_t tileColumns =
-    (static_cast<uint32_t>(fullWidth) + centerTileWidth - 1u) / centerTileWidth;
+    (static_cast<uint32_t>(planWidth) + centerTileWidth - 1u) / centerTileWidth;
   const uint32_t tileRows =
-    (static_cast<uint32_t>(fullHeight) + centerTileHeight - 1u) / centerTileHeight;
+    (static_cast<uint32_t>(planHeight) + centerTileHeight - 1u) / centerTileHeight;
   const uint32_t plannedTileCount = tileColumns * tileRows;
   const bool halationBoostMilestoneEnabled =
     envFlagEnabledOrDefault("SPEKTRAFILM_VULKAN_HALATION_PASS", true) &&
     tileParams.halationEnabled &&
     tileParams.halationBoostEv > 0.0f;
   if (halationBoostMilestoneEnabled &&
-      !computeHalationBoostMilestone(source, window, tileParams, centerTileWidth, centerTileHeight)) {
+      !computeHalationBoostMilestone(source, window, tileParams, milestoneTileWidth, milestoneTileHeight)) {
     const std::string milestoneError = lastError.empty() ? "unknown Vulkan halation boost milestone failure" : lastError;
     lastError = "Vulkan tiled render failed while computing the halation boost milestone: " + milestoneError;
     updateSharedDiagnostics();
@@ -8098,10 +8248,10 @@ bool VulkanRenderer::Impl::renderTiledBootstrap(
   uint32_t tileIndex = 0u;
   for (uint32_t tileY = 0u; tileY < tileRows; ++tileY) {
     for (uint32_t tileX = 0u; tileX < tileColumns; ++tileX, ++tileIndex) {
-      const int32_t centerX0 = window.x1 + static_cast<int32_t>(tileX * centerTileWidth);
-      const int32_t centerY0 = window.y1 + static_cast<int32_t>(tileY * centerTileHeight);
-      const int32_t centerX1 = std::min(window.x2, centerX0 + static_cast<int32_t>(centerTileWidth));
-      const int32_t centerY1 = std::min(window.y2, centerY0 + static_cast<int32_t>(centerTileHeight));
+      const int32_t centerX0 = planWindow.x1 + static_cast<int32_t>(tileX * centerTileWidth);
+      const int32_t centerY0 = planWindow.y1 + static_cast<int32_t>(tileY * centerTileHeight);
+      const int32_t centerX1 = std::min(planWindow.x2, centerX0 + static_cast<int32_t>(centerTileWidth));
+      const int32_t centerY1 = std::min(planWindow.y2, centerY0 + static_cast<int32_t>(centerTileHeight));
       const int32_t centerWidth = centerX1 - centerX0;
       const int32_t centerHeight = centerY1 - centerY0;
       if (centerWidth <= 0 || centerHeight <= 0) {
@@ -8334,7 +8484,7 @@ bool VulkanRenderer::render(
     ok = impl_->renderCopyValidation(source, destination, window, time);
   } else {
     const GpuRenderTilingMode tileMode = resolveVulkanTileMode(params);
-    if (tileMode == GpuRenderTilingMode::Tiled) {
+    if (tileMode == GpuRenderTilingMode::Tiled || params.viewWindow.enabled) {
       ok = impl_->renderTiledBootstrap(source, destination, window, params, time);
     } else {
       ok = impl_->renderCoreBootstrap(source, destination, window, params, time);

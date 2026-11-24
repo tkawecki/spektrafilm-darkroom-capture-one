@@ -44,9 +44,26 @@ internal sealed class ViewerPreview : IDisposable
     internal Guid PaintedVariant { get; private set; }
     internal double ViewportWidth { get; private set; }
     internal double ViewportHeight { get; private set; }
+    // The part of the image visible in the Viewer, as fractions of the image (0-1); empty until painted.
+    internal Rect VisibleRegion { get; private set; } = Rect.Empty;
     internal event Action? StatusChanged;
 
-    internal bool Show(Guid variantId, BitmapSource bitmap, ViewerFrameLayout? layout = null)
+    // A Viewer window (2026-11-23): a sharper rendering of part of the image, drawn over the frame at region
+    // (fractions of the image). Null removes it. Only for frames without a layout (no scan geometry or border).
+    internal void ShowWindow(Guid variantId, BitmapSource? bitmap, Rect region)
+    {
+        if (disposed || attachment is not { } current || current.VariantId != variantId)
+            return;
+        if (ReferenceEquals(current.Window, bitmap) && current.WindowRegion == region)
+            return;
+        current.Window = bitmap;
+        current.WindowRegion = region;
+        current.WindowDrawing = bitmap is null ? null : PreviewDrawing.Create(bitmap);
+        Invalidate(current.View);
+    }
+
+    // keepWindow: the new frame is the refreshed base under the Viewer window; otherwise a new frame removes the window.
+    internal bool Show(Guid variantId, BitmapSource bitmap, ViewerFrameLayout? layout = null, bool keepWindow = false)
     {
         if (disposed)
             return false;
@@ -71,6 +88,11 @@ internal sealed class ViewerPreview : IDisposable
                 {
                     current.Bitmap = bitmap;
                     current.Layout = layout;
+                    if (!keepWindow || layout is not null)
+                    {
+                        current.Window = null;
+                        current.WindowDrawing = null;
+                    }
                     current.Drawing = PreviewDrawing.Create(bitmap);
                     Invalidate(current.View);
                 }
@@ -207,6 +229,7 @@ internal sealed class ViewerPreview : IDisposable
             // full-image corners TL, TR, BR, BL and use its pan/zoom/crop clip.
             if (drawing is null || !ViewerGeometry.TryCreate(clip, model.CanvasCoordinates, width, height, out var geometry))
             {
+                VisibleRegion = Rect.Empty;
                 SetStatus(current.PaintUnavailable = WaitingForGeometry);
                 return;
             }
@@ -214,6 +237,21 @@ internal sealed class ViewerPreview : IDisposable
             var scale = geometry.Transform;
             ScreenLongEdge = Math.Max(Math.Sqrt(scale.M11 * scale.M11 + scale.M12 * scale.M12) * width,
                 Math.Sqrt(scale.M21 * scale.M21 + scale.M22 * scale.M22) * height);
+            var inverse = scale;
+            if (inverse.HasInverse)
+            {
+                inverse.Invert();
+                var a = inverse.Transform(geometry.Clip.TopLeft);
+                var b = inverse.Transform(geometry.Clip.TopRight);
+                var c = inverse.Transform(geometry.Clip.BottomLeft);
+                var d = inverse.Transform(geometry.Clip.BottomRight);
+                var left = Math.Min(Math.Min(a.X, b.X), Math.Min(c.X, d.X)) / width;
+                var top = Math.Min(Math.Min(a.Y, b.Y), Math.Min(c.Y, d.Y)) / height;
+                var right = Math.Max(Math.Max(a.X, b.X), Math.Max(c.X, d.X)) / width;
+                var bottom = Math.Max(Math.Max(a.Y, b.Y), Math.Max(c.Y, d.Y)) / height;
+                var visible = Rect.Intersect(new Rect(new System.Windows.Point(left, top), new System.Windows.Point(right, bottom)), new Rect(0, 0, 1, 1));
+                VisibleRegion = current.Layout is null ? visible : Rect.Empty;
+            }
             var dpi = VisualTreeHelper.GetDpi(current.View);
             ViewportWidth = current.View.ActualWidth * dpi.DpiScaleX;
             ViewportHeight = current.View.ActualHeight * dpi.DpiScaleY;
@@ -246,7 +284,18 @@ internal sealed class ViewerPreview : IDisposable
                             fitted.Height / current.Bitmap.PixelHeight, fitted.Left, fitted.Top));
                         try { drawing.DrawDrawing(image); } finally { drawing.Pop(); }
                     }
-                    else drawing.DrawDrawing(image);
+                    else
+                    {
+                        drawing.DrawDrawing(image);
+                        if (current.Window is { } overlay && current.WindowDrawing is { } overlayDrawing)
+                        {
+                            var region = current.WindowRegion;
+                            drawing.PushTransform(new MatrixTransform(region.Width * width / overlay.PixelWidth, 0, 0,
+                                region.Height * height / overlay.PixelHeight, region.X * width, region.Y * height));
+                            try { drawing.DrawDrawing(monitorColor.GetDrawing(current.View, overlay, overlayDrawing)); }
+                            finally { drawing.Pop(); }
+                        }
+                    }
                     SetColorWarning(monitorColor.Warning);
                 }
                 finally
@@ -434,5 +483,8 @@ internal sealed class ViewerPreview : IDisposable
         internal bool HasDrawn { get; set; }
         internal RectangleGeometry? Clip { get; set; }
         internal MatrixTransform? Transform { get; set; }
+        internal BitmapSource? Window { get; set; }
+        internal DrawingGroup? WindowDrawing { get; set; }
+        internal Rect WindowRegion { get; set; }
     }
 }

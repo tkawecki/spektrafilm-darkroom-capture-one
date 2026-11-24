@@ -65,11 +65,13 @@ internal static class Program
             // DIR tone warning: silent up to 1.5 effective strength (all measured settings monotonic there),
             // shown above it; at default inhibitions the effective strength is the amount itself.
             var guard=assembly.GetType("DirToneGuard",true)!;
-            string? DirWarning(double a,double s,double i)=>(string?)guard.GetMethod("Warning",Flags)!.Invoke(null,new object[]{a,s,i});
+            string? DirWarning(double a,double s,double i,bool guarded=false)=>(string?)guard.GetMethod("Warning",Flags)!.Invoke(null,new object[]{a,s,i,guarded});
             Check((double)guard.GetMethod("EffectiveStrength",Flags)!.Invoke(null,new object[]{1.3,1.0,1.0})! == 1.3,"effective DIR strength must equal the amount at default inhibitions");
             Check(DirWarning(1,1,1) is null&&DirWarning(1.5,1,1) is null&&DirWarning(1,1.5,1.2) is null,"DIR warning shown for settings measured monotonic");
             foreach(var (a,s,i) in new[]{(1.6,1.0,1.0),(1.0,1.0,2.0),(1.0,2.0,1.4),(1.2,2.0,1.0),(1.4,1.5,1.0),(1.5,0.5,1.4)})
                 Check(DirWarning(a,s,i) is string text&&text.Contains("reverse tones"),$"DIR warning missing for reversing setting {a}/{s}/{i}");
+            // Film model 4 limits the strength in the renderer: the warning says so instead of predicting reversed tones.
+            Check(DirWarning(1.6,1,1,true) is string limited&&limited.Contains("Film model 4")&&!limited.Contains("can reverse tones")&&DirWarning(1.5,1,1,true) is null,"film model 4 DIR warning must describe the limit");
             Console.WriteLine($"PASS {checks} Print/Scan capability, honest gating and preservation assertions.");return 0;
         }catch(Exception error){Console.Error.WriteLine(error.GetBaseException());return 1;}
         finally{((IDisposable)view).Dispose();}
@@ -208,7 +210,7 @@ internal static class Program
             // Defaults use model 2 (CAT16 input adaptation); an unknown model is refused instead of being reinterpreted.
             Check(Array.IndexOf(oldArgs,"--film-model")<0,"a look saved without a film model must render with model 1 (no option)");
             Check(JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(Call("CaptureSettings"))).GetProperty("Selections").GetProperty("film-model").GetString()=="1","an old look must be saved back as model 1");
-            Check(defaultArgs[Array.IndexOf(defaultArgs,"--film-model")+1]=="3","new looks must use film model 3");
+            Check(defaultArgs[Array.IndexOf(defaultArgs,"--film-model")+1]=="4","new looks must use film model 4");
             var futureLook=JsonSerializer.Deserialize("{\"Numbers\":{},\"Selections\":{\"quality-defaults\":\"2\",\"film-model\":\"9\"},\"Switches\":{}}",type.GetNestedType("Settings",Flags)!)!;
             var refused=false;try{Call("LoadSettings",futureLook);}catch(Exception error)when(error.GetBaseException() is InvalidDataException){refused=true;}
             Check(refused,"a look with an unknown film model must be refused, not reinterpreted");

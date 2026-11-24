@@ -25,7 +25,7 @@ internal sealed class OpticalRenderer(bool export = false, bool nativePreview = 
     // Request serialization and the HELLO handshake are adapted from nothing-complex/spektrafilm-for-capture-one
     // 285f0aa (GPL-3.0). One worker reads one command at a time from one pipe: overlapping requests (a
     // warm-up and a frame, or two callers of one export worker) would interleave their bytes.
-    internal const int StreamProtocol = 2; // Must match kStreamProtocol in ofx-still-renderer/main.cpp.
+    internal const int StreamProtocol = 3; // Must match kStreamProtocol in ofx-still-renderer/main.cpp (3: INPUT, VIEW8).
     private readonly SemaphoreSlim requests = new(1, 1);
     private readonly CancellationTokenSource lifetime = new();
     private readonly object sync = new();
@@ -48,6 +48,107 @@ internal sealed class OpticalRenderer(bool export = false, bool nativePreview = 
             return await RenderCoreAsync(width, height, rgba, arguments, linked.Token, displayPixels).ConfigureAwait(false);
         }
         finally { requests.Release(); }
+    }
+
+    // Viewer window (2026-11-23): packed Viewer pixels of one rectangle of the frame. The renderer keeps the whole
+    // frame (sent with INPUT/MINPUT when it is new, without rendering it) and takes every full-frame step from it, so
+    // the pixels equal the same pixels of a full frame. Native Viewer renderer only.
+    internal async Task<byte[]> RenderViewAsync(int width, int height, byte[] rgba, int x, int y, int viewWidth, int viewHeight,
+        string[] arguments, CancellationToken stop)
+    {
+        if (!nativePreview)
+            throw new InvalidOperationException("Viewer windows require the native Viewer renderer.");
+        ObjectDisposedException.ThrowIf(disposed, this);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(stop, lifetime.Token);
+        await requests.WaitAsync(linked.Token).ConfigureAwait(false);
+        try
+        {
+            if (disposed)
+                throw new OperationCanceledException("The renderer was released.", lifetime.Token);
+            return await RenderViewCoreAsync(width, height, rgba, x, y, viewWidth, viewHeight, arguments, linked.Token).ConfigureAwait(false);
+        }
+        finally { requests.Release(); }
+    }
+
+    private async Task<byte[]> RenderViewCoreAsync(int width, int height, byte[] rgba, int x, int y, int viewWidth, int viewHeight,
+        string[] arguments, CancellationToken stop)
+    {
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(stop);
+        deadline.CancelAfter(TimeSpan.FromMinutes(8));
+        var token = deadline.Token;
+        try
+        {
+            var renderer = await GetReadyProcessAsync(token).ConfigureAwait(false);
+            var expectedSize = checked(viewWidth * viewHeight * 4);
+            if (source is null || !source.TryGetTarget(out var resident) || !ReferenceEquals(resident, rgba))
+            {
+                await PrepareSharedInputAsync(renderer, rgba.Length, token).ConfigureAwait(false);
+                renderer = await GetReadyProcessAsync(token).ConfigureAwait(false); // A failed mapping restarts the worker.
+            }
+            await PrepareSharedOutputAsync(renderer, expectedSize, token).ConfigureAwait(false);
+            renderer = await GetReadyProcessAsync(token).ConfigureAwait(false);
+            // Decided after the last restart: a new worker has no resident frame (Stop clears source).
+            var newSource = source is null || !source.TryGetTarget(out var previous) || !ReferenceEquals(previous, rgba);
+            var shared = mappedOutput;
+            var input = renderer.StandardInput.BaseStream;
+            var output = renderer.StandardOutput.BaseStream;
+            var reply = new byte[8];
+            async Task<int> ReadReplyAsync()
+            {
+                await output.ReadExactlyAsync(reply, token).ConfigureAwait(false);
+                var code = BinaryPrimitives.ReadInt32LittleEndian(reply);
+                var size = BinaryPrimitives.ReadInt32LittleEndian(reply.AsSpan(4));
+                if (code == 1 && size is >= 1 and <= 16384)
+                {
+                    var error = new byte[size];
+                    await output.ReadExactlyAsync(error, token).ConfigureAwait(false);
+                    source = null;
+                    throw new InvalidOperationException(Encoding.UTF8.GetString(error));
+                }
+                if (code != 0)
+                    throw new InvalidDataException("The optical renderer returned an invalid reply.");
+                return size;
+            }
+            if (newSource)
+            {
+                var sharedSource = mappedInput;
+                var sent = PreviewPerformance.Start();
+                if (sharedSource is not null)
+                    await Task.Run(() => CopyToSharedFrame(sharedSource, rgba, token), token).ConfigureAwait(false);
+                var verb = sharedSource is not null ? "MINPUT" : "INPUT";
+                await input.WriteAsync(Encoding.ASCII.GetBytes(FormattableString.Invariant($"{verb} {width} {height}\n")), token).ConfigureAwait(false);
+                if (sharedSource is null)
+                    await input.WriteAsync(rgba, token).ConfigureAwait(false);
+                await input.FlushAsync(token).ConfigureAwait(false);
+                if (await ReadReplyAsync().ConfigureAwait(false) != 0)
+                    throw new InvalidDataException("The optical renderer returned an invalid reply.");
+                source = new WeakReference<byte[]>(rgba);
+                PreviewPerformance.End(sent, "renderer.input", $"{width}x{height} {verb}");
+            }
+            var ready = PreviewPerformance.Start();
+            var command = FormattableString.Invariant($"VIEW8 {x} {y} {viewWidth} {viewHeight} ") + string.Join(' ', arguments) + "\n";
+            await input.WriteAsync(Encoding.ASCII.GetBytes(command), token).ConfigureAwait(false);
+            await input.FlushAsync(token).ConfigureAwait(false);
+            if (await ReadReplyAsync().ConfigureAwait(false) != expectedSize)
+                throw new InvalidDataException("The optical renderer returned an invalid frame.");
+            var pixels = GC.AllocateUninitializedArray<byte>(expectedSize);
+            if (shared is not null)
+                CopySharedFrame(shared, pixels, expectedSize, token);
+            else
+                await output.ReadExactlyAsync(pixels, token).ConfigureAwait(false);
+            PreviewPerformance.End(ready, "renderer.view", $"{viewWidth}x{viewHeight} of {width}x{height}");
+            return pixels;
+        }
+        catch (OperationCanceledException) when (!stop.IsCancellationRequested)
+        {
+            Stop(abort: true);
+            throw new TimeoutException("Spektrafilm did not finish the native Viewer preview in time.");
+        }
+        catch (Exception error) when (error is IOException or InvalidDataException or OperationCanceledException or ObjectDisposedException)
+        {
+            Stop(abort: true);
+            throw;
+        }
     }
 
     private async Task<byte[]> RenderCoreAsync(int width, int height, byte[] rgba, string[] arguments, CancellationToken stop,

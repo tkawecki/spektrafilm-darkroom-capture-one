@@ -15,6 +15,7 @@ and channels; densities and logs in their own units, output in 8-bit code values
 """
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -33,7 +34,10 @@ TAPS = {  # renderer tap name -> Python Tap attribute
 PRINT_ONLY = {"print-log", "print-density"}
 
 
-def chart(width: int = 288, height: int = 192) -> "tuple[np.ndarray, dict]":
+CHART_SIZE = (288, 192)
+
+
+def chart(width: int = CHART_SIZE[0], height: int = CHART_SIZE[1]) -> "tuple[np.ndarray, dict]":
     """ProPhoto chart (values as ROMM-encoded, the way the panel sends them): a neutral ramp of 12 stops, a hue sweep at three saturations and three levels, pure
     primaries/secondaries at three levels, and a smooth 2D field. Also returns the row ranges of each region."""
     img = np.ones((height, width, 4), np.float32)
@@ -100,6 +104,24 @@ CASES = {
                                    film_ev=1.0, print_ev=0.5),
     "velvia100-scan-m2": dict(stock="fujifilm_velvia_100", paper="kodak_portra_endura", mode="scan", model="2"),
     "portra400-scan-m2": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="scan", model="2"),
+    # Film model 3: the reference's stock profiles; output gamut compression still OkLch (the reference uses CAM16-UCS).
+    "portra400-endura-m3": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="print", model="3"),
+    "velvia100-scan-m3": dict(stock="fujifilm_velvia_100", paper="kodak_portra_endura", mode="scan", model="3"),
+    # Film model 4: CAM16-UCS output gamut compression as the reference.
+    "portra400-endura-m4": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="print", model="4"),
+    "vision3-500t-endura-m4": dict(stock="kodak_vision3_500t", paper="kodak_portra_endura", mode="print", model="4"),
+    "velvia100-scan-m4": dict(stock="fujifilm_velvia_100", paper="kodak_portra_endura", mode="scan", model="4"),
+    "portra400-endura-dir-m3": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="print", model="3", dir=True),
+    "portra400-endura-dir-m4": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="print", model="4", dir=True),
+    "velvia100-scan-dir-m3": dict(stock="fujifilm_velvia_100", paper="kodak_portra_endura", mode="scan", model="3", dir=True),
+    "velvia100-scan-dir-m4": dict(stock="fujifilm_velvia_100", paper="kodak_portra_endura", mode="scan", model="4", dir=True),
+    # Scanner blur and unsharp mask (px, Python's default unsharp mask): model 4 compresses the output gamut before them, as Python does.
+    "portra400-endura-scanner-m3": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="print", model="3",
+                                        scanner=(0.7, 0.7, 0.7)),
+    "portra400-endura-scanner-m4": dict(stock="kodak_portra_400", paper="kodak_portra_endura", mode="print", model="4",
+                                        scanner=(0.7, 0.7, 0.7)),
+    "velvia100-scan-scanner-m4": dict(stock="fujifilm_velvia_100", paper="kodak_portra_endura", mode="scan", model="4",
+                                      scanner=(0.7, 0.7, 0.7)),
 }
 
 
@@ -122,7 +144,12 @@ def python_params(case: dict):
     p.debug.deactivate_spatial_effects = True
     p.debug.deactivate_stochastic_effects = True
     p.film_render.dir_couplers.active = bool(case.get("dir"))
-    return digest_params(p)
+    digested = digest_params(p)
+    if case.get("scanner"):  # after digest_params, which zeroes them for deactivate_spatial_effects
+        lens_px, unsharp_px, amount = case["scanner"]
+        digested.scanner.lens_blur = lens_px
+        digested.scanner.unsharp_mask = (unsharp_px, amount)
+    return digested
 
 
 def our_options(case: dict, params) -> dict:
@@ -132,6 +159,13 @@ def our_options(case: dict, params) -> dict:
     o["film-exposure"] = str(case.get("film_ev", 0.0))
     o["print-exposure"] = str(case.get("print_ev", 0.0))
     o.update(case.get("ours", {}))
+    if case.get("scanner"):
+        # The renderer takes the scanner blur as MTF50 and the unsharp radius in film um; film pixel = 35 mm / long edge.
+        lens_px, unsharp_px, amount = case["scanner"]
+        pixel_um = 35000.0 / max(CHART_SIZE)
+        o.update({"scanner-enabled": "true", "scanner-glare": "0",
+                  "scanner-mtf": str(1000.0 * math.sqrt(math.log(2.0) / (2.0 * math.pi ** 2)) / (lens_px * pixel_um)),
+                  "scanner-unsharp-radius": str(unsharp_px * pixel_um), "scanner-unsharp-amount": str(amount)})
     if case.get("dir"):
         d = params.film_render.dir_couplers
         (gr, gg, gb), (r2g, r2b), (g2r, g2b), (b2r, b2g) = (d.gamma_samelayer_rgb, d.gamma_interlayer_r_to_gb,

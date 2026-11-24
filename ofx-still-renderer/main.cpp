@@ -326,7 +326,7 @@ void configure(RenderParams &p, std::string_view key, const std::string &value) 
     if (key == "input-color") p.inputColorSpace = select(value, kInputColorSpaces);
     else if (key == "output-color") p.outputColorSpace = select(value, kOutputColorSpaces);
     else if (key == "spectral-method") p.rgbToRawMethod = select(value, kUpsampling);
-    else if (key == "film-model") p.filmModel = integer(value, 1, 3);
+    else if (key == "film-model") p.filmModel = integer(value, 1, 4);
     else if (key == "debug-tap") p.debugTap = select(value, kDebugTaps);
     else if (key == "mode") {
         p.process = select(value, kProcesses);
@@ -347,6 +347,9 @@ void configure(RenderParams &p, std::string_view key, const std::string &value) 
     } else if (key == "auto-exposure-meter") {
         constexpr Option<AutoExposureMethod> modes[] = {
             {"center_weighted", AutoExposureMethod::CenterWeighted}, {"median", AutoExposureMethod::Median},
+            {"average", AutoExposureMethod::Average}, {"partial", AutoExposureMethod::Partial},
+            {"matrix", AutoExposureMethod::Matrix}, {"multi_zone", AutoExposureMethod::MultiZone},
+            {"highlight_weighted", AutoExposureMethod::HighlightWeighted},
         };
         p.autoExposureMethod = select(value, modes);
     } else if (key == "camera-diffusion-family") {
@@ -382,7 +385,7 @@ RenderParams readParameters(const std::vector<std::string> &args) {
         if (name == "--stock") params.film = stockIndex(args[arg + 1], true);
         if (name == "--paper") params.paper = stockIndex(args[arg + 1], false);
         // The stock defaults below come from the film model's own tables (film model 3 has its own data set).
-        if (name == "--film-model") params.filmModel = integer(args[arg + 1], 1, 3);
+        if (name == "--film-model") params.filmModel = integer(args[arg + 1], 1, 4);
     }
     setStockCalibration(params);
     for (std::size_t arg = 0; arg < args.size(); arg += 2) {
@@ -576,6 +579,31 @@ void renderFrame(Renderer &renderer, const InputFrame &input, const RenderParams
     const MutableImageView destination{output.data(), 0, 0, width, height, rowBytes, 4, sizeof(float)};
     const RenderWindow frame{0, 0, width, height};
     if (!renderer.render(source, destination, frame, params, 0.0))
+        throw std::runtime_error(renderer.lastError());
+    if (!hasFiniteComponents(output.data(), output.size()))
+        throw std::runtime_error("Renderer produced a non-finite pixel.");
+}
+
+// Spektrafilm C1 Viewer window: renders only params.viewWindow of the resident frame. The renderer takes every
+// full-frame step from the whole frame, so these pixels equal the same pixels of renderFrame's output.
+void renderView(Renderer &renderer, const InputFrame &input, const RenderParams &params, std::vector<float> &output) {
+    const auto width = input.size.width;
+    const auto height = input.size.height;
+    const auto &view = params.viewWindow;
+    const auto *pixels = input.pixels.data();
+    auto revision = input.revision;
+    std::vector<float> enlarged;
+    if (std::abs(params.enlargerScale - 1.0f) > 1.0e-6f) {
+        enlarged = input.pixels;
+        resampleEnlarger(enlarged, width, height, params);
+        pixels = enlarged.data();
+        revision = 0;
+    }
+    output.resize(static_cast<std::size_t>(view.width) * static_cast<std::size_t>(view.height) * 4u);
+    const ImageView source{pixels, 0, 0, width, height, width * 4 * static_cast<int>(sizeof(float)), 4, sizeof(float), revision};
+    const MutableImageView destination{output.data(), view.x, view.y, view.width, view.height,
+                                       view.width * 4 * static_cast<int>(sizeof(float)), 4, sizeof(float)};
+    if (!renderer.render(source, destination, RenderWindow{0, 0, width, height}, params, 0.0))
         throw std::runtime_error(renderer.lastError());
     if (!hasFiniteComponents(output.data(), output.size()))
         throw std::runtime_error("Renderer produced a non-finite pixel.");
@@ -784,7 +812,7 @@ void writeError(std::string_view message) {
 // answers with an error instead of misreading later commands (for example --display-strength).
 // Bump the version whenever a panel would send something an older renderer cannot handle.
 // Clients that never send HELLO (test scripts, one-shot mode) keep working.
-constexpr int kStreamProtocol = 2;
+constexpr int kStreamProtocol = 3;  // 3: VIEW/VIEW8 Viewer windows (2026-11-23)
 
 void answerHello(std::istringstream &command, const FrameLimit &limit) {
     std::string version, extra;
@@ -806,6 +834,27 @@ void answerHello(std::istringstream &command, const FrameLimit &limit) {
 
 // Native preview only. The client owns the mapping; success headers are sent
 // after all pixels are ready, while errors always remain on the control pipe.
+// Packed Viewer pixels of a window: the source alpha comes from the same rows of the resident full frame.
+void packViewPixels(char *destination, const std::vector<float> &rendered, const InputFrame &input,
+                    const ViewWindow &view, const DisplayBlend *blend) {
+    const std::size_t row = static_cast<std::size_t>(view.width) * 4u;
+    for (int y = 0; y < view.height; ++y) {
+        const std::size_t sourceOffset =
+            (static_cast<std::size_t>(view.y + y) * static_cast<std::size_t>(input.size.width) + static_cast<std::size_t>(view.x)) * 4u;
+        packDisplayPixels(destination + y * row, rendered.data() + y * row, input.pixels.data() + sourceOffset, row, blend);
+    }
+}
+
+void writePackedView(const InputFrame &input, const std::vector<float> &rendered, const ViewWindow &view,
+                     const DisplayBlend *blend) {
+    std::vector<char> packed(rendered.size());
+    packViewPixels(packed.data(), rendered, input, view, blend);
+    writeReplyHeader(0, static_cast<uint32_t>(packed.size()));
+    if (!std::cout.write(packed.data(), static_cast<std::streamsize>(packed.size())))
+        throw std::runtime_error("Could not send the rendered frame to Capture One.");
+    flushReply();
+}
+
 struct SharedPreviewBuffer {
     HANDLE handle = nullptr;
     void *view = nullptr;
@@ -846,6 +895,18 @@ struct SharedPreviewBuffer {
         // Own the validated source so later client writes cannot alter REUSE.
         std::memcpy(frame.pixels.data(), view, bytes);
         return frame;
+    }
+    void sendView(const InputFrame &input, const std::vector<float> &output, bool packed, const ViewWindow &window,
+                  const DisplayBlend *blend) {
+        const auto size = packed ? output.size() : output.size() * sizeof(float);
+        if (size > capacity) {
+            writeError("Shared preview mapping is too small for this frame.");
+            return;
+        }
+        if (packed) packViewPixels(static_cast<char *>(view), output, input, window, blend);
+        else std::memcpy(view, output.data(), size);
+        writeReplyHeader(0, static_cast<uint32_t>(size));
+        flushReply();
     }
     void send(const InputFrame &input, const std::vector<float> &output, bool packed, const DisplayBlend *blend) {
         const auto size = packed ? output.size() : output.size() * sizeof(float);
@@ -977,6 +1038,9 @@ void processStream(const FrameLimit &limit) {
     // Film-side options of the last completed Viewer render; equal options of the next request let the renderer
     // reuse its developed negative.
     std::optional<std::vector<std::string>> renderedFilmArguments;
+    // Last Viewer window (VIEW/VIEW8): its own output and key, so it never replaces the full frame's.
+    std::vector<float> viewOutput;
+    std::optional<std::vector<std::string>> renderedViewKey;
     const bool nativePreview = &limit == &kNativePreviewLimit;
     SharedPreviewBuffer sharedOutput, sharedInput;
     uint64_t nextRevision = 0;
@@ -998,6 +1062,77 @@ void processStream(const FrameLimit &limit) {
                     auto &buffer = verb == "SOURCE" ? sharedInput : sharedOutput;
                     buffer.open(name, static_cast<std::size_t>(integer(size, 1, 1600000000)), verb == "SOURCE");
                     writeReply(0, nullptr, 0);
+                } catch (const std::exception &error) { writeError(error.what()); }
+                continue;
+            }
+            if ((verb == "INPUT" || verb == "MINPUT") && nativePreview) {
+                // INPUT W H + pixels, or MINPUT W H from the shared source mapping: replaces the resident frame
+                // without rendering it, so a Viewer window (VIEW8) can follow without a full render first.
+                std::string width, height;
+                command >> width >> height;
+                // An invalid frame length makes locating the next header impossible (as for FRAME).
+                const auto size = readFrameSize(width, height, limit);
+                InputFrame replacement{};
+                if (verb == "MINPUT") {
+                    try { replacement = sharedInput.receive(size); }
+                    catch (const std::exception &error) { writeError(error.what()); continue; }
+                } else replacement = readFrame(size);
+                if (!hasFinitePixels(replacement)) {
+                    writeError("Invalid input pixel.");
+                    continue;
+                }
+                replacement.revision = ++nextRevision;
+                input = std::move(replacement);
+                renderedArguments.reset();
+                renderedFilmArguments.reset();
+                renderedViewKey.reset();
+                writeReply(0, nullptr, 0);
+                continue;
+            }
+            if ((verb == "VIEW" || verb == "VIEW8") && nativePreview) {
+                // VIEW x y w h --options...: a window of the resident frame (sent by FRAME/MFRAME before).
+                try {
+                    std::string xs, ys, ws, hs;
+                    if (!(command >> xs >> ys >> ws >> hs))
+                        throw std::invalid_argument("VIEW requires x, y, width and height.");
+                    std::vector<std::string> viewArgs;
+                    for (std::string option; command >> option;) viewArgs.push_back(std::move(option));
+                    std::optional<double> viewStrength;
+                    for (std::size_t i = 0; i + 1 < viewArgs.size(); i += 2)
+                        if (viewArgs[i] == "--display-strength") {
+                            try { viewStrength = std::stod(viewArgs[i + 1]); } catch (const std::exception &) { viewStrength = -1.0; }
+                            viewArgs.erase(viewArgs.begin() + static_cast<std::ptrdiff_t>(i), viewArgs.begin() + static_cast<std::ptrdiff_t>(i) + 2);
+                            break;
+                        }
+                    if (input.pixels.empty()) throw std::invalid_argument("Send a FRAME before requesting a VIEW.");
+                    const bool packedView = verb == "VIEW8";
+                    auto params = readParameters(viewArgs);
+                    if (packedView && params.outputColorSpace != ColorSpace::Srgb)
+                        throw std::invalid_argument("Packed Viewer pixels require sRGB output.");
+                    if (viewStrength && (!packedView || !(*viewStrength > 0.0 && *viewStrength <= 1.0)))
+                        throw std::invalid_argument("--display-strength needs packed Viewer pixels and a value in (0, 1].");
+                    configureLargeFrame(params, input.size, false);
+                    params.viewWindow = ViewWindow{true, integer(xs, 0, input.size.width - 1), integer(ys, 0, input.size.height - 1),
+                                                   integer(ws, 1, input.size.width), integer(hs, 1, input.size.height)};
+                    const auto &window = params.viewWindow;
+                    if (window.x + window.width > input.size.width || window.y + window.height > input.size.height)
+                        throw std::invalid_argument("The Viewer window lies outside the frame.");
+                    auto key = viewArgs;
+                    key.insert(key.end(), {xs, ys, ws, hs, std::to_string(input.revision)});
+                    if (!renderedViewKey || key != *renderedViewKey) {
+                        renderedViewKey.reset();
+                        if (!renderer) renderer = startRenderer();
+                        try { renderView(*renderer, input, params, viewOutput); }
+                        catch (...) { renderer.reset(); throw; }
+                        renderedViewKey = std::move(key);
+                        // A window renders through the tiled path, which leaves no reusable developed negative.
+                        renderedFilmArguments.reset();
+                    }
+                    std::optional<DisplayBlend> blend;
+                    if (viewStrength && *viewStrength < 1.0) blend.emplace(*viewStrength, params.inputColorSpace);
+                    if (sharedOutput.view) sharedOutput.sendView(input, viewOutput, packedView, window, blend ? &*blend : nullptr);
+                    else if (packedView) writePackedView(input, viewOutput, window, blend ? &*blend : nullptr);
+                    else writeReply(0, reinterpret_cast<const char *>(viewOutput.data()), static_cast<uint32_t>(byteCount(viewOutput.size())));
                 } catch (const std::exception &error) { writeError(error.what()); }
                 continue;
             }

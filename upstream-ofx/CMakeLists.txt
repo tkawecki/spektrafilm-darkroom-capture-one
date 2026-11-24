@@ -155,6 +155,8 @@ set(SPEKTRAFILM_GENERATED_PROFILE_CURVES "${CMAKE_CURRENT_BINARY_DIR}/generated/
 set(SPEKTRAFILM_GENERATED_PROFILE_COUNTS "${CMAKE_CURRENT_BINARY_DIR}/generated/SpektraGeneratedProfileCounts.h")
 set(SPEKTRAFILM_GENERATED_HANATOS_LUT "${CMAKE_CURRENT_BINARY_DIR}/generated/SpektraHanatos2025Spectra.f32")
 set(SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_COMPRESSION "${CMAKE_CURRENT_BINARY_DIR}/generated/SpektraOutputGamutCompression.f32")
+# Spektrafilm C1 film model 4: CAM16-UCS output gamut compression data.
+set(SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_CAM16 "${CMAKE_CURRENT_BINARY_DIR}/generated/SpektraOutputGamutCam16.f32")
 set(SPEKTRAFILM_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Resources/data")
 set(SPEKTRAFILM_PARITY_PROFILE_DIR "${SPEKTRAFILM_DATA_DIR}/profiles/archive")
 set(SPEKTRAFILM_PARITY_GENERATED_PROFILE_CURVES "${CMAKE_CURRENT_BINARY_DIR}/generated_parity/SpektraGeneratedProfileCurves.cpp")
@@ -184,6 +186,7 @@ add_custom_command(
           "${SPEKTRAFILM_GENERATED_PROFILE_COUNTS}"
           "${SPEKTRAFILM_GENERATED_HANATOS_LUT}"
           "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_COMPRESSION}"
+          "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_CAM16}"
   COMMAND "${CMAKE_COMMAND}" -E env "SPEKTRAFILM_DATA_DIR=${SPEKTRAFILM_DATA_DIR}"
           "${Python3_EXECUTABLE}"
           "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_profile_curves.py"
@@ -195,6 +198,8 @@ add_custom_command(
           "${SPEKTRAFILM_GENERATED_HANATOS_LUT}"
           "--output-gamut-compression-output"
           "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_COMPRESSION}"
+          "--output-gamut-cam16-output"
+          "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_CAM16}"
   DEPENDS
           "${CMAKE_CURRENT_SOURCE_DIR}/tools/generate_profile_curves.py"
           "${CMAKE_CURRENT_SOURCE_DIR}/tools/ofx_stock_lists.py"
@@ -739,6 +744,9 @@ function(add_vulkan_bundle_resources target artifact_name plugin_manifest plugin
             "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_COMPRESSION}"
             "${resources_dir}/SpektraOutputGamutCompression.f32"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_CAM16}"
+            "${resources_dir}/SpektraOutputGamutCam16.f32"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "${SPEKTRAFILM_USER_MANUAL_PDF}"
             "${resources_dir}/manual.pdf"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
@@ -1066,6 +1074,9 @@ elseif(SPEKTRAFILM_USE_VULKAN)
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_COMPRESSION}"
             "$<TARGET_FILE_DIR:SpektraVulkanCopyHarness>/SpektraOutputGamutCompression.f32"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${SPEKTRAFILM_GENERATED_OUTPUT_GAMUT_CAM16}"
+            "$<TARGET_FILE_DIR:SpektraVulkanCopyHarness>/SpektraOutputGamutCam16.f32"
     VERBATIM
   )
 endif()

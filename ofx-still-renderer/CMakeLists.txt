@@ -24,5 +24,6 @@ add_custom_command(TARGET SpektraStillRenderer POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${HARNESS_RESOURCES}/SpektraHanatos2025Spectra.f32"
         "${HARNESS_RESOURCES}/SpektraOutputGamutCompression.f32"
+        "${HARNESS_RESOURCES}/SpektraOutputGamutCam16.f32"
         "$<TARGET_FILE_DIR:SpektraStillRenderer>"
     VERBATIM)

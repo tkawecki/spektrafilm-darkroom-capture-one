@@ -273,7 +273,8 @@ try {
     Confirm-RequiredFile $hook
     Confirm-RequiredFile $renderer
     foreach ($file in @('stocks.json', 'profiles\preview\Linear Rec.2020.icc', 'profiles\preview\ProPhoto RGB.icc',
-        'renderer\SpektraHanatos2025Spectra.f32', 'renderer\SpektraOutputGamutCompression.f32')) {
+        'renderer\SpektraHanatos2025Spectra.f32', 'renderer\SpektraOutputGamutCompression.f32',
+        'renderer\SpektraOutputGamutCam16.f32')) {
         Confirm-RequiredFile (Join-Path $PSScriptRoot $file)
     }
     foreach ($shader in @('Copy','CurveDevelop','Diffusion','Dir','FilmExposure','FormatConvert','Grain','Halation','PrintScan','ScannerPost')) {

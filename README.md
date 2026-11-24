@@ -11,7 +11,7 @@ An unofficial panel for Capture One 16.9 that renders a spectral simulation of c
 ## What it does
 
 - A tool tab in Capture One with film stock, print stock, film and print exposure, look strength and the usual darkroom controls (development, enlarger filtration, preflash, print base, emulsion aging).
-- **Live Viewer:** the photo shown in Capture One's Viewer is the film simulation of your current Capture One development. Viewer resolution follows the zoom; quick frames keep sliders responsive.
+- **Live Viewer:** the photo shown in Capture One's Viewer is the film simulation of your current Capture One development. Viewer resolution follows the zoom; when you zoom in, only the visible part is rendered at full resolution, also while you drag a slider; quick frames keep sliders responsive.
 - **Optics and grain:** halation, emulsion scatter, camera and print diffusion filters, several grain models, scanner simulation.
 - **Post-scan finishing:** exposure, contrast, micro contrast, curves, toning, scan geometry, paper textures and borders.
 - **Export through Capture One's recipes:** Capture One's own Export writes the Spektrafilm image with every active recipe: location and file names with tokens, JPEG, TIFF, PNG, PSD and PSB, the recipe's ICC profile and size, the photo's metadata, watermarks, output sharpening and the crop as a path. The files are listed before the export starts, each photo is rendered once per group of compatible recipes, and an interrupted export can be resumed.

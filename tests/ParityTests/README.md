@@ -89,8 +89,37 @@ Differences that remain (each a separate decision; fixes that change the look go
    **Done as film model 3 (2026-11-23):** a second table set from Python main's profiles with neutral print filters
    fitted by `upstream-ofx/tools/fit_neutral_print_filters.py`; `stage_parity.py --sweep 3` compares every film
    (output mean 0.7-1.4/255, greys within 5.5/255 at the ramp ends, mid grey neutral by construction).
-4. **Saturated output in print mode:** up to 20/255 while print densities agree within 0.06; scan mode stays within
-   3.7/255. Candidates: output gamut compression (OkLch in the renderer, CAM16-UCS in Python) on the print path.
+4. **Saturated output in print mode:** up to 20/255 while print densities agree within 0.06. **Diagnosed 2026-11-23:**
+   the output gamut compression algorithm. The renderer compresses in OkLch (`SpektraPrintScan.comp`,
+   `SpektraScannerPost.comp`), Python main defaults to CAM16-UCS (`OutputGamutCompressSpec.algorithm`). With Python
+   switched to OkLch (same knees) the saturated output differs by at most 2.7-3.2/255 in print and 1.7/255 in scan
+   (Portra 400 / Portra Endura, model 3); with compression off in both, 1.6-3.3/255. Porting CAM16-UCS would change
+   the look of saturated colours, so it needs a new film model.
+   **Done as film model 4 (2026-11-24):** CAM16-UCS with the reference's Cp_max table. `--sweep 4` against `--sweep 3`
+   (renderer `build/model4`, all 26 films): largest output difference 1.8-6.7/255 (median 2.8) instead of 14-22/255
+   (median 18.4); slides mean 0.02/255. Full output `artifacts/model4/sweep-m{3,4}.{txt,json}` (local).
+
+## Film model 4 checks (2026-11-24)
+
+```powershell
+artifacts\quality-audit-20261115\venv\Scripts\python.exe -I tests\ParityTests\autoexposure_parity.py <renderer dir>\SpektraStillRenderer.exe upstream-spektrafilm\src
+.venv\Scripts\python.exe -I tests\ParityTests\dir_guard_sweep.py <renderer dir>\SpektraStillRenderer.exe --model 4
+.venv\Scripts\python.exe -I tests\ParityTests\model_identity.py <installed renderer>\SpektraStillRenderer.exe <renderer dir>\SpektraStillRenderer.exe [--tile 512]
+```
+
+- `autoexposure_parity.py`: the renderer's metered EV (read from the film-log tap, auto exposure on minus off) against
+  `measure_autoexposure_ev` on the reference's small preview, seven methods at 3000 x 2000, 1997 x 3001 and 200 x 150.
+  Model 4: all within 0.0001 EV. Model 3 (`--model 3`, earlier sampling): up to 0.11 EV for median, 0.03 EV for
+  center weighted. The scene keeps highlights below ROMM 1.5, the top of the renderer's decoding table.
+- `dir_guard_sweep.py`: film density along a grey exposure ramp at three strong DIR settings must follow exposure
+  (rise for negatives, fall for slides). Model 3: 60 of 78 film/setting pairs fold; model 4: none.
+- Scanner cases (`*-scanner-m3/m4`, Python's unsharp mask 0.7 px / 0.7 and a 0.7 px scanner blur): the raw output
+  comparison reports up to 43/255 because Python's sharpened output goes below black; clipped to the image range,
+  model 4 is within 2.4-3.3/255 of Python, model 3 26.7/255 (compression after the sharpening).
+- `model_identity.py`: older models against the installed renderer across 13 configurations (auto exposure, DIR,
+  output compression, grain, scanner, scan modes). 2026-11-24: models 1-3, 39 of 39 identical; with 512 px tiles,
+  models 1 and 3, 26 of 26. After the scanner order change (14 configurations, including scanner with colour
+  adaptation): models 1-3 42 of 42, tiles 28 of 28; model 4 differs from its first build only with the scanner on.
 
 ## Grain RMS closed loop (`tests/GrainRmsTests/closed_loop_rms.py`)
 

@@ -57,6 +57,7 @@ const uint kColorAdaptationInputCompression = 1u << 0u;
 const uint kColorAdaptationCurveSmoothing = 1u << 1u;
 const uint kColorAdaptationOutputLightnessCompression = 1u << 2u;
 const uint kColorAdaptationOutputChromaCompression = 1u << 3u;
+const uint kColorAdaptationOutputCam16Ucs = 1u << 4u;
 const uint kOutputGamutCompressionStride = 18u;
 const uint kTransferLinear = 0u;
 const uint kTransferSrgb = 2u;
@@ -635,11 +636,136 @@ vec3 outputGamutCompressOklch(
     : clamp(compressed, vec3(lowerBound), vec3(upperBound));
 }
 
+// Spektrafilm C1 film model 4 (2026-11-24): CAM16-UCS output gamut compression, a port of the Python reference's
+// default (spektrafilm.utils.gamut_compression.compress_rgb_cam16ucs_chroma, GPLv3, Andrea Volpato): the lightness
+// knee (0.7, 1, 2.2) on Jp / Jp(white), then the chroma knee (0, 1, 6) on Cp / Cp_max(Jp, hp) with the reference's
+// table (SpektraOutputGamutCam16.f32, after the transfer parameters in colorEncodeLuts).
+const uint kCam16Header = 32u;
+const uint kCam16TableJ = 64u;
+const uint kCam16TableH = 720u;
+const float kCam16TableJMin = 1.0;
+const float kCam16TableJMax = 110.0;
+const float kCam16Pi = 3.14159265358979;
+
+uint cam16DataOffset(uint colorSpace) {
+  return params.colorSpaceCount * (params.transferLutSize + kOutputGamutCompressionStride + 1u) +
+    colorSpace * (kCam16Header + kCam16TableJ * kCam16TableH);
+}
+
+float cam16Spow(float value, float power) {
+  return sign(value) * pow(abs(value), power);
+}
+
+// Linear output RGB -> (Jp, ap, bp).
+vec3 cam16UcsFromOutputRgb(vec3 rgb, uint base) {
+  const vec3 rgbC = multiplyPackedColorMatrix(base, rgb);
+  const vec3 compressed = pow(colorEncodeLuts[base + 18u] * abs(rgbC) / 100.0, vec3(0.42));
+  const vec3 rgbA = sign(rgbC) * 400.0 * compressed / (27.13 + compressed) + 0.1;
+  const float a = rgbA.r - 12.0 * rgbA.g / 11.0 + rgbA.b / 11.0;
+  const float b = (rgbA.r + rgbA.g - 2.0 * rgbA.b) / 9.0;
+  const float hue = atan(b, a);
+  const float achromatic = (2.0 * rgbA.r + rgbA.g + 0.05 * rgbA.b - 0.305) * colorEncodeLuts[base + 19u];
+  const float lightness = 100.0 * cam16Spow(achromatic / colorEncodeLuts[base + 21u], colorEncodeLuts[base + 20u]);
+  const float eccentricity = 0.25 * (cos(hue + 2.0) + 3.8);
+  const float t = (50000.0 / 13.0 * colorEncodeLuts[base + 19u] * eccentricity * length(vec2(a, b))) /
+    (rgbA.r + rgbA.g + 21.0 / 20.0 * rgbA.b);
+  const float chroma = cam16Spow(t, 0.9) * cam16Spow(lightness / 100.0, 0.5) * colorEncodeLuts[base + 22u];
+  const float colourfulness = chroma * colorEncodeLuts[base + 23u];
+  const float jp = 1.7 * lightness / (1.0 + 0.007 * lightness);
+  const float mp = log(1.0 + 0.0228 * colourfulness) / 0.0228;
+  return vec3(jp, mp * cos(hue), mp * sin(hue));
+}
+
+// (Jp, Cp, hue) -> linear output RGB, as colour.CAM16UCS_to_XYZ followed by the space's XYZ to RGB matrix.
+vec3 outputRgbFromCam16Ucs(float jp, float cp, float hue, uint base) {
+  const float lightness = jp / (1.7 - 0.007 * jp);
+  const float colourfulness = (exp(0.0228 * cp) - 1.0) / 0.0228;
+  const float chroma = colourfulness / colorEncodeLuts[base + 23u];
+  const float achromatic = colorEncodeLuts[base + 21u] * cam16Spow(lightness / 100.0, 1.0 / colorEncodeLuts[base + 20u]);
+  const float p2 = achromatic / colorEncodeLuts[base + 19u] + 0.305;
+  // colour clamps J at machine epsilon here (temporary_magnitude_quantity_inverse).
+  const float t = cam16Spow(chroma / (sqrt(max(lightness, 1.0e-30) / 100.0) * colorEncodeLuts[base + 22u]), 1.0 / 0.9);
+  float a = 0.0;
+  float b = 0.0;
+  if (t != 0.0) {
+    const float cosH = cos(hue);
+    const float sinH = sin(hue);
+    const float eccentricity = 0.25 * (cos(hue + 2.0) + 3.8);
+    const float p1 = 50000.0 / 13.0 * colorEncodeLuts[base + 19u] * eccentricity / t;
+    const float p3 = 21.0 / 20.0;
+    const float n = p2 * (2.0 + p3) * (460.0 / 1403.0);
+    if (abs(sinH) >= abs(cosH)) {
+      b = n / (p1 / sinH + (2.0 + p3) * (220.0 / 1403.0) * (cosH / sinH) - 27.0 / 1403.0 + p3 * (6300.0 / 1403.0));
+      a = b * cosH / sinH;
+    } else {
+      a = n / (p1 / cosH + (2.0 + p3) * (220.0 / 1403.0) - (27.0 / 1403.0 - p3 * (6300.0 / 1403.0)) * (sinH / cosH));
+      b = a * sinH / cosH;
+    }
+  }
+  const vec3 rgbA = vec3(
+    460.0 * p2 + 451.0 * a + 288.0 * b,
+    460.0 * p2 - 891.0 * a - 261.0 * b,
+    460.0 * p2 - 220.0 * a - 6300.0 * b
+  ) / 1403.0 - 0.1;
+  const vec3 rgbC = sign(rgbA) * 100.0 / colorEncodeLuts[base + 18u] *
+    pow(27.13 * abs(rgbA) / (400.0 - abs(rgbA)), vec3(1.0 / 0.42));
+  return multiplyPackedColorMatrix(base + 9u, rgbC);
+}
+
+// Bilinear Cp_max(Jp, hue) as the reference's _c_max_lookup.
+float cam16ChromaMax(float jp, float hue, uint base) {
+  const float hueStep = 2.0 * kCam16Pi / float(kCam16TableH);
+  const float hueIndex = (hue + kCam16Pi) / hueStep;
+  const float hueFloor = floor(hueIndex);
+  const float hueFraction = hueIndex - hueFloor;
+  const uint h0 = uint(int(hueFloor) % int(kCam16TableH) + int(kCam16TableH)) % kCam16TableH;
+  const uint h1 = (h0 + 1u) % kCam16TableH;
+  const float clamped = clamp(jp, kCam16TableJMin, kCam16TableJMax);
+  const float jIndex = (clamped - kCam16TableJMin) / (kCam16TableJMax - kCam16TableJMin) * float(kCam16TableJ - 1u);
+  const uint j0 = min(uint(floor(jIndex)), kCam16TableJ - 2u);
+  const float jFraction = jIndex - float(j0);
+  const uint table = base + kCam16Header;
+  const float v00 = colorEncodeLuts[table + j0 * kCam16TableH + h0];
+  const float v01 = colorEncodeLuts[table + j0 * kCam16TableH + h1];
+  const float v10 = colorEncodeLuts[table + (j0 + 1u) * kCam16TableH + h0];
+  const float v11 = colorEncodeLuts[table + (j0 + 1u) * kCam16TableH + h1];
+  return v00 * (1.0 - jFraction) * (1.0 - hueFraction) + v01 * (1.0 - jFraction) * hueFraction +
+    v10 * jFraction * (1.0 - hueFraction) + v11 * jFraction * hueFraction;
+}
+
+vec3 outputGamutCompressCam16Ucs(vec3 rgb, uint colorSpace, bool compressLightness, bool compressChroma) {
+  if (any(isnan(rgb)) || any(isinf(rgb))) {
+    return vec3(0.0);
+  }
+  const uint base = cam16DataOffset(colorSpace);
+  const vec3 jab = cam16UcsFromOutputRgb(rgb, base);
+  float jp = jab.x;
+  if (compressLightness) {
+    const float white = colorEncodeLuts[base + 24u];
+    jp = reinhardKnee(jp / white, 0.7, 1.0, 2.2) * white;
+  }
+  float cp = length(jab.yz);
+  const float hue = atan(jab.z, jab.y);
+  if (compressChroma) {
+    const float cmax = max(cam16ChromaMax(jp, hue, base), 1.0e-9);
+    cp = reinhardKnee(cp / cmax, 0.0, 1.0, 6.0) * cmax;
+  }
+  const vec3 compressed = outputRgbFromCam16Ucs(jp, cp, hue, base);
+  // Below-black or far over-white pixels can leave the CAM16 inverse's domain; keep them finite.
+  if (any(isnan(compressed)) || any(isinf(compressed))) {
+    return clamp(rgb, vec3(0.0), vec3(1.0));
+  }
+  return rgbInBounds(compressed, 0.0, 1.0) ? compressed : clamp(compressed, vec3(0.0), vec3(1.0));
+}
+
 vec3 outputGamutCompressDisplaySdr(vec3 rgb) {
   const bool compressLightness = colorAdaptationEnabled(kColorAdaptationOutputLightnessCompression);
   const bool compressChroma = colorAdaptationEnabled(kColorAdaptationOutputChromaCompression);
   if ((!compressLightness && !compressChroma) || u(kFrameIntOutputRole) != kOutputRoleDisplaySdr) {
     return rgb;
+  }
+  if (colorAdaptationEnabled(kColorAdaptationOutputCam16Ucs)) {
+    return outputGamutCompressCam16Ucs(rgb, finalOutputColorSpace(), compressLightness, compressChroma);
   }
   return outputGamutCompressOklch(rgb, finalOutputColorSpace(), 0.0, 1.0, true, compressLightness, compressChroma);
 }
